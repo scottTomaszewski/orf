@@ -1,0 +1,46 @@
+{
+	"formulas": [
+		{
+			"ref": "ability.modifier.strength",
+			"dependencies": [
+				"ability.score.strength"
+			],
+			"expression": "(ability.score.strength - 10) / 2"
+		},
+		{
+			"ref": "ability.modifier.constitution",
+			"dependencies": [
+				"ability.score.constitution"
+			],
+			"expression": "(ability.score.constitution - 10) / 2"
+		},
+		{
+			"ref": "ability.modifier.dexterity",
+			"dependencies": [
+				"ability.score.dexterity"
+			],
+			"expression": "(ability.score.dexterity - 10) / 2"
+		},
+		{
+			"ref": "ability.modifier.intelligence",
+			"dependencies": [
+				"ability.score.intelligence"
+			],
+			"expression": "(ability.score.intelligence - 10) / 2"
+		},
+		{
+			"ref": "ability.modifier.wisdom",
+			"dependencies": [
+				"ability.score.wisdom"
+			],
+			"expression": "(ability.score.wisdom - 10) / 2"
+		},
+		{
+			"ref": "ability.modifier.charisma",
+			"dependencies": [
+				"ability.score.charisma"
+			],
+			"expression": "(ability.score.charisma - 10) / 2"
+		}
+	]
+}

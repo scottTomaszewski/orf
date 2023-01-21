@@ -1,0 +1,28 @@
+{
+	"formulas": [
+		{
+			"ref": "ability.score.strength",
+			"expression": "8"
+		},
+		{
+			"ref": "ability.score.constitution",
+			"expression": "13"
+		},
+		{
+			"ref": "ability.score.dexterity",
+			"expression": "14"
+		},
+		{
+			"ref": "ability.score.intelligence",
+			"expression": "10"
+		},
+		{
+			"ref": "ability.score.wisdom",
+			"expression": "12"
+		},
+		{
+			"ref": "ability.score.charisma",
+			"expression": "15"
+		}
+	]
+}

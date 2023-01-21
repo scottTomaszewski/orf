@@ -1,0 +1,11 @@
+{
+	"formulas": [
+		{
+			"ref": "armor_class.unarmored",
+			"dependencies": [
+				"ability.modifier.dexterity"
+			],
+			"expression": "10 + ability.modifier.dexterity"
+		}
+	]
+}
