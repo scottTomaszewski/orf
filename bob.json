@@ -26,7 +26,7 @@
 		},
 		{
 			"ref": "class.sorcerer.level",
-			"expression": "2"
+			"expression": "5"
 		},
 		{
 			"ref": "class.fighter.level",

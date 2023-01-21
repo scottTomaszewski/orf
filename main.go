@@ -47,15 +47,6 @@ func main() {
 		return
 	}
 
-	//for i := range formulaFiles {
-	//	formulas, err := loadFormulas(formulaFiles[i])
-	//	if err != nil {
-	//		fmt.Printf("Failed to load formulas from %s: %s", formulaFiles[i], err)
-	//		return
-	//	}
-	//	allFormulas = append(allFormulas, formulas.Formulas...)
-	//}
-
 	fmt.Printf("Building DAG\n")
 	formulaDAG := dag.NewDAG()
 
@@ -83,64 +74,20 @@ func main() {
 
 	//fmt.Print(formulaDAG.String())
 
+	fmt.Printf("Loading custom functions\n")
+	functions := make(map[string]goval.ExpressionFunction)
+	functions["sum"] = sum
+	functions["max"] = max
+
 	fmt.Printf("Evaluating formulas:\n")
 	parameters := make(map[string]interface{}, 8)
-	formulaDAG.BFSWalk(&evaluatingVisitor{parameters: parameters})
+	formulaDAG.BFSWalk(&evaluatingVisitor{parameters: parameters, functions: functions})
 
 	marshal, err := json.MarshalIndent(parameters, "", "  ")
 	if err != nil {
 		return
 	}
 	fmt.Println(string(marshal))
-}
-
-type evaluatingVisitor struct {
-	parameters map[string]interface{}
-}
-
-func (evaluator *evaluatingVisitor) Visit(v dag.Vertexer) {
-	_, formulaVertex := v.Vertex()
-	formula := formulaVertex.(Formula)
-
-	err := evalFormulaGoVal(formula, evaluator.parameters)
-	if err != nil {
-		fmt.Printf("Failed to eval formula %s: %s\n", formula.Ref, err)
-		return
-	}
-	value, err := getRefValue(formula.Ref, evaluator.parameters)
-	if err != nil {
-		fmt.Printf("Failed to find value for %s: %s\n", formula.Ref, err)
-		return
-	}
-	fmt.Printf("	%s = %v\n", formula.Ref, value)
-}
-
-type Character struct {
-	BaseValues map[string]interface{} `json:"base_values,omitempty"`
-}
-
-func loadCharacter(filePath string, parameters map[string]interface{}) error {
-	characterBytes, err := ioutil.ReadFile(filePath)
-	if err != nil {
-		return err
-	}
-
-	var characterData Character
-	err = json.Unmarshal(characterBytes, &characterData)
-	if err != nil {
-		return err
-	}
-
-	//var characterParams = make(map[string]interface{})
-	fmt.Printf("Loading character data\n")
-
-	for k, v := range characterData.BaseValues {
-		fmt.Printf("	%s = %v\n", k, v)
-		//characterParams[k] = v
-		parameters[k] = v
-	}
-	//parameters["character"] = characterParams
-	return nil
 }
 
 func loadFormulas(filePath string) (*Formulas, error) {
@@ -170,21 +117,6 @@ type Formula struct {
 	Ref        string `json:"ref"`
 	Type       string `json:"type"`
 	Expression string `json:"expression"`
-}
-
-func evalFormulaGoVal(formula Formula, parameters map[string]interface{}) error {
-	eval := goval.NewEvaluator()
-	result, err := eval.Evaluate(formula.Expression, parameters, nil) // Returns <true, nil>
-	if err != nil {
-		return err
-	}
-
-	err = insertAtPath(formula.Ref, result, parameters)
-	if err != nil {
-		return err
-	}
-	//parameters[formula.Ref] = result
-	return nil
 }
 
 // Creates parents along the way

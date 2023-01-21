@@ -1,18 +1,26 @@
 {
-	"formulas": [
-		{
-			"ref": "armor_class.unarmored",
-			"dependencies": [
-				"ability.modifier.dexterity"
-			],
-			"expression": "10 + ability.modifier.dexterity"
-		},
-		{
-			"ref": "initiative",
-			"dependencies": [
-				"ability.modifier.dexterity"
-			],
-			"expression": "ability.modifier.dexterity"
-		}
-	]
+  "formulas": [
+    {
+      "ref": "armor_class.unarmored",
+      "dependencies": [
+        "ability.modifier.dexterity"
+      ],
+      "expression": "10 + ability.modifier.dexterity"
+    },
+    {
+      "ref": "initiative",
+      "dependencies": [
+        "ability.modifier.dexterity"
+      ],
+      "expression": "ability.modifier.dexterity"
+    },
+    {
+      "ref": "character.level",
+      "dependencies": [
+        "class.sorcerer.level",
+        "class.fighter.level"
+      ],
+      "expression": "sum(class.sorcerer.level, class.fighter.level)"
+    }
+  ]
 }
