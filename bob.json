@@ -23,6 +23,14 @@
 		{
 			"ref": "ability.score.charisma",
 			"expression": "15"
+		},
+		{
+			"ref": "class.sorcerer.level",
+			"expression": "2"
+		},
+		{
+			"ref": "class.fighter.level",
+			"expression": "1"
 		}
 	]
 }

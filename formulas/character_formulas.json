@@ -6,6 +6,13 @@
 				"ability.modifier.dexterity"
 			],
 			"expression": "10 + ability.modifier.dexterity"
+		},
+		{
+			"ref": "initiative",
+			"dependencies": [
+				"ability.modifier.dexterity"
+			],
+			"expression": "ability.modifier.dexterity"
 		}
 	]
 }

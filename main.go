@@ -7,21 +7,54 @@ import (
 	"github.com/heimdalr/dag"
 	"github.com/maja42/goval"
 	"io/ioutil"
+	"os"
+	"path/filepath"
 	"strings"
 )
 
 func main() {
-	formulaFiles := []string{"bob.json", "ability_modifiers.json", "character_formulas.json"}
+	formulaRootDir := "formulas"
+	characterFile := "bob.json"
+	//formulaFiles := []string{"bob.json", "ability_modifiers.json", "character_formulas.json"}
 	var allFormulas = make([]DependentFormula, 0)
 
-	for i := range formulaFiles {
-		formulas, err := loadFormulas(formulaFiles[i])
-		if err != nil {
-			fmt.Printf("Failed to load formulas from %s: %s", formulaFiles[i], err)
-			return
-		}
-		allFormulas = append(allFormulas, formulas.Formulas...)
+	formulas, err := loadFormulas(characterFile)
+	if err != nil {
+		fmt.Printf("Failed to load formulas from %s: %s", characterFile, err)
+		return
 	}
+	allFormulas = append(allFormulas, formulas.Formulas...)
+
+	err = filepath.Walk(formulaRootDir,
+		func(path string, info os.FileInfo, err error) error {
+			if err != nil {
+				return err
+			}
+			if info.IsDir() {
+				return nil
+			}
+			fmt.Printf("Loading formulas at %s\n", path)
+			formulas, err := loadFormulas(path)
+			if err != nil {
+				fmt.Printf("Failed to load formulas from %s: %s", path, err)
+				return err
+			}
+			allFormulas = append(allFormulas, formulas.Formulas...)
+			return nil
+		})
+	if err != nil {
+		fmt.Printf("Failed to load formulas: %s", err)
+		return
+	}
+
+	//for i := range formulaFiles {
+	//	formulas, err := loadFormulas(formulaFiles[i])
+	//	if err != nil {
+	//		fmt.Printf("Failed to load formulas from %s: %s", formulaFiles[i], err)
+	//		return
+	//	}
+	//	allFormulas = append(allFormulas, formulas.Formulas...)
+	//}
 
 	fmt.Printf("Building DAG\n")
 	formulaDAG := dag.NewDAG()
