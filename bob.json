@@ -1,27 +1,27 @@
 {
 	"formulas": [
 		{
-			"ref": "ability.score.strength",
+			"ref": "ability.score.base.strength",
 			"expression": "8"
 		},
 		{
-			"ref": "ability.score.constitution",
+			"ref": "ability.score.base.constitution",
 			"expression": "13"
 		},
 		{
-			"ref": "ability.score.dexterity",
+			"ref": "ability.score.base.dexterity",
 			"expression": "14"
 		},
 		{
-			"ref": "ability.score.intelligence",
+			"ref": "ability.score.base.intelligence",
 			"expression": "10"
 		},
 		{
-			"ref": "ability.score.wisdom",
+			"ref": "ability.score.base.wisdom",
 			"expression": "12"
 		},
 		{
-			"ref": "ability.score.charisma",
+			"ref": "ability.score.base.charisma",
 			"expression": "15"
 		},
 		{
