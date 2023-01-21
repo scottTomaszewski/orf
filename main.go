@@ -5,7 +5,6 @@ import (
 	"errors"
 	"fmt"
 	"github.com/heimdalr/dag"
-	"github.com/maja42/goval"
 	"io/ioutil"
 	"os"
 	"path/filepath"
@@ -75,13 +74,14 @@ func main() {
 	//fmt.Print(formulaDAG.String())
 
 	fmt.Printf("Loading custom functions\n")
-	functions := make(map[string]goval.ExpressionFunction)
-	functions["sum"] = sum
-	functions["max"] = max
+	parameters := make(map[string]interface{}, 8)
+	functions := GetFunctions(parameters)
 
 	fmt.Printf("Evaluating formulas:\n")
-	parameters := make(map[string]interface{}, 8)
-	formulaDAG.BFSWalk(&evaluatingVisitor{parameters: parameters, functions: functions})
+	formulaDAG.BFSWalk(&evaluatingVisitor{
+		parameters: parameters,
+		functions:  functions,
+	})
 
 	marshal, err := json.MarshalIndent(parameters, "", "  ")
 	if err != nil {

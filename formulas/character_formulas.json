@@ -21,6 +21,18 @@
         "class.fighter.level"
       ],
       "expression": "sum(class.sorcerer.level, class.fighter.level)"
+    },
+    {
+      "ref": "ability.score_sum",
+      "dependencies": [
+        "ability.score.strength",
+        "ability.score.constitution",
+        "ability.score.dexterity",
+        "ability.score.intelligence",
+        "ability.score.wisdom",
+        "ability.score.charisma"
+      ],
+      "expression": "sumAll(ability.score)"
     }
   ]
 }
