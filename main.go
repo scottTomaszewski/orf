@@ -4,7 +4,6 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
-	"io/ioutil"
 	"strings"
 )
 
@@ -40,35 +39,6 @@ func main() {
 		return
 	}
 	fmt.Println(string(marshal))
-}
-
-func loadFormulas(filePath string) (*Formulas, error) {
-	formulaBytes, err := ioutil.ReadFile(filePath)
-	if err != nil {
-		return nil, err
-	}
-
-	formulas := &Formulas{}
-	err = json.Unmarshal(formulaBytes, formulas)
-	if err != nil {
-		return nil, err
-	}
-	return formulas, nil
-}
-
-type Formulas struct {
-	Formulas []DependentFormula `json:"formulas"`
-}
-
-type DependentFormula struct {
-	Formula
-	Dependencies []string `json:"dependencies,omitempty"`
-}
-
-type Formula struct {
-	Ref        string `json:"ref"`
-	Type       string `json:"type"`
-	Expression string `json:"expression"`
 }
 
 // Creates parents along the way
