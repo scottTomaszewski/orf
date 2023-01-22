@@ -13,6 +13,21 @@ type FormulaData struct {
 	refToFormula map[string]DependentFormula
 }
 
+type DependentFormula struct {
+	Formula
+	Dependencies []string `json:"dependencies,omitempty"`
+}
+
+type Formula struct {
+	Ref        string `json:"ref"`
+	Type       string `json:"type"`
+	Expression string `json:"expression"`
+}
+
+type Formulas struct {
+	Formulas []DependentFormula `json:"formulas"`
+}
+
 func loadData(characterFile string, formulaRootDir string) (*FormulaData, error) {
 	formulas, err := loadFormulas(characterFile)
 	if err != nil {
@@ -39,7 +54,7 @@ func loadData(characterFile string, formulaRootDir string) (*FormulaData, error)
 			return nil
 		})
 	if err != nil {
-		return nil, fmt.Errorf("Failed to load formulas: %s", err)
+		return nil, fmt.Errorf("failed to load formulas: %s", err)
 	}
 
 	var refToFormula = make(map[string]DependentFormula, 0)
@@ -66,19 +81,4 @@ func loadFormulas(filePath string) (*Formulas, error) {
 		return nil, err
 	}
 	return formulas, nil
-}
-
-type DependentFormula struct {
-	Formula
-	Dependencies []string `json:"dependencies,omitempty"`
-}
-
-type Formula struct {
-	Ref        string `json:"ref"`
-	Type       string `json:"type"`
-	Expression string `json:"expression"`
-}
-
-type Formulas struct {
-	Formulas []DependentFormula `json:"formulas"`
 }

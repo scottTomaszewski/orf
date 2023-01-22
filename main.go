@@ -29,15 +29,12 @@ func main() {
 		return
 	}
 
-	//parameters, err := HeimdalrDagEvaluate(allFormulas)
-	//if err != nil {
-	//	fmt.Printf("Failed to evaluate usng Heimdalr DAG evaluation: %s", err)
-	//}
-
 	marshal, err := json.MarshalIndent(parameters, "", "  ")
 	if err != nil {
 		return
 	}
+
+	fmt.Printf("\n\nResult\n=======\n\n")
 	fmt.Println(string(marshal))
 }
 
