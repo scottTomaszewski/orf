@@ -21,6 +21,13 @@
         "class.fighter.level"
       ],
       "expression": "sum(class.sorcerer.level, class.fighter.level)"
+    },
+    {
+      "ref": "proficiency_bonus",
+      "dependencies": [
+        "character.level"
+      ],
+      "expression": "2 + (character.level - 1) / 4"
     }
   ]
 }

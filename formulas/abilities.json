@@ -52,7 +52,7 @@
         "ability.score.base.wisdom",
         "ability.score.base.charisma"
       ],
-      "expression": "sumAll(ability.score.base)"
+      "expression": "sum(ability.score.base)"
     }
   ]
 }

@@ -27,7 +27,10 @@ func (evaluator *evaluatingVisitor) Visit(v dag.Vertexer) {
 	}
 }
 
-func evaluate(formula Formula, parameters map[string]interface{}, functions map[string]goval.ExpressionFunction) error {
+func evaluate(
+	formula Formula,
+	parameters map[string]interface{},
+	functions map[string]goval.ExpressionFunction) error {
 	//fmt.Printf("[DEBUG] Evaluating %s\n", formula.Ref)
 	fmt.Printf("	%s", formula.Ref)
 	eval := goval.NewEvaluator()
@@ -41,5 +44,20 @@ func evaluate(formula Formula, parameters map[string]interface{}, functions map[
 		return err
 	}
 	fmt.Printf(" = %v\n", result)
+	return nil
+}
+
+func evaluateAll(
+	orderedFormulaRefs []string,
+	formulas FormulaData,
+	parameters map[string]interface{},
+	functions map[string]goval.ExpressionFunction) error {
+
+	for _, ref := range orderedFormulaRefs {
+		err := evaluate(formulas.refToFormula[ref].Formula, parameters, functions)
+		if err != nil {
+			return err
+		}
+	}
 	return nil
 }

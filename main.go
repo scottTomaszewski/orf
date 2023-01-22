@@ -4,84 +4,36 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
-	"github.com/heimdalr/dag"
 	"io/ioutil"
-	"os"
-	"path/filepath"
 	"strings"
 )
 
 func main() {
 	formulaRootDir := "formulas"
 	characterFile := "bob.json"
-	//formulaFiles := []string{"bob.json", "ability_modifiers.json", "character_formulas.json"}
-	var allFormulas = make([]DependentFormula, 0)
 
-	formulas, err := loadFormulas(characterFile)
+	formulas, err := loadData(characterFile, formulaRootDir)
 	if err != nil {
-		fmt.Printf("Failed to load formulas from %s: %s", characterFile, err)
-		return
+		fmt.Printf("Failed to load formula data: %s", err)
 	}
-	allFormulas = append(allFormulas, formulas.Formulas...)
 
-	err = filepath.Walk(formulaRootDir,
-		func(path string, info os.FileInfo, err error) error {
-			if err != nil {
-				return err
-			}
-			if info.IsDir() {
-				return nil
-			}
-			fmt.Printf("Loading formulas at %s\n", path)
-			formulas, err := loadFormulas(path)
-			if err != nil {
-				fmt.Printf("Failed to load formulas from %s: %s", path, err)
-				return err
-			}
-			allFormulas = append(allFormulas, formulas.Formulas...)
-			return nil
-		})
+	orderedFormulas, err := buildAndSortTopologicalOrdering(*formulas)
 	if err != nil {
-		fmt.Printf("Failed to load formulas: %s", err)
+		fmt.Printf("Failed to topologically sort: %s", err)
+	}
+
+	parameters := make(map[string]interface{}, 0)
+
+	err = evaluateAll(orderedFormulas, *formulas, parameters, GetFunctions(parameters))
+	if err != nil {
+		fmt.Printf("Failed to evaluate formulas: %s", err)
 		return
 	}
 
-	fmt.Printf("Building DAG\n")
-	formulaDAG := dag.NewDAG()
-
-	// Add formula Vertices
-	for formulaIndex := range allFormulas {
-		formula := allFormulas[formulaIndex]
-		err := formulaDAG.AddVertexByID(formula.Ref, formula.Formula)
-		if err != nil {
-			fmt.Printf("Failed to add formula %s to DAG: %s", formula.Ref, err)
-			return
-		}
-	}
-
-	// Add formula dependencies (needs all vertices before we can do this)
-	for formulaIndex := range allFormulas {
-		formula := allFormulas[formulaIndex]
-		for depIndex := range formula.Dependencies {
-			err := formulaDAG.AddEdge(formula.Dependencies[depIndex], formula.Ref)
-			if err != nil {
-				fmt.Printf("Failed to add formula dependency from  %s to %s: %s", formula.Ref, formula.Dependencies[depIndex], err)
-				return
-			}
-		}
-	}
-
-	//fmt.Print(formulaDAG.String())
-
-	fmt.Printf("Loading custom functions\n")
-	parameters := make(map[string]interface{}, 8)
-	functions := GetFunctions(parameters)
-
-	fmt.Printf("Evaluating formulas:\n")
-	formulaDAG.BFSWalk(&evaluatingVisitor{
-		parameters: parameters,
-		functions:  functions,
-	})
+	//parameters, err := HeimdalrDagEvaluate(allFormulas)
+	//if err != nil {
+	//	fmt.Printf("Failed to evaluate usng Heimdalr DAG evaluation: %s", err)
+	//}
 
 	marshal, err := json.MarshalIndent(parameters, "", "  ")
 	if err != nil {

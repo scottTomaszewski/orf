@@ -31,6 +31,10 @@
 		{
 			"ref": "class.fighter.level",
 			"expression": "1"
+		},
+		{
+			"ref": "saving_throw.strength.proficiency",
+			"expression": "true"
 		}
 	]
 }
