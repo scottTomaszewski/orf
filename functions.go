@@ -5,7 +5,7 @@ import (
 	"github.com/maja42/goval"
 )
 
-func GetFunctions(variables map[string]interface{}) map[string]goval.ExpressionFunction {
+func GetFunctions(context characterContext) map[string]goval.ExpressionFunction {
 	return map[string]goval.ExpressionFunction{
 		"sum": sum,
 		"max": max,

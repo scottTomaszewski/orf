@@ -7,9 +7,9 @@ import (
 )
 
 type debuggingVisitor struct {
-	parameters map[string]interface{}
-	functions  map[string]goval.ExpressionFunction
-	dag        *dag.DAG
+	context   characterContext
+	functions map[string]goval.ExpressionFunction
+	dag       *dag.DAG
 }
 
 func (visitor *debuggingVisitor) Visit(v dag.Vertexer) {
