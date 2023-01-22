@@ -6,7 +6,7 @@ import (
 	"github.com/philopon/go-toposort"
 )
 
-func buildAndSortTopologicalOrdering(formulas FormulaData) ([]string, error) {
+func orderTopologically(formulas FormulaData) ([]string, error) {
 	graph := toposort.NewGraph(8)
 
 	for _, formula := range formulas.refToFormula {

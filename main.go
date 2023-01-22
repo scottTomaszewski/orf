@@ -14,7 +14,7 @@ func main() {
 		fmt.Printf("Failed to load formula data: %s", err)
 	}
 
-	orderedFormulas, err := buildAndSortTopologicalOrdering(*formulas)
+	orderedFormulas, err := orderTopologically(*formulas)
 	if err != nil {
 		fmt.Printf("Failed to topologically sort: %s", err)
 	}
