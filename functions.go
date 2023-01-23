@@ -3,9 +3,10 @@ package main
 import (
 	"errors"
 	"github.com/maja42/goval"
+	"orf/orf"
 )
 
-func GetFunctions(context characterContext) map[string]goval.ExpressionFunction {
+func GetFunctions(context orf.CharacterContext) map[string]goval.ExpressionFunction {
 	return map[string]goval.ExpressionFunction{
 		"sum": sum,
 		"max": max,

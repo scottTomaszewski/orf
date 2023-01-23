@@ -8,7 +8,7 @@ import (
 )
 
 type debuggingVisitor struct {
-	context   characterContext
+	context   orf.CharacterContext
 	functions map[string]goval.ExpressionFunction
 	dag       *dag.DAG
 }

@@ -8,7 +8,7 @@ import (
 )
 
 type evaluatingVisitor struct {
-	context   characterContext
+	context   orf.CharacterContext
 	functions map[string]goval.ExpressionFunction
 }
 
@@ -16,7 +16,7 @@ func (evaluator *evaluatingVisitor) Visit(v dag.Vertexer) {
 	_, formulaVertex := v.Vertex()
 	formula := formulaVertex.(orf.Formula)
 
-	err := evaluate(formula, evaluator.context, evaluator.functions)
+	err := evaluate2(formula, evaluator.context, evaluator.functions)
 	if err != nil {
 		fmt.Printf("Failed to eval formula %s: %s\n", formula.Ref, err)
 		return
@@ -28,14 +28,13 @@ func (evaluator *evaluatingVisitor) Visit(v dag.Vertexer) {
 	}
 }
 
-func evaluate(
+func evaluate2(
 	formula orf.Formula,
-	context characterContext,
+	context orf.CharacterContext,
 	functions map[string]goval.ExpressionFunction) error {
-	//fmt.Printf("[DEBUG] Evaluating %s\n", formula.Ref)
 	fmt.Printf("	%s", formula.Ref)
 	eval := goval.NewEvaluator()
-	result, err := eval.Evaluate(formula.Expression, context.variables, functions) // Returns <true, nil>
+	result, err := eval.Evaluate(formula.Expression, context.Variables, functions) // Returns <true, nil>
 	if err != nil {
 		return err
 	}
@@ -48,14 +47,14 @@ func evaluate(
 	return nil
 }
 
-func evaluateAll(
+func EvaluateAll(
 	orderedFormulaRefs []string,
-	formulas FormulaData,
-	context characterContext,
+	formulas ContextAsFormulas,
+	context orf.CharacterContext,
 	functions map[string]goval.ExpressionFunction) error {
 
 	for _, ref := range orderedFormulaRefs {
-		err := evaluate(formulas.refToFormula[ref].Formula, context, functions)
+		err := evaluate2(formulas.refToFormula[ref].Formula, context, functions)
 		if err != nil {
 			return err
 		}

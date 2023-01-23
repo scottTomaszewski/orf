@@ -1,34 +1,40 @@
 package main
 
 import (
-	"encoding/json"
 	"fmt"
+	"orf/evaluate"
+	"orf/orf"
 )
 
 func main() {
 	formulaRootDir := "formulas"
 	characterFile := "bob.json"
 
-	formulas, err := loadData(characterFile, formulaRootDir)
+	orfData, err := orf.FromAllFilesIn(formulaRootDir)
 	if err != nil {
-		fmt.Printf("Failed to load formula data: %s", err)
-	}
-
-	orderedFormulas, err := orderTopologically(*formulas)
-	if err != nil {
-		fmt.Printf("Failed to topologically sort: %s", err)
-	}
-
-	context := characterContext{variables: make(map[string]interface{}, 0)}
-
-	err = evaluateAll(orderedFormulas, *formulas, context, GetFunctions(context))
-	if err != nil {
-		fmt.Printf("Failed to evaluate formulas: %s", err)
+		fmt.Printf("Failed to load orf data: %s", err)
 		return
 	}
 
-	marshal, err := json.MarshalIndent(context.variables, "", "  ")
+	characterOrf, err := orf.FromFile(characterFile)
 	if err != nil {
+		fmt.Printf("Failed to load character data: %s", err)
+		return
+	}
+
+	// Add the character data, overwriting the regular data
+	orfData.Upsert(characterOrf)
+
+	contextAsFormulas := From(*orfData)
+	context, err := contextAsFormulas.evaluate(evaluate.GoValEvaluator{})
+	if err != nil {
+		fmt.Printf("Failed to evaluate data: %s", err)
+		return
+	}
+
+	marshal, err := context.ToJson()
+	if err != nil {
+		fmt.Printf("Failed to convert data to json: %s", err)
 		return
 	}
 

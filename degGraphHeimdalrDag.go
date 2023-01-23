@@ -76,7 +76,7 @@ func HeimdalrDagEvaluate(formulas []orf.DependentFormula) (map[string]interface{
 	fmt.Print(formulaDAG.String())
 
 	fmt.Printf("Loading custom functions\n")
-	context := characterContext{variables: make(map[string]interface{}, 8)}
+	context := orf.CharacterContext{Variables: make(map[string]interface{}, 8)}
 	functions := GetFunctions(context)
 
 	formulaDAG.BFSWalk(&debuggingVisitor{
@@ -90,5 +90,5 @@ func HeimdalrDagEvaluate(formulas []orf.DependentFormula) (map[string]interface{
 		context:   context,
 		functions: functions,
 	})
-	return context.variables, nil
+	return context.Variables, nil
 }

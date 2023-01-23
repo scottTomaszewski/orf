@@ -7,17 +7,18 @@ import (
 	"strings"
 )
 
-func orderTopologically(formulas FormulaData) ([]string, error) {
+func orderTopologically(formulas ContextAsFormulas) ([]string, error) {
 	graph := toposort.NewGraph(8)
 
-	for _, formula := range formulas.refToFormula {
+	refToFormula := formulas.refToFormula
+	for _, formula := range refToFormula {
 		inserted := graph.AddNode(formula.Ref)
 		if !inserted {
 			return nil, errors.New(fmt.Sprintf("Failed to add formula %s to DAG", formula.Ref))
 		}
 	}
 
-	for _, formula := range formulas.refToFormula {
+	for _, formula := range refToFormula {
 		for depIndex := range formula.Dependencies {
 			dependencyRef := formula.Dependencies[depIndex]
 
@@ -51,6 +52,5 @@ func orderTopologically(formulas FormulaData) ([]string, error) {
 	}
 
 	//fmt.Println(result)
-
 	return result, nil
 }
