@@ -73,10 +73,4 @@ func (f *ContextAsFormulas) evaluate(evaluator evaluate.GoValEvaluator) (*orf.Ch
 	}
 
 	return &context, nil
-
-	//err = evaluate.evaluateAll(orderedFormulaRefs, *formulas, context, GetFunctions(context))
-	//if err != nil {
-	//	fmt.Printf("Failed to evaluate formulas: %s", err)
-	//	return
-	//}
 }
