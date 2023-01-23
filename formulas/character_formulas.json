@@ -20,7 +20,7 @@
         "class.sorcerer.level",
         "class.fighter.level"
       ],
-      "expression": "sum(class.sorcerer.level, class.fighter.level)"
+      "expression": "sum(getFromAll(class, \"level\"))"
     },
     {
       "ref": "proficiency_bonus",
