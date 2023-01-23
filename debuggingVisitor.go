@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"github.com/heimdalr/dag"
 	"github.com/maja42/goval"
+	"orf/orf"
 )
 
 type debuggingVisitor struct {
@@ -14,7 +15,7 @@ type debuggingVisitor struct {
 
 func (visitor *debuggingVisitor) Visit(v dag.Vertexer) {
 	id, formulaVertex := v.Vertex()
-	formula := formulaVertex.(Formula)
+	formula := formulaVertex.(orf.Formula)
 
 	ancestors, err := visitor.dag.GetParents(id)
 	if err != nil {

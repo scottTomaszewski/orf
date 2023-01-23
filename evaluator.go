@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"github.com/heimdalr/dag"
 	"github.com/maja42/goval"
+	"orf/orf"
 )
 
 type evaluatingVisitor struct {
@@ -13,7 +14,7 @@ type evaluatingVisitor struct {
 
 func (evaluator *evaluatingVisitor) Visit(v dag.Vertexer) {
 	_, formulaVertex := v.Vertex()
-	formula := formulaVertex.(Formula)
+	formula := formulaVertex.(orf.Formula)
 
 	err := evaluate(formula, evaluator.context, evaluator.functions)
 	if err != nil {
@@ -28,7 +29,7 @@ func (evaluator *evaluatingVisitor) Visit(v dag.Vertexer) {
 }
 
 func evaluate(
-	formula Formula,
+	formula orf.Formula,
 	context characterContext,
 	functions map[string]goval.ExpressionFunction) error {
 	//fmt.Printf("[DEBUG] Evaluating %s\n", formula.Ref)

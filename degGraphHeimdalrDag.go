@@ -4,9 +4,10 @@ import (
 	"errors"
 	"fmt"
 	"github.com/heimdalr/dag"
+	"orf/orf"
 )
 
-func HeimdalrDagEvaluate(formulas []DependentFormula) (map[string]interface{}, error) {
+func HeimdalrDagEvaluate(formulas []orf.DependentFormula) (map[string]interface{}, error) {
 	fmt.Printf("Building DAG\n")
 	formulaDAG := dag.NewDAG()
 	ids := make([]string, 0, len(formulas))

@@ -4,29 +4,15 @@ import (
 	"encoding/json"
 	"fmt"
 	"io/ioutil"
+	"orf/orf"
 	"os"
 	"path/filepath"
 	"strings"
 )
 
 type FormulaData struct {
-	formulas     []DependentFormula
-	refToFormula map[string]DependentFormula
-}
-
-type DependentFormula struct {
-	Formula
-	Dependencies []string `json:"dependencies,omitempty"`
-}
-
-type Formula struct {
-	Ref        string `json:"ref"`
-	Type       string `json:"type"`
-	Expression string `json:"expression"`
-}
-
-type Formulas struct {
-	Formulas []DependentFormula `json:"formulas"`
+	formulas     []orf.DependentFormula
+	refToFormula map[string]orf.DependentFormula
 }
 
 func loadData(characterFile string, formulaRootDir string) (*FormulaData, error) {
@@ -35,7 +21,7 @@ func loadData(characterFile string, formulaRootDir string) (*FormulaData, error)
 		return nil, fmt.Errorf("failed to load formulas from %s: %s", characterFile, err)
 	}
 
-	var allFormulas = make([]DependentFormula, 0)
+	var allFormulas = make([]orf.DependentFormula, 0)
 	allFormulas = append(allFormulas, formulas.Formulas...)
 
 	err = filepath.Walk(formulaRootDir,
@@ -58,7 +44,7 @@ func loadData(characterFile string, formulaRootDir string) (*FormulaData, error)
 		return nil, fmt.Errorf("failed to load formulas: %s", err)
 	}
 
-	var refToFormula = make(map[string]DependentFormula, 0)
+	var refToFormula = make(map[string]orf.DependentFormula, 0)
 	for _, formula := range allFormulas {
 		refToFormula[formula.Ref] = formula
 	}
@@ -70,13 +56,13 @@ func loadData(characterFile string, formulaRootDir string) (*FormulaData, error)
 	return &data, nil
 }
 
-func loadFormulas(filePath string) (*Formulas, error) {
+func loadFormulas(filePath string) (*orf.Formulas, error) {
 	formulaBytes, err := ioutil.ReadFile(filePath)
 	if err != nil {
 		return nil, err
 	}
 
-	formulas := &Formulas{}
+	formulas := &orf.Formulas{}
 	err = json.Unmarshal(formulaBytes, formulas)
 	if err != nil {
 		return nil, err
@@ -84,9 +70,9 @@ func loadFormulas(filePath string) (*Formulas, error) {
 	return formulas, nil
 }
 
-func (f *FormulaData) GetAllMatchingWildcard(dotSeparatedPath string) []DependentFormula {
+func (f *FormulaData) GetAllMatchingWildcard(dotSeparatedPath string) []orf.DependentFormula {
 	path := strings.Replace(dotSeparatedPath, ".*", "", -1)
-	matches := make([]DependentFormula, 0)
+	matches := make([]orf.DependentFormula, 0)
 	for id, formula := range f.refToFormula {
 		if strings.HasPrefix(id, path) {
 			matches = append(matches, formula)
