@@ -3,6 +3,7 @@ package main
 import (
 	"fmt"
 	"orf/evaluate"
+	"orf/functions"
 	"orf/orf"
 	"strings"
 )
@@ -66,7 +67,7 @@ func (f *ContextAsFormulas) evaluate(evaluator evaluate.GoValEvaluator) (*orf.Ch
 	context := orf.CharacterContext{Variables: make(map[string]interface{}, 0)}
 
 	for _, ref := range orderedFormulaRefs {
-		err := evaluator.Evaluate(f.refToFormula[ref].Formula, context, GetFunctions(context))
+		err := evaluator.Evaluate(f.refToFormula[ref].Formula, context, functions.GetFunctions(context))
 		if err != nil {
 			return nil, err
 		}
