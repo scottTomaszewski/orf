@@ -1,29 +1,19 @@
 {
+	"variables": {
+		"ability": {
+			"score": {
+				"base": {
+					"strength": "8",
+					"constitution": "13",
+					"dexterity": "14",
+					"intelligence": "12",
+					"wisdom": "12",
+					"charisma": "15"
+				}
+			}
+		}
+	},
 	"formulas": [
-		{
-			"ref": "ability.score.base.strength",
-			"expression": "8"
-		},
-		{
-			"ref": "ability.score.base.constitution",
-			"expression": "13"
-		},
-		{
-			"ref": "ability.score.base.dexterity",
-			"expression": "14"
-		},
-		{
-			"ref": "ability.score.base.intelligence",
-			"expression": "10"
-		},
-		{
-			"ref": "ability.score.base.wisdom",
-			"expression": "12"
-		},
-		{
-			"ref": "ability.score.base.charisma",
-			"expression": "15"
-		},
 		{
 			"ref": "class.sorcerer.level",
 			"expression": "5"

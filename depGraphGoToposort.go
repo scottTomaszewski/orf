@@ -37,10 +37,7 @@ func orderTopologically(formulas ContextAsFormulas) ([]string, error) {
 				}
 
 			} else {
-				inserted := graph.AddEdge(formula.Dependencies[depIndex], formula.Ref)
-				if !inserted {
-					return nil, errors.New(fmt.Sprintf("Failed to add formula dependency from  %s to %s", formula.Ref, formula.Dependencies[depIndex]))
-				}
+				graph.AddEdge(formula.Dependencies[depIndex], formula.Ref)
 			}
 
 		}

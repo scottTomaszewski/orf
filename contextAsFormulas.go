@@ -75,3 +75,7 @@ func (f *ContextAsFormulas) evaluate(evaluator evaluate.GoValEvaluator) (*orf.Ch
 
 	return &context, nil
 }
+
+func (f *ContextAsFormulas) Print() {
+	fmt.Println(f.refToFormula)
+}

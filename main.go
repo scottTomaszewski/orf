@@ -16,6 +16,7 @@ func main() {
 		return
 	}
 
+	fmt.Printf("Loading orf data from %s\n", characterFile)
 	characterOrf, err := orf.FromFile(characterFile)
 	if err != nil {
 		fmt.Printf("Failed to load character data: %s", err)
@@ -26,6 +27,7 @@ func main() {
 	orfData.Upsert(characterOrf)
 
 	contextAsFormulas := From(*orfData)
+	//contextAsFormulas.Print()
 	context, err := contextAsFormulas.evaluate(evaluate.GoValEvaluator{})
 	if err != nil {
 		fmt.Printf("Failed to evaluate data: %s", err)

@@ -37,7 +37,7 @@ func FromFile(relativeFilePath string) (*ORFFile, error) {
 	orf := &ORFFile{}
 	err = json.Unmarshal(orfBytes, orf)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("failed to load orf file at %s: %w\n", relativeFilePath, err)
 	}
 	return orf, nil
 }
@@ -45,7 +45,7 @@ func FromFile(relativeFilePath string) (*ORFFile, error) {
 func FromAllFilesIn(relativeDirPath string) (*ORFFile, error) {
 	composed := ORFFile{
 		Formulas:  Formulas{},
-		Variables: nil,
+		Variables: make(map[string]interface{}),
 	}
 
 	err := filepath.Walk(relativeDirPath,
@@ -56,7 +56,7 @@ func FromAllFilesIn(relativeDirPath string) (*ORFFile, error) {
 			if info.IsDir() {
 				return nil
 			}
-			fmt.Printf("Loading orf files at %s\n", path)
+			fmt.Printf("Loading orf data from %s\n", path)
 			orfFile, err := FromFile(path)
 			if err != nil {
 				return fmt.Errorf("failed to load formulas from %s: %s", path, err)
@@ -75,6 +75,7 @@ func (o *ORFFile) Upsert(other *ORFFile) {
 	maps.Copy(o.Variables, other.Variables)
 }
 
+// TODO - try to delete this?
 // Note: this iterates over the entire formula slice - it is NOT efficient
 func (o *ORFFile) allAsRefToDepFormula() map[string]DependentFormula {
 	var refToFormula = make(map[string]DependentFormula, 0)

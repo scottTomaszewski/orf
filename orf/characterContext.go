@@ -66,7 +66,11 @@ func Flatten(path string, curr interface{}, flattened map[string]interface{}) {
 	case map[string]interface{}:
 		nested := curr.(map[string]interface{})
 		for k, v := range nested {
-			Flatten(path+"."+k, v, flattened)
+			prefix := ""
+			if path != "" {
+				prefix = path + "."
+			}
+			Flatten(prefix+k, v, flattened)
 		}
 	default:
 		flattened[path] = curr
