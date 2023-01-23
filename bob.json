@@ -23,12 +23,8 @@
 			"expression": "1"
 		},
 		{
-			"ref": "saving_throw.strength.proficiency",
+			"ref": "saving_throw.proficiency.strength",
 			"expression": "true"
-		},
-		{
-			"ref": "saving_throw.constitution.proficiency",
-			"expression": "false"
 		}
 	]
 }

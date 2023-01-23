@@ -1,0 +1,16 @@
+{
+	"variables": {
+		"saving_throw": {
+			"proficiency": {
+				"strength": "false",
+				"constitution": "false",
+				"dexterity": "false",
+				"intelligence": "false",
+				"wisdom": "false",
+				"charisma": "false"
+			}
+		}
+	},
+	"formulas": [
+	]
+}

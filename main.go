@@ -8,14 +8,25 @@ import (
 
 func main() {
 	formulaRootDir := "formulas"
+	defaultsRootDir := "defaults"
 	characterFile := "bob.json"
 
+	// Load formulas
 	orfData, err := orf.FromAllFilesIn(formulaRootDir)
 	if err != nil {
 		fmt.Printf("Failed to load orf data: %s", err)
 		return
 	}
 
+	// Load defaults
+	orfDefaults, err := orf.FromAllFilesIn(defaultsRootDir)
+	if err != nil {
+		fmt.Printf("Failed to load orf data: %s", err)
+		return
+	}
+	orfData.Upsert(orfDefaults)
+
+	// Load character
 	fmt.Printf("Loading orf data from %s\n", characterFile)
 	characterOrf, err := orf.FromFile(characterFile)
 	if err != nil {

@@ -45,12 +45,7 @@
     {
       "ref": "ability.score.sum",
       "dependencies": [
-        "ability.score.base.strength",
-        "ability.score.base.constitution",
-        "ability.score.base.dexterity",
-        "ability.score.base.intelligence",
-        "ability.score.base.wisdom",
-        "ability.score.base.charisma"
+        "ability.score.base.*"
       ],
       "expression": "sum(ability.score.base)"
     }

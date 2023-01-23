@@ -1,34 +1,36 @@
 {
-  "formulas": [
-    {
-      "ref": "saving_throw.strength.total",
-      "dependencies": [
-        "ability.modifier.strength",
-        "saving_throw.strength.modifier.*"
-      ],
-      "expression": "ability.modifier.strength + sum(saving_throw.strength.modifier)"
-    },
-    {
-      "ref": "saving_throw.constitution.total",
-      "dependencies": [
-        "ability.modifier.constitution",
-        "saving_throw.constitution.modifier.*"
-      ],
-      "expression": "ability.modifier.constitution + sum(saving_throw.constitution.modifier)"
-    },
-    {
-      "ref": "saving_throw.strength.modifier.proficiency",
-      "dependencies": [
-        "proficiency_bonus"
-      ],
-      "expression": "saving_throw.strength.proficiency ? proficiency_bonus : 0"
-    },
-    {
-      "ref": "saving_throw.constitution.modifier.proficiency",
-      "dependencies": [
-        "proficiency_bonus"
-      ],
-      "expression": "saving_throw.constitution.proficiency ? proficiency_bonus : 0"
-    }
-  ]
+	"formulas": [
+		{
+			"ref": "saving_throw.total.strength",
+			"dependencies": [
+				"ability.modifier.strength",
+				"saving_throw.modifier.strength.*"
+			],
+			"expression": "ability.modifier.strength + sum(saving_throw.modifier.strength)"
+		},
+		{
+			"ref": "saving_throw.total.constitution",
+			"dependencies": [
+				"ability.modifier.constitution",
+				"saving_throw.constitution.modifier.*"
+			],
+			"expression": "ability.modifier.constitution + sum(saving_throw.constitution.modifier)"
+		},
+		{
+			"ref": "saving_throw.modifier.strength.proficiency",
+			"dependencies": [
+				"proficiency_bonus",
+				"saving_throw.proficiency.strength"
+			],
+			"expression": "saving_throw.proficiency.strength ? proficiency_bonus : 0"
+		},
+		{
+			"ref": "saving_throw.constitution.modifier.proficiency",
+			"dependencies": [
+				"proficiency_bonus",
+				"saving_throw.proficiency.constitution"
+			],
+			"expression": "saving_throw.proficiency.constitution ? proficiency_bonus : 0"
+		}
+	]
 }
