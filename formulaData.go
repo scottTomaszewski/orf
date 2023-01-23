@@ -6,6 +6,7 @@ import (
 	"io/ioutil"
 	"os"
 	"path/filepath"
+	"strings"
 )
 
 type FormulaData struct {
@@ -81,4 +82,15 @@ func loadFormulas(filePath string) (*Formulas, error) {
 		return nil, err
 	}
 	return formulas, nil
+}
+
+func (f *FormulaData) GetAllMatchingWildcard(dotSeparatedPath string) []DependentFormula {
+	path := strings.Replace(dotSeparatedPath, ".*", "", -1)
+	matches := make([]DependentFormula, 0)
+	for id, formula := range f.refToFormula {
+		if strings.HasPrefix(id, path) {
+			matches = append(matches, formula)
+		}
+	}
+	return matches
 }

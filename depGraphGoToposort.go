@@ -4,6 +4,7 @@ import (
 	"errors"
 	"fmt"
 	"github.com/philopon/go-toposort"
+	"strings"
 )
 
 func orderTopologically(formulas FormulaData) ([]string, error) {
@@ -18,10 +19,29 @@ func orderTopologically(formulas FormulaData) ([]string, error) {
 
 	for _, formula := range formulas.refToFormula {
 		for depIndex := range formula.Dependencies {
-			inserted := graph.AddEdge(formula.Dependencies[depIndex], formula.Ref)
-			if !inserted {
-				return nil, errors.New(fmt.Sprintf("Failed to add formula dependency from  %s to %s", formula.Ref, formula.Dependencies[depIndex]))
+			dependencyRef := formula.Dependencies[depIndex]
+
+			if strings.HasSuffix(dependencyRef, ".*") {
+				// find all formulas that match the dependency ref-wildcard
+				depsMatchingWildcard := formulas.GetAllMatchingWildcard(dependencyRef)
+
+				// for each formula that matches the wildcard (other than itself), add an edge
+				for _, dependency := range depsMatchingWildcard {
+					depRefMatchingWildcard := dependency.Ref
+					if depRefMatchingWildcard != formula.Ref {
+						fmt.Printf("Adding wildcard edge from %s to %s\n", depRefMatchingWildcard, formula.Ref)
+						graph.AddNode(depRefMatchingWildcard)
+						graph.AddEdge(depRefMatchingWildcard, formula.Ref)
+					}
+				}
+
+			} else {
+				inserted := graph.AddEdge(formula.Dependencies[depIndex], formula.Ref)
+				if !inserted {
+					return nil, errors.New(fmt.Sprintf("Failed to add formula dependency from  %s to %s", formula.Ref, formula.Dependencies[depIndex]))
+				}
 			}
+
 		}
 	}
 

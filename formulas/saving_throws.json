@@ -11,7 +11,7 @@
     {
       "ref": "saving_throw.strength.modifier_sum",
       "dependencies": [
-        "saving_throw.strength.modifier.proficiency"
+        "saving_throw.strength.modifier.*"
       ],
       "expression": "sum(saving_throw.strength.modifier)"
     },
