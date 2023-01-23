@@ -35,6 +35,10 @@
 		{
 			"ref": "saving_throw.strength.proficiency",
 			"expression": "true"
+		},
+		{
+			"ref": "saving_throw.constitution.proficiency",
+			"expression": "false"
 		}
 	]
 }
