@@ -33,7 +33,7 @@
       "dependencies": [
         "ability.modifier.wisdom"
       ],
-      "expression": "TODO"
+      "expression": "0"
     }
   ]
 }

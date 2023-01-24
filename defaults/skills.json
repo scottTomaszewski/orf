@@ -1,0 +1,29 @@
+{
+  "variables": {
+    "skill": {
+      "proficiency": {
+        "acrobatics": "false",
+        "animal_handling": "false",
+        "arcana": "false",
+        "athletics": "false",
+        "cha": "false",
+        "deception": "false",
+        "history": "false",
+        "insight": "false",
+        "intimidation": "false",
+        "investigation": "false",
+        "medicine": "false",
+        "nature": "false",
+        "perception": "false",
+        "performance": "false",
+        "persuasion": "false",
+        "religion": "false",
+        "sleight_of_hand": "false",
+        "stealth": "false",
+        "survival": "false"
+      }
+    }
+  },
+  "formulas": [
+  ]
+}

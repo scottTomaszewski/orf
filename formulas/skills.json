@@ -1,0 +1,309 @@
+{
+  "formulas": [
+    {
+      "ref": "skill.modifier.total.acrobatics",
+      "dependencies": [
+        "ability.modifier.dexterity",
+        "skill.modifier.acrobatics.*"
+      ],
+      "expression": "ability.modifier.dexterity + sum(skill.modifier.acrobatics)"
+    },
+    {
+      "ref": "skill.modifier.acrobatics.proficiency",
+      "dependencies": [
+        "proficiency_bonus",
+        "skill.proficiency.acrobatics"
+      ],
+      "expression": "skill.proficiency.acrobatics ? proficiency_bonus : 0"
+    },
+
+    {
+      "ref": "skill.modifier.total.animal_handling",
+      "dependencies": [
+        "ability.modifier.wisdom",
+        "skill.modifier.animal_handling.*"
+      ],
+      "expression": "ability.modifier.wisdom + sum(skill.modifier.animal_handling)"
+    },
+    {
+      "ref": "skill.modifier.animal_handling.proficiency",
+      "dependencies": [
+        "proficiency_bonus",
+        "skill.proficiency.animal_handling"
+      ],
+      "expression": "skill.proficiency.animal_handling ? proficiency_bonus : 0"
+    },
+
+    {
+      "ref": "skill.modifier.total.arcana",
+      "dependencies": [
+        "ability.modifier.intelligence",
+        "skill.modifier.arcana.*"
+      ],
+      "expression": "ability.modifier.intelligence + sum(skill.modifier.arcana)"
+    },
+    {
+      "ref": "skill.modifier.arcana.proficiency",
+      "dependencies": [
+        "proficiency_bonus",
+        "skill.proficiency.arcana"
+      ],
+      "expression": "skill.proficiency.arcana ? proficiency_bonus : 0"
+    },
+
+    {
+      "ref": "skill.modifier.total.athletics",
+      "dependencies": [
+        "ability.modifier.strength",
+        "skill.modifier.athletics.*"
+      ],
+      "expression": "ability.modifier.strength + sum(skill.modifier.athletics)"
+    },
+    {
+      "ref": "skill.modifier.athletics.proficiency",
+      "dependencies": [
+        "proficiency_bonus",
+        "skill.proficiency.athletics"
+      ],
+      "expression": "skill.proficiency.athletics ? proficiency_bonus : 0"
+    },
+
+    {
+      "ref": "skill.modifier.total.deception",
+      "dependencies": [
+        "ability.modifier.charisma",
+        "skill.modifier.deception.*"
+      ],
+      "expression": "ability.modifier.charisma + sum(skill.modifier.deception)"
+    },
+    {
+      "ref": "skill.modifier.deception.proficiency",
+      "dependencies": [
+        "proficiency_bonus",
+        "skill.proficiency.deception"
+      ],
+      "expression": "skill.proficiency.deception ? proficiency_bonus : 0"
+    },
+
+    {
+      "ref": "skill.modifier.total.history",
+      "dependencies": [
+        "ability.modifier.intelligence",
+        "skill.modifier.history.*"
+      ],
+      "expression": "ability.modifier.intelligence + sum(skill.modifier.history)"
+    },
+    {
+      "ref": "skill.modifier.history.proficiency",
+      "dependencies": [
+        "proficiency_bonus",
+        "skill.proficiency.history"
+      ],
+      "expression": "skill.proficiency.history ? proficiency_bonus : 0"
+    },
+
+    {
+      "ref": "skill.modifier.total.insight",
+      "dependencies": [
+        "ability.modifier.wisdom",
+        "skill.modifier.insight.*"
+      ],
+      "expression": "ability.modifier.wisdom + sum(skill.modifier.insight)"
+    },
+    {
+      "ref": "skill.modifier.insight.proficiency",
+      "dependencies": [
+        "proficiency_bonus",
+        "skill.proficiency.insight"
+      ],
+      "expression": "skill.proficiency.insight ? proficiency_bonus : 0"
+    },
+
+    {
+      "ref": "skill.modifier.total.intimidation",
+      "dependencies": [
+        "ability.modifier.charisma",
+        "skill.modifier.intimidation.*"
+      ],
+      "expression": "ability.modifier.charisma + sum(skill.modifier.intimidation)"
+    },
+    {
+      "ref": "skill.modifier.intimidation.proficiency",
+      "dependencies": [
+        "proficiency_bonus",
+        "skill.proficiency.intimidation"
+      ],
+      "expression": "skill.proficiency.intimidation ? proficiency_bonus : 0"
+    },
+
+    {
+      "ref": "skill.modifier.total.investigation",
+      "dependencies": [
+        "ability.modifier.intelligence",
+        "skill.modifier.investigation.*"
+      ],
+      "expression": "ability.modifier.intelligence + sum(skill.modifier.investigation)"
+    },
+    {
+      "ref": "skill.modifier.investigation.proficiency",
+      "dependencies": [
+        "proficiency_bonus",
+        "skill.proficiency.investigation"
+      ],
+      "expression": "skill.proficiency.investigation ? proficiency_bonus : 0"
+    },
+
+    {
+      "ref": "skill.modifier.total.medicine",
+      "dependencies": [
+        "ability.modifier.wisdom",
+        "skill.modifier.medicine.*"
+      ],
+      "expression": "ability.modifier.wisdom + sum(skill.modifier.medicine)"
+    },
+    {
+      "ref": "skill.modifier.medicine.proficiency",
+      "dependencies": [
+        "proficiency_bonus",
+        "skill.proficiency.medicine"
+      ],
+      "expression": "skill.proficiency.medicine ? proficiency_bonus : 0"
+    },
+
+    {
+      "ref": "skill.modifier.total.nature",
+      "dependencies": [
+        "ability.modifier.intelligence",
+        "skill.modifier.nature.*"
+      ],
+      "expression": "ability.modifier.intelligence + sum(skill.modifier.nature)"
+    },
+    {
+      "ref": "skill.modifier.nature.proficiency",
+      "dependencies": [
+        "proficiency_bonus",
+        "skill.proficiency.nature"
+      ],
+      "expression": "skill.proficiency.nature ? proficiency_bonus : 0"
+    },
+
+    {
+      "ref": "skill.modifier.total.perception",
+      "dependencies": [
+        "ability.modifier.wisdom",
+        "skill.modifier.perception.*"
+      ],
+      "expression": "ability.modifier.wisdom + sum(skill.modifier.perception)"
+    },
+    {
+      "ref": "skill.modifier.perception.proficiency",
+      "dependencies": [
+        "proficiency_bonus",
+        "skill.proficiency.perception"
+      ],
+      "expression": "skill.proficiency.perception ? proficiency_bonus : 0"
+    },
+
+    {
+      "ref": "skill.modifier.total.performance",
+      "dependencies": [
+        "ability.modifier.charisma",
+        "skill.modifier.performance.*"
+      ],
+      "expression": "ability.modifier.charisma + sum(skill.modifier.performance)"
+    },
+    {
+      "ref": "skill.modifier.performance.proficiency",
+      "dependencies": [
+        "proficiency_bonus",
+        "skill.proficiency.performance"
+      ],
+      "expression": "skill.proficiency.performance ? proficiency_bonus : 0"
+    },
+
+    {
+      "ref": "skill.modifier.total.persuasion",
+      "dependencies": [
+        "ability.modifier.charisma",
+        "skill.modifier.persuasion.*"
+      ],
+      "expression": "ability.modifier.charisma + sum(skill.modifier.persuasion)"
+    },
+    {
+      "ref": "skill.modifier.persuasion.proficiency",
+      "dependencies": [
+        "proficiency_bonus",
+        "skill.proficiency.persuasion"
+      ],
+      "expression": "skill.proficiency.persuasion ? proficiency_bonus : 0"
+    },
+
+    {
+      "ref": "skill.modifier.total.religion",
+      "dependencies": [
+        "ability.modifier.intelligence",
+        "skill.modifier.religion.*"
+      ],
+      "expression": "ability.modifier.intelligence + sum(skill.modifier.religion)"
+    },
+    {
+      "ref": "skill.modifier.religion.proficiency",
+      "dependencies": [
+        "proficiency_bonus",
+        "skill.proficiency.religion"
+      ],
+      "expression": "skill.proficiency.religion ? proficiency_bonus : 0"
+    },
+
+    {
+      "ref": "skill.modifier.total.sleight_of_hand",
+      "dependencies": [
+        "ability.modifier.dexterity",
+        "skill.modifier.sleight_of_hand.*"
+      ],
+      "expression": "ability.modifier.dexterity + sum(skill.modifier.sleight_of_hand)"
+    },
+    {
+      "ref": "skill.modifier.sleight_of_hand.proficiency",
+      "dependencies": [
+        "proficiency_bonus",
+        "skill.proficiency.sleight_of_hand"
+      ],
+      "expression": "skill.proficiency.sleight_of_hand ? proficiency_bonus : 0"
+    },
+
+    {
+      "ref": "skill.modifier.total.stealth",
+      "dependencies": [
+        "ability.modifier.dexterity",
+        "skill.modifier.stealth.*"
+      ],
+      "expression": "ability.modifier.dexterity + sum(skill.modifier.stealth)"
+    },
+    {
+      "ref": "skill.modifier.stealth.proficiency",
+      "dependencies": [
+        "proficiency_bonus",
+        "skill.proficiency.stealth"
+      ],
+      "expression": "skill.proficiency.stealth ? proficiency_bonus : 0"
+    },
+
+    {
+      "ref": "skill.modifier.total.survival",
+      "dependencies": [
+        "ability.modifier.wisdom",
+        "skill.modifier.survival.*"
+      ],
+      "expression": "ability.modifier.wisdom + sum(skill.modifier.survival)"
+    },
+    {
+      "ref": "skill.modifier.survival.proficiency",
+      "dependencies": [
+        "proficiency_bonus",
+        "skill.proficiency.survival"
+      ],
+      "expression": "skill.proficiency.survival ? proficiency_bonus : 0"
+    }
+  ]
+}
