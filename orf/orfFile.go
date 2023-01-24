@@ -3,7 +3,6 @@ package orf
 import (
 	"encoding/json"
 	"fmt"
-	"golang.org/x/exp/maps"
 	"io/ioutil"
 	"os"
 	"path/filepath"
@@ -72,7 +71,22 @@ func FromAllFilesIn(relativeDirPath string) (*ORFFile, error) {
 
 func (o *ORFFile) Upsert(other *ORFFile) {
 	o.Formulas.Formulas = append(o.Formulas.Formulas, other.Formulas.Formulas...)
-	maps.Copy(o.Variables, other.Variables)
+	merge(other.Variables, o.Variables)
+}
+
+func merge(src map[string]interface{}, dest map[string]interface{}) {
+	for k, v := range src {
+		switch v.(type) {
+		case map[string]interface{}:
+			if destVal, ok := dest[k]; ok {
+				merge(v.(map[string]interface{}), destVal.(map[string]interface{}))
+			} else {
+				dest[k] = v
+			}
+		default:
+			dest[k] = v
+		}
+	}
 }
 
 // TODO - try to delete this?

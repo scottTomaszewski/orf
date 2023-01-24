@@ -11,6 +11,11 @@
 					"charisma": "15"
 				}
 			}
+		},
+		"saving_throw": {
+			"proficiency": {
+				"charisma": "true"
+			}
 		}
 	},
 	"formulas": [

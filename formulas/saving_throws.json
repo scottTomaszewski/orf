@@ -1,36 +1,100 @@
 {
-	"formulas": [
-		{
-			"ref": "saving_throw.total.strength",
-			"dependencies": [
-				"ability.modifier.strength",
-				"saving_throw.modifier.strength.*"
-			],
-			"expression": "ability.modifier.strength + sum(saving_throw.modifier.strength)"
-		},
-		{
-			"ref": "saving_throw.total.constitution",
-			"dependencies": [
-				"ability.modifier.constitution",
-				"saving_throw.constitution.modifier.*"
-			],
-			"expression": "ability.modifier.constitution + sum(saving_throw.constitution.modifier)"
-		},
-		{
-			"ref": "saving_throw.modifier.strength.proficiency",
-			"dependencies": [
-				"proficiency_bonus",
-				"saving_throw.proficiency.strength"
-			],
-			"expression": "saving_throw.proficiency.strength ? proficiency_bonus : 0"
-		},
-		{
-			"ref": "saving_throw.constitution.modifier.proficiency",
-			"dependencies": [
-				"proficiency_bonus",
-				"saving_throw.proficiency.constitution"
-			],
-			"expression": "saving_throw.proficiency.constitution ? proficiency_bonus : 0"
-		}
-	]
+  "formulas": [
+    {
+      "ref": "saving_throw.total.strength",
+      "dependencies": [
+        "ability.modifier.strength",
+        "saving_throw.modifier.strength.*"
+      ],
+      "expression": "ability.modifier.strength + sum(saving_throw.modifier.strength)"
+    },
+    {
+      "ref": "saving_throw.total.constitution",
+      "dependencies": [
+        "ability.modifier.constitution",
+        "saving_throw.modifier.constitution.*"
+      ],
+      "expression": "ability.modifier.constitution + sum(saving_throw.modifier.constitution)"
+    },
+    {
+      "ref": "saving_throw.total.dexterity",
+      "dependencies": [
+        "ability.modifier.dexterity",
+        "saving_throw.modifier.dexterity.*"
+      ],
+      "expression": "ability.modifier.dexterity + sum(saving_throw.modifier.dexterity)"
+    },
+    {
+      "ref": "saving_throw.total.intelligence",
+      "dependencies": [
+        "ability.modifier.intelligence",
+        "saving_throw.modifier.intelligence.*"
+      ],
+      "expression": "ability.modifier.intelligence + sum(saving_throw.modifier.intelligence)"
+    },
+    {
+      "ref": "saving_throw.total.wisdom",
+      "dependencies": [
+        "ability.modifier.wisdom",
+        "saving_throw.modifier.wisdom.*"
+      ],
+      "expression": "ability.modifier.wisdom + sum(saving_throw.modifier.wisdom)"
+    },
+    {
+      "ref": "saving_throw.total.charisma",
+      "dependencies": [
+        "ability.modifier.charisma",
+        "saving_throw.modifier.charisma.*"
+      ],
+      "expression": "ability.modifier.charisma + sum(saving_throw.modifier.charisma)"
+    },
+    {
+      "ref": "saving_throw.modifier.strength.proficiency",
+      "dependencies": [
+        "proficiency_bonus",
+        "saving_throw.proficiency.strength"
+      ],
+      "expression": "saving_throw.proficiency.strength ? proficiency_bonus : 0"
+    },
+    {
+      "ref": "saving_throw.modifier.constitution.proficiency",
+      "dependencies": [
+        "proficiency_bonus",
+        "saving_throw.proficiency.constitution"
+      ],
+      "expression": "saving_throw.proficiency.constitution ? proficiency_bonus : 0"
+    },
+    {
+      "ref": "saving_throw.modifier.dexterity.proficiency",
+      "dependencies": [
+        "proficiency_bonus",
+        "saving_throw.proficiency.dexterity"
+      ],
+      "expression": "saving_throw.proficiency.dexterity ? proficiency_bonus : 0"
+    },
+    {
+      "ref": "saving_throw.modifier.intelligence.proficiency",
+      "dependencies": [
+        "proficiency_bonus",
+        "saving_throw.proficiency.intelligence"
+      ],
+      "expression": "saving_throw.proficiency.intelligence ? proficiency_bonus : 0"
+    },
+    {
+      "ref": "saving_throw.modifier.wisdom.proficiency",
+      "dependencies": [
+        "proficiency_bonus",
+        "saving_throw.proficiency.wisdom"
+      ],
+      "expression": "saving_throw.proficiency.wisdom ? proficiency_bonus : 0"
+    },
+    {
+      "ref": "saving_throw.modifier.charisma.proficiency",
+      "dependencies": [
+        "proficiency_bonus",
+        "saving_throw.proficiency.charisma"
+      ],
+      "expression": "saving_throw.proficiency.charisma ? proficiency_bonus : 0"
+    }
+  ]
 }

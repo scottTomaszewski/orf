@@ -6,7 +6,6 @@ import (
 	"orf/functions"
 	"orf/orf"
 	"orf/util"
-	"strings"
 )
 
 type ContextAsFormulas struct {
@@ -50,16 +49,16 @@ func From(source orf.ORFFile) *ContextAsFormulas {
 	}
 }
 
-func (f *ContextAsFormulas) GetAllMatchingWildcard(dotSeparatedPath string) []orf.DependentFormula {
-	path := strings.Replace(dotSeparatedPath, ".*", "", -1)
-	matches := make([]orf.DependentFormula, 0)
-	for id, formula := range f.refToFormula {
-		if strings.HasPrefix(id, path) {
-			matches = append(matches, formula)
-		}
-	}
-	return matches
-}
+//func (f *ContextAsFormulas) GetAllMatchingWildcard(dotSeparatedPath string) []orf.DependentFormula {
+//	path := strings.Replace(dotSeparatedPath, ".*", "", -1)
+//	matches := make([]orf.DependentFormula, 0)
+//	for id, formula := range f.refToFormula {
+//		if strings.HasPrefix(id, path) {
+//			matches = append(matches, formula)
+//		}
+//	}
+//	return matches
+//}
 
 func (f *ContextAsFormulas) FindAllMatching(wildcardPath string) []interface{} {
 	return f.formulaHierarchy.GetAll(wildcardPath)

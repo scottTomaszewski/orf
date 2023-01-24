@@ -26,6 +26,8 @@ func main() {
 	}
 	orfData.Upsert(orfDefaults)
 
+	fmt.Printf("Base Values: %v\n\n", orfData.Variables)
+
 	// Load character
 	fmt.Printf("Loading orf data from %s\n", characterFile)
 	characterOrf, err := orf.FromFile(characterFile)
@@ -36,6 +38,8 @@ func main() {
 
 	// Add the character data, overwriting the regular data
 	orfData.Upsert(characterOrf)
+
+	fmt.Printf("Base Values: %v\n\n", orfData.Variables)
 
 	contextAsFormulas := From(*orfData)
 	//contextAsFormulas.Print()
