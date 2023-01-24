@@ -28,6 +28,12 @@
         "character.level"
       ],
       "expression": "2 + (character.level - 1) / 4"
+    },{
+      "ref": "passive.perception.wisdom",
+      "dependencies": [
+        "ability.modifier.wisdom"
+      ],
+      "expression": "TODO"
     }
   ]
 }
