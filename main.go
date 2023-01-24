@@ -7,8 +7,8 @@ import (
 )
 
 func main() {
-	formulaRootDir := "formulas"
-	defaultsRootDir := "defaults"
+	formulaRootDir := "rules/character/formulas"
+	defaultsRootDir := "rules/character/defaults"
 	characterFile := "bob.json"
 
 	// Load formulas
