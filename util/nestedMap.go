@@ -20,7 +20,7 @@ func (c *NestedMap) Get(path string) (interface{}, error) {
 	return c.getRefValue(path, c.Variables)
 }
 
-func (c *NestedMap) GetAll(wildcardPath string) (interface{}, error) {
+func (c *NestedMap) GetAll(wildcardPath string) []interface{} {
 	return c.getRefValues(wildcardPath, c.Variables)
 }
 

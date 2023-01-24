@@ -4,6 +4,7 @@ import (
 	"errors"
 	"fmt"
 	"github.com/philopon/go-toposort"
+	"orf/orf"
 	"strings"
 )
 
@@ -23,16 +24,10 @@ func orderTopologically(formulas ContextAsFormulas) ([]string, error) {
 			dependencyRef := formula.Dependencies[depIndex]
 
 			if strings.Contains(dependencyRef, ".*") {
-				formulas.formulaHierarchy.
-			}
-
-			if strings.HasSuffix(dependencyRef, ".*") {
-				// find all formulas that match the dependency ref-wildcard
-				depsMatchingWildcard := formulas.GetAllMatchingWildcard(dependencyRef)
-
-				// for each formula that matches the wildcard (other than itself), add an edge
-				for _, dependency := range depsMatchingWildcard {
-					depRefMatchingWildcard := dependency.Ref
+				matches := formulas.FindAllMatching(dependencyRef)
+				for _, match := range matches {
+					depForm := match.(orf.DependentFormula)
+					depRefMatchingWildcard := depForm.Ref
 					if depRefMatchingWildcard != formula.Ref {
 						fmt.Printf("Adding wildcard edge from %s to %s\n", depRefMatchingWildcard, formula.Ref)
 						graph.AddNode(depRefMatchingWildcard)
@@ -40,6 +35,20 @@ func orderTopologically(formulas ContextAsFormulas) ([]string, error) {
 					}
 				}
 
+				//if strings.HasSuffix(dependencyRef, ".*") {
+				//	// find all formulas that match the dependency ref-wildcard
+				//	depsMatchingWildcard := formulas.GetAllMatchingWildcard(dependencyRef)
+				//
+				//	// for each formula that matches the wildcard (other than itself), add an edge
+				//	for _, dependency := range depsMatchingWildcard {
+				//		depRefMatchingWildcard := dependency.Ref
+				//		if depRefMatchingWildcard != formula.Ref {
+				//			fmt.Printf("Adding wildcard edge from %s to %s\n", depRefMatchingWildcard, formula.Ref)
+				//			graph.AddNode(depRefMatchingWildcard)
+				//			graph.AddEdge(depRefMatchingWildcard, formula.Ref)
+				//		}
+				//	}
+				//
 			} else {
 				graph.AddEdge(formula.Dependencies[depIndex], formula.Ref)
 			}

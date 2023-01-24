@@ -61,9 +61,8 @@ func (f *ContextAsFormulas) GetAllMatchingWildcard(dotSeparatedPath string) []or
 	return matches
 }
 
-func (f *ContextAsFormulas) FindAllMatching(wildcardPath string) []orf.DependentFormula {
+func (f *ContextAsFormulas) FindAllMatching(wildcardPath string) []interface{} {
 	return f.formulaHierarchy.GetAll(wildcardPath)
-
 }
 
 func (f *ContextAsFormulas) evaluate(evaluator evaluate.GoValEvaluator) (*orf.CharacterContext, error) {
