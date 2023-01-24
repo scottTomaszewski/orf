@@ -22,6 +22,10 @@ func orderTopologically(formulas ContextAsFormulas) ([]string, error) {
 		for depIndex := range formula.Dependencies {
 			dependencyRef := formula.Dependencies[depIndex]
 
+			if strings.Contains(dependencyRef, ".*") {
+				formulas.formulaHierarchy.
+			}
+
 			if strings.HasSuffix(dependencyRef, ".*") {
 				// find all formulas that match the dependency ref-wildcard
 				depsMatchingWildcard := formulas.GetAllMatchingWildcard(dependencyRef)

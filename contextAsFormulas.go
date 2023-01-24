@@ -5,21 +5,25 @@ import (
 	"orf/evaluate"
 	"orf/functions"
 	"orf/orf"
+	"orf/util"
 	"strings"
 )
 
 type ContextAsFormulas struct {
-	formulas     []orf.DependentFormula
-	refToFormula map[string]orf.DependentFormula
+	formulas         []orf.DependentFormula
+	refToFormula     map[string]orf.DependentFormula
+	formulaHierarchy util.NestedMap
 }
 
 func From(source orf.ORFFile) *ContextAsFormulas {
 	allFormulas := make([]orf.DependentFormula, 0)
 	refToFormula := make(map[string]orf.DependentFormula, 0)
+	formulaHierarchy := util.NestedMap{Variables: make(map[string]interface{})}
 
 	for _, formula := range source.Formulas.Formulas {
 		refToFormula[formula.Ref] = formula
 		allFormulas = append(allFormulas, formula)
+		formulaHierarchy.Put(formula.Ref, formula)
 	}
 
 	// kinda cheating here, but whatever
@@ -34,14 +38,15 @@ func From(source orf.ORFFile) *ContextAsFormulas {
 			},
 			Dependencies: nil,
 		}
-		refToFormula[k] = depForm
-
 		allFormulas = append(allFormulas, depForm)
+		refToFormula[k] = depForm
+		formulaHierarchy.Put(k, depForm)
 	}
 
 	return &ContextAsFormulas{
-		formulas:     allFormulas,
-		refToFormula: refToFormula,
+		formulas:         allFormulas,
+		refToFormula:     refToFormula,
+		formulaHierarchy: formulaHierarchy,
 	}
 }
 
@@ -54,6 +59,11 @@ func (f *ContextAsFormulas) GetAllMatchingWildcard(dotSeparatedPath string) []or
 		}
 	}
 	return matches
+}
+
+func (f *ContextAsFormulas) FindAllMatching(wildcardPath string) []orf.DependentFormula {
+	return f.formulaHierarchy.GetAll(wildcardPath)
+
 }
 
 func (f *ContextAsFormulas) evaluate(evaluator evaluate.GoValEvaluator) (*orf.CharacterContext, error) {
