@@ -1,5 +1,10 @@
 {
 	"variables": {
+		"name": "bob",
+		"player_name": "Scott",
+		"age": "29",
+		"height": "5ft 11in",
+		"gender": "male",
 		"ability": {
 			"score": {
 				"base": {

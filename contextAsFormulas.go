@@ -30,10 +30,15 @@ func From(source orf.ORFFile) *ContextAsFormulas {
 	orf.Flatten("", source.Variables, flattened)
 
 	for k, v := range flattened {
+		value := v
+		switch v.(type) {
+		case string:
+			value = fmt.Sprintf("\"%s\"", v)
+		}
 		depForm := orf.DependentFormula{
 			Formula: orf.Formula{
 				Ref:        k,
-				Expression: fmt.Sprintf("%v", v),
+				Expression: fmt.Sprintf("%v", value),
 			},
 			Dependencies: nil,
 		}

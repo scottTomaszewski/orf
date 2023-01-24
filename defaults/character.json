@@ -1,5 +1,9 @@
 {
   "variables": {
-
+    "name": "",
+    "player_name": "",
+    "age": "",
+    "height": "",
+    "gender": ""
   }
 }
