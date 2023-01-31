@@ -1,0 +1,192 @@
+{
+	"ability": {
+		"modifier": {
+			"charisma": 2,
+			"constitution": 1,
+			"dexterity": 2,
+			"intelligence": 1,
+			"strength": -1,
+			"wisdom": 0
+		},
+		"score": {
+			"base": {
+				"charisma": 15,
+				"constitution": 13,
+				"dexterity": 14,
+				"intelligence": 12,
+				"strength": 8,
+				"wisdom": 10
+			},
+			"sum": 72
+		}
+	},
+	"age": "29",
+	"armor_class": {
+		"unarmored": 12
+	},
+	"character": {
+		"level": 6
+	},
+	"class": {
+		"fighter": {
+			"level": 1
+		},
+		"sorcerer": {
+			"level": 5
+		}
+	},
+	"gender": "male",
+	"height": "5ft 11in",
+	"initiative": 2,
+	"name": "bob",
+	"passive": {
+		"insight": {
+			"wisdom": 10
+		},
+		"investigation": {
+			"intelligence": 11
+		},
+		"perception": {
+			"wisdom": 10
+		}
+	},
+	"player_name": "Scott",
+	"proficiency_bonus": 3,
+	"saving_throw": {
+		"modifier": {
+			"charisma": {
+				"proficiency": 3
+			},
+			"constitution": {
+				"proficiency": 0
+			},
+			"dexterity": {
+				"proficiency": 0
+			},
+			"intelligence": {
+				"proficiency": 0
+			},
+			"strength": {
+				"proficiency": 0
+			},
+			"wisdom": {
+				"proficiency": 0
+			}
+		},
+		"proficiency": {
+			"charisma": true,
+			"constitution": false,
+			"dexterity": false,
+			"intelligence": false,
+			"strength": false,
+			"wisdom": false
+		},
+		"total": {
+			"charisma": 5,
+			"constitution": 1,
+			"dexterity": 2,
+			"intelligence": 1,
+			"strength": -1,
+			"wisdom": 0
+		}
+	},
+	"skill": {
+		"modifier": {
+			"acrobatics": {
+				"proficiency": 0
+			},
+			"animal_handling": {
+				"proficiency": 0
+			},
+			"arcana": {
+				"proficiency": 0
+			},
+			"athletics": {
+				"proficiency": 0
+			},
+			"deception": {
+				"proficiency": 0
+			},
+			"history": {
+				"proficiency": 0
+			},
+			"insight": {
+				"proficiency": 0
+			},
+			"intimidation": {
+				"proficiency": 0
+			},
+			"investigation": {
+				"proficiency": 0
+			},
+			"medicine": {
+				"proficiency": 0
+			},
+			"nature": {
+				"proficiency": 0
+			},
+			"perception": {
+				"proficiency": 0
+			},
+			"performance": {
+				"proficiency": 0
+			},
+			"persuasion": {
+				"proficiency": 0
+			},
+			"religion": {
+				"proficiency": 0
+			},
+			"sleight_of_hand": {
+				"proficiency": 0
+			},
+			"stealth": {
+				"proficiency": 0
+			},
+			"survival": {
+				"proficiency": 0
+			},
+			"total": {
+				"acrobatics": 2,
+				"animal_handling": 0,
+				"arcana": 1,
+				"athletics": -1,
+				"deception": 2,
+				"history": 1,
+				"insight": 0,
+				"intimidation": 2,
+				"investigation": 1,
+				"medicine": 0,
+				"nature": 1,
+				"perception": 0,
+				"performance": 2,
+				"persuasion": 2,
+				"religion": 1,
+				"sleight_of_hand": 2,
+				"stealth": 2,
+				"survival": 0
+			}
+		},
+		"proficiency": {
+			"acrobatics": false,
+			"animal_handling": false,
+			"arcana": false,
+			"athletics": false,
+			"cha": false,
+			"deception": false,
+			"history": false,
+			"insight": false,
+			"intimidation": false,
+			"investigation": false,
+			"medicine": false,
+			"nature": false,
+			"perception": false,
+			"performance": false,
+			"persuasion": false,
+			"religion": false,
+			"sleight_of_hand": false,
+			"stealth": false,
+			"survival": false
+		}
+	}
+}
