@@ -53,29 +53,38 @@ func (c *NestedMap) getRefValue(dotSeparatedPath string, m map[string]interface{
 	}
 }
 
+// Recursion: assumes the wildcardPath is at the height of the root of m
 func (c *NestedMap) getRefValues(wildcardPath string, m map[string]interface{}) []interface{} {
 	pathComponents := strings.Split(wildcardPath, ".")
+
+	// Handle wildcard as next path component
 	if pathComponents[0] == "*" {
 		matches := make([]interface{}, 0)
 		for _, v := range m {
 			switch v.(type) {
 			case map[string]interface{}:
+				// the nestedMap m has a map at wildcard match v, recurse down passing sub-map (* is not the last path component)
 				value := c.getRefValues(strings.Join(pathComponents[1:], "."), v.(map[string]interface{}))
-				matches = append(matches, value)
+				matches = append(matches, value...)
 			default:
+				// the nestedMap m has reached a leaf entry with a value, add it (* is the last path component)
 				matches = append(matches, v)
 			}
-
 		}
 		return matches
 	}
 
 	if _, ok := m[pathComponents[0]]; !ok {
-		return nil
+		// no value exists for this path, return empty slice
+		return make([]interface{}, 0)
 	}
+
 	if 1 == len(pathComponents) {
+		// this path has a value, return it as a single-element slice
 		return []interface{}{m[pathComponents[0]]}
+
 	} else {
+		// more to the path, recurse down
 		return c.getRefValues(strings.Join(pathComponents[1:], "."), m[pathComponents[0]].(map[string]interface{}))
 	}
 }

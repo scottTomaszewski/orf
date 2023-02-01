@@ -9,8 +9,13 @@ import (
 )
 
 type ContextAsFormulas struct {
-	formulas         []orf.DependentFormula
-	refToFormula     map[string]orf.DependentFormula
+	// formulas slice of all values converted to orf.DependentFormula
+	formulas []orf.DependentFormula
+
+	// refToFormula flat map of reference paths to orf.DependentFormula
+	refToFormula map[string]orf.DependentFormula
+
+	// formulaHierarchy nested map of ref components with the leaves as orf.DependentFormula
 	formulaHierarchy util.NestedMap
 }
 

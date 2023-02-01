@@ -17,8 +17,7 @@
     {
       "ref": "character.level",
       "dependencies": [
-        "class.sorcerer.level",
-        "class.fighter.level"
+        "class.*.level"
       ],
       "expression": "sum(getFromAll(class, \"level\"))"
     },

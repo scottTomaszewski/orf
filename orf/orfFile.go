@@ -89,6 +89,14 @@ func merge(src map[string]interface{}, dest map[string]interface{}) {
 	}
 }
 
+func (df DependentFormula) String() string {
+	return fmt.Sprintf("{DependentFormula form='%s', deps=%s}", df.Formula, df.Dependencies)
+}
+
+func (f Formula) String() string {
+	return fmt.Sprintf("{Formula ref='%s', expr='%s'}", f.Ref, f.Expression)
+}
+
 // TODO - try to delete this?
 // Note: this iterates over the entire formula slice - it is NOT efficient
 func (o *ORFFile) allAsRefToDepFormula() map[string]DependentFormula {
