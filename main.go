@@ -1,8 +1,9 @@
 package main
 
 import (
-	"fmt"
 	"orf/engine"
+	"orf/log"
+	"os"
 )
 
 func main() {
@@ -10,18 +11,24 @@ func main() {
 	defaultsRootDir := "rules/character/defaults"
 	characterFile := "bob.json"
 
+	log.InitFromConfig(log.Config{
+		Level:  log.LevelInfo,
+		Format: log.ConsoleFormat,
+		Type:   log.Zap,
+		Out:    os.Stdout,
+	})
+
 	context, err := engine.Run(formulaRootDir, defaultsRootDir, characterFile)
 	if err != nil {
-		fmt.Printf("Engine failed: %s", err)
+		log.Errorf("Engine failed: %s", err)
 		return
 	}
 
 	marshal, err := context.ToJson()
 	if err != nil {
-		fmt.Printf("Failed to convert data to json: %s", err)
+		log.Errorf("Failed to convert data to json: %s", err)
 		return
 	}
 
-	fmt.Printf("\n\nResult\n=======\n\n")
-	fmt.Println(string(marshal))
+	log.Info(string(marshal))
 }

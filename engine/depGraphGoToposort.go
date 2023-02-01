@@ -4,6 +4,7 @@ import (
 	"errors"
 	"fmt"
 	"github.com/philopon/go-toposort"
+	"orf/log"
 	"orf/orf"
 	"strings"
 )
@@ -29,7 +30,7 @@ func orderTopologically(formulas ContextAsFormulas) ([]string, error) {
 					depForm := match.(orf.DependentFormula)
 					depRefMatchingWildcard := depForm.Ref
 					if depRefMatchingWildcard != formula.Ref {
-						fmt.Printf("Adding wildcard edge from %s to %s\n", depRefMatchingWildcard, formula.Ref)
+						log.Debugf("Adding wildcard edge from %s to %s", depRefMatchingWildcard, formula.Ref)
 						graph.AddNode(depRefMatchingWildcard)
 						graph.AddEdge(depRefMatchingWildcard, formula.Ref)
 					}

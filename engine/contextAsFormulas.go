@@ -62,7 +62,6 @@ func (f *ContextAsFormulas) evaluate(evaluator evaluate.GoValEvaluator) (*orf.Ch
 
 	orderedFormulaRefs, err := orderTopologically(*f)
 	if err != nil {
-		fmt.Printf("Failed to topologically sort: %s", err)
 		return nil, fmt.Errorf("failed to topologically sort: %w", err)
 	}
 

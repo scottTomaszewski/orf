@@ -1,8 +1,8 @@
 package evaluate
 
 import (
-	"fmt"
 	"github.com/maja42/goval"
+	"orf/log"
 	"orf/orf"
 )
 
@@ -16,7 +16,7 @@ func (e *GoValEvaluator) Evaluate(
 	formula orf.Formula,
 	context orf.CharacterContext,
 	functions map[string]goval.ExpressionFunction) error {
-	fmt.Printf("	%s", formula.Ref)
+	//log.Debugf("evaluating %s", formula.Ref)
 	eval := goval.NewEvaluator()
 	result, err := eval.Evaluate(formula.Expression, context.Variables, functions) // Returns <true, nil>
 	if err != nil {
@@ -27,6 +27,6 @@ func (e *GoValEvaluator) Evaluate(
 	if err != nil {
 		return err
 	}
-	fmt.Printf(" = %v\n", result)
+	log.Debugf("%s = %v", formula.Ref, result)
 	return nil
 }

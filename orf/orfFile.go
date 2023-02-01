@@ -3,7 +3,7 @@ package orf
 import (
 	"encoding/json"
 	"fmt"
-	"io/ioutil"
+	"orf/log"
 	"os"
 	"path/filepath"
 )
@@ -28,7 +28,7 @@ type Formula struct {
 }
 
 func FromFile(relativeFilePath string) (*ORFFile, error) {
-	orfBytes, err := ioutil.ReadFile(relativeFilePath)
+	orfBytes, err := os.ReadFile(relativeFilePath)
 	if err != nil {
 		return nil, err
 	}
@@ -55,7 +55,7 @@ func FromAllFilesIn(relativeDirPath string) (*ORFFile, error) {
 			if info.IsDir() {
 				return nil
 			}
-			fmt.Printf("Loading orf data from %s\n", path)
+			log.Debugf("Loading orf data from %s", path)
 			orfFile, err := FromFile(path)
 			if err != nil {
 				return fmt.Errorf("failed to load formulas from %s: %s", path, err)

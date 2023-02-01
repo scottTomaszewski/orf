@@ -3,6 +3,7 @@ package engine
 import (
 	"fmt"
 	"orf/evaluate"
+	"orf/log"
 	"orf/orf"
 )
 
@@ -21,11 +22,11 @@ func Run(formulaRootDir string, defaultsRootDir string, characterFile string) (*
 	orfData.Upsert(orfDefaults)
 
 	// TODO - output to debug logger
-	fmt.Printf("Base Values: %v\n\n", orfData.Variables)
+	log.Debugf("Base Values: %v\n", orfData.Variables)
 
 	// Load character
 	// TODO - output to info logger
-	fmt.Printf("Loading orf data from %s\n", characterFile)
+	log.Infof("Loading orf data from %s", characterFile)
 	characterOrf, err := orf.FromFile(characterFile)
 	if err != nil {
 		return nil, fmt.Errorf("failed to load character data: %s", err)
@@ -35,7 +36,7 @@ func Run(formulaRootDir string, defaultsRootDir string, characterFile string) (*
 	orfData.Upsert(characterOrf)
 
 	// TODO - output to debug logger
-	fmt.Printf("Base Values: %v\n\n", orfData.Variables)
+	log.Debugf("Base Values: %v\n", orfData.Variables)
 
 	contextAsFormulas := From(*orfData)
 	//contextAsFormulas.Print()
