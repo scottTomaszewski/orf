@@ -22,7 +22,7 @@
       "expression": "sum(getFromAll(class, \"level\"))"
     },
     {
-      "ref": "proficiency_bonus",
+      "ref": "character.proficiency_bonus",
       "dependencies": [
         "character.level"
       ],

@@ -11,10 +11,10 @@
     {
       "ref": "skill.modifier.acrobatics.proficiency",
       "dependencies": [
-        "proficiency_bonus",
+        "character.proficiency_bonus",
         "skill.proficiency.acrobatics"
       ],
-      "expression": "skill.proficiency.acrobatics ? proficiency_bonus : 0"
+      "expression": "skill.proficiency.acrobatics ? character.proficiency_bonus : 0"
     },
 
     {
@@ -28,10 +28,10 @@
     {
       "ref": "skill.modifier.animal_handling.proficiency",
       "dependencies": [
-        "proficiency_bonus",
+        "character.proficiency_bonus",
         "skill.proficiency.animal_handling"
       ],
-      "expression": "skill.proficiency.animal_handling ? proficiency_bonus : 0"
+      "expression": "skill.proficiency.animal_handling ? character.proficiency_bonus : 0"
     },
 
     {
@@ -45,10 +45,10 @@
     {
       "ref": "skill.modifier.arcana.proficiency",
       "dependencies": [
-        "proficiency_bonus",
+        "character.proficiency_bonus",
         "skill.proficiency.arcana"
       ],
-      "expression": "skill.proficiency.arcana ? proficiency_bonus : 0"
+      "expression": "skill.proficiency.arcana ? character.proficiency_bonus : 0"
     },
 
     {
@@ -62,10 +62,10 @@
     {
       "ref": "skill.modifier.athletics.proficiency",
       "dependencies": [
-        "proficiency_bonus",
+        "character.proficiency_bonus",
         "skill.proficiency.athletics"
       ],
-      "expression": "skill.proficiency.athletics ? proficiency_bonus : 0"
+      "expression": "skill.proficiency.athletics ? character.proficiency_bonus : 0"
     },
 
     {
@@ -79,10 +79,10 @@
     {
       "ref": "skill.modifier.deception.proficiency",
       "dependencies": [
-        "proficiency_bonus",
+        "character.proficiency_bonus",
         "skill.proficiency.deception"
       ],
-      "expression": "skill.proficiency.deception ? proficiency_bonus : 0"
+      "expression": "skill.proficiency.deception ? character.proficiency_bonus : 0"
     },
 
     {
@@ -96,10 +96,10 @@
     {
       "ref": "skill.modifier.history.proficiency",
       "dependencies": [
-        "proficiency_bonus",
+        "character.proficiency_bonus",
         "skill.proficiency.history"
       ],
-      "expression": "skill.proficiency.history ? proficiency_bonus : 0"
+      "expression": "skill.proficiency.history ? character.proficiency_bonus : 0"
     },
 
     {
@@ -113,10 +113,10 @@
     {
       "ref": "skill.modifier.insight.proficiency",
       "dependencies": [
-        "proficiency_bonus",
+        "character.proficiency_bonus",
         "skill.proficiency.insight"
       ],
-      "expression": "skill.proficiency.insight ? proficiency_bonus : 0"
+      "expression": "skill.proficiency.insight ? character.proficiency_bonus : 0"
     },
 
     {
@@ -130,10 +130,10 @@
     {
       "ref": "skill.modifier.intimidation.proficiency",
       "dependencies": [
-        "proficiency_bonus",
+        "character.proficiency_bonus",
         "skill.proficiency.intimidation"
       ],
-      "expression": "skill.proficiency.intimidation ? proficiency_bonus : 0"
+      "expression": "skill.proficiency.intimidation ? character.proficiency_bonus : 0"
     },
 
     {
@@ -147,10 +147,10 @@
     {
       "ref": "skill.modifier.investigation.proficiency",
       "dependencies": [
-        "proficiency_bonus",
+        "character.proficiency_bonus",
         "skill.proficiency.investigation"
       ],
-      "expression": "skill.proficiency.investigation ? proficiency_bonus : 0"
+      "expression": "skill.proficiency.investigation ? character.proficiency_bonus : 0"
     },
 
     {
@@ -164,10 +164,10 @@
     {
       "ref": "skill.modifier.medicine.proficiency",
       "dependencies": [
-        "proficiency_bonus",
+        "character.proficiency_bonus",
         "skill.proficiency.medicine"
       ],
-      "expression": "skill.proficiency.medicine ? proficiency_bonus : 0"
+      "expression": "skill.proficiency.medicine ? character.proficiency_bonus : 0"
     },
 
     {
@@ -181,10 +181,10 @@
     {
       "ref": "skill.modifier.nature.proficiency",
       "dependencies": [
-        "proficiency_bonus",
+        "character.proficiency_bonus",
         "skill.proficiency.nature"
       ],
-      "expression": "skill.proficiency.nature ? proficiency_bonus : 0"
+      "expression": "skill.proficiency.nature ? character.proficiency_bonus : 0"
     },
 
     {
@@ -198,10 +198,10 @@
     {
       "ref": "skill.modifier.perception.proficiency",
       "dependencies": [
-        "proficiency_bonus",
+        "character.proficiency_bonus",
         "skill.proficiency.perception"
       ],
-      "expression": "skill.proficiency.perception ? proficiency_bonus : 0"
+      "expression": "skill.proficiency.perception ? character.proficiency_bonus : 0"
     },
 
     {
@@ -215,10 +215,10 @@
     {
       "ref": "skill.modifier.performance.proficiency",
       "dependencies": [
-        "proficiency_bonus",
+        "character.proficiency_bonus",
         "skill.proficiency.performance"
       ],
-      "expression": "skill.proficiency.performance ? proficiency_bonus : 0"
+      "expression": "skill.proficiency.performance ? character.proficiency_bonus : 0"
     },
 
     {
@@ -232,10 +232,10 @@
     {
       "ref": "skill.modifier.persuasion.proficiency",
       "dependencies": [
-        "proficiency_bonus",
+        "character.proficiency_bonus",
         "skill.proficiency.persuasion"
       ],
-      "expression": "skill.proficiency.persuasion ? proficiency_bonus : 0"
+      "expression": "skill.proficiency.persuasion ? character.proficiency_bonus : 0"
     },
 
     {
@@ -249,10 +249,10 @@
     {
       "ref": "skill.modifier.religion.proficiency",
       "dependencies": [
-        "proficiency_bonus",
+        "character.proficiency_bonus",
         "skill.proficiency.religion"
       ],
-      "expression": "skill.proficiency.religion ? proficiency_bonus : 0"
+      "expression": "skill.proficiency.religion ? character.proficiency_bonus : 0"
     },
 
     {
@@ -266,10 +266,10 @@
     {
       "ref": "skill.modifier.sleight_of_hand.proficiency",
       "dependencies": [
-        "proficiency_bonus",
+        "character.proficiency_bonus",
         "skill.proficiency.sleight_of_hand"
       ],
-      "expression": "skill.proficiency.sleight_of_hand ? proficiency_bonus : 0"
+      "expression": "skill.proficiency.sleight_of_hand ? character.proficiency_bonus : 0"
     },
 
     {
@@ -283,10 +283,10 @@
     {
       "ref": "skill.modifier.stealth.proficiency",
       "dependencies": [
-        "proficiency_bonus",
+        "character.proficiency_bonus",
         "skill.proficiency.stealth"
       ],
-      "expression": "skill.proficiency.stealth ? proficiency_bonus : 0"
+      "expression": "skill.proficiency.stealth ? character.proficiency_bonus : 0"
     },
 
     {
@@ -300,10 +300,10 @@
     {
       "ref": "skill.modifier.survival.proficiency",
       "dependencies": [
-        "proficiency_bonus",
+        "character.proficiency_bonus",
         "skill.proficiency.survival"
       ],
-      "expression": "skill.proficiency.survival ? proficiency_bonus : 0"
+      "expression": "skill.proficiency.survival ? character.proficiency_bonus : 0"
     }
   ]
 }

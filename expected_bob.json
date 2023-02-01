@@ -25,7 +25,8 @@
 		"unarmored": 12
 	},
 	"character": {
-		"level": 6
+		"level": 6,
+		"proficiency_bonus": 3
 	},
 	"class": {
 		"fighter": {
@@ -51,7 +52,6 @@
 		}
 	},
 	"player_name": "Scott",
-	"proficiency_bonus": 3,
 	"saving_throw": {
 		"modifier": {
 			"charisma": {

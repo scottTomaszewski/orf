@@ -21,20 +21,14 @@
 			"proficiency": {
 				"charisma": true
 			}
-		}
-	},
-	"formulas": [
-		{
-			"ref": "class.sorcerer.level",
-			"expression": "5"
 		},
-		{
-			"ref": "class.fighter.level",
-			"expression": "1"
-		},
-		{
-			"ref": "saving_throw.proficiency.strength",
-			"expression": "true"
+		"class": {
+			"sorcerer": {
+				"level": 5
+			},
+			"fighter": {
+				"level": 1
+			}
 		}
-	]
+	}
 }

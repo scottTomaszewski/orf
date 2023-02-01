@@ -51,50 +51,50 @@
     {
       "ref": "saving_throw.modifier.strength.proficiency",
       "dependencies": [
-        "proficiency_bonus",
+        "character.proficiency_bonus",
         "saving_throw.proficiency.strength"
       ],
-      "expression": "saving_throw.proficiency.strength ? proficiency_bonus : 0"
+      "expression": "saving_throw.proficiency.strength ? character.proficiency_bonus : 0"
     },
     {
       "ref": "saving_throw.modifier.constitution.proficiency",
       "dependencies": [
-        "proficiency_bonus",
+        "character.proficiency_bonus",
         "saving_throw.proficiency.constitution"
       ],
-      "expression": "saving_throw.proficiency.constitution ? proficiency_bonus : 0"
+      "expression": "saving_throw.proficiency.constitution ? character.proficiency_bonus : 0"
     },
     {
       "ref": "saving_throw.modifier.dexterity.proficiency",
       "dependencies": [
-        "proficiency_bonus",
+        "character.proficiency_bonus",
         "saving_throw.proficiency.dexterity"
       ],
-      "expression": "saving_throw.proficiency.dexterity ? proficiency_bonus : 0"
+      "expression": "saving_throw.proficiency.dexterity ? character.proficiency_bonus : 0"
     },
     {
       "ref": "saving_throw.modifier.intelligence.proficiency",
       "dependencies": [
-        "proficiency_bonus",
+        "character.proficiency_bonus",
         "saving_throw.proficiency.intelligence"
       ],
-      "expression": "saving_throw.proficiency.intelligence ? proficiency_bonus : 0"
+      "expression": "saving_throw.proficiency.intelligence ? character.proficiency_bonus : 0"
     },
     {
       "ref": "saving_throw.modifier.wisdom.proficiency",
       "dependencies": [
-        "proficiency_bonus",
+        "character.proficiency_bonus",
         "saving_throw.proficiency.wisdom"
       ],
-      "expression": "saving_throw.proficiency.wisdom ? proficiency_bonus : 0"
+      "expression": "saving_throw.proficiency.wisdom ? character.proficiency_bonus : 0"
     },
     {
       "ref": "saving_throw.modifier.charisma.proficiency",
       "dependencies": [
-        "proficiency_bonus",
+        "character.proficiency_bonus",
         "saving_throw.proficiency.charisma"
       ],
-      "expression": "saving_throw.proficiency.charisma ? proficiency_bonus : 0"
+      "expression": "saving_throw.proficiency.charisma ? character.proficiency_bonus : 0"
     }
   ]
 }
