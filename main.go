@@ -2,8 +2,7 @@ package main
 
 import (
 	"fmt"
-	"orf/evaluate"
-	"orf/orf"
+	"orf/engine"
 )
 
 func main() {
@@ -11,41 +10,9 @@ func main() {
 	defaultsRootDir := "rules/character/defaults"
 	characterFile := "bob.json"
 
-	// Load formulas
-	orfData, err := orf.FromAllFilesIn(formulaRootDir)
+	context, err := engine.Run(formulaRootDir, defaultsRootDir, characterFile)
 	if err != nil {
-		fmt.Printf("Failed to load orf data: %s", err)
-		return
-	}
-
-	// Load defaults
-	orfDefaults, err := orf.FromAllFilesIn(defaultsRootDir)
-	if err != nil {
-		fmt.Printf("Failed to load orf data: %s", err)
-		return
-	}
-	orfData.Upsert(orfDefaults)
-
-	fmt.Printf("Base Values: %v\n\n", orfData.Variables)
-
-	// Load character
-	fmt.Printf("Loading orf data from %s\n", characterFile)
-	characterOrf, err := orf.FromFile(characterFile)
-	if err != nil {
-		fmt.Printf("Failed to load character data: %s", err)
-		return
-	}
-
-	// Add the character data, overwriting the regular data
-	orfData.Upsert(characterOrf)
-
-	fmt.Printf("Base Values: %v\n\n", orfData.Variables)
-
-	contextAsFormulas := From(*orfData)
-	//contextAsFormulas.Print()
-	context, err := contextAsFormulas.evaluate(evaluate.GoValEvaluator{})
-	if err != nil {
-		fmt.Printf("Failed to evaluate data: %s", err)
+		fmt.Printf("Engine failed: %s", err)
 		return
 	}
 
