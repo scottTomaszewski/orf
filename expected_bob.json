@@ -26,7 +26,8 @@
 	},
 	"character": {
 		"level": 6,
-		"proficiency_bonus": 3
+		"proficiency_bonus": 3,
+		"initiative": 2
 	},
 	"class": {
 		"fighter": {
@@ -38,7 +39,6 @@
 	},
 	"gender": "male",
 	"height": "5ft 11in",
-	"initiative": 2,
 	"name": "bob",
 	"passive": {
 		"insight": {

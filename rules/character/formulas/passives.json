@@ -1,0 +1,28 @@
+{
+	"formulas": [
+		{
+			"ref": "passive.perception.wisdom",
+			"dependencies": [
+				"ability.modifier.wisdom",
+				"skill.modifier.perception.*"
+			],
+			"expression": "10 + ability.modifier.wisdom + sum(skill.modifier.perception)"
+		},
+		{
+			"ref": "passive.investigation.intelligence",
+			"dependencies": [
+				"ability.modifier.intelligence",
+				"skill.modifier.investigation.*"
+			],
+			"expression": "10 + ability.modifier.intelligence + sum(skill.modifier.investigation)"
+		},
+		{
+			"ref": "passive.insight.wisdom",
+			"dependencies": [
+				"ability.modifier.wisdom",
+				"skill.modifier.insight.*"
+			],
+			"expression": "10 + ability.modifier.wisdom + sum(skill.modifier.insight)"
+		}
+	]
+}

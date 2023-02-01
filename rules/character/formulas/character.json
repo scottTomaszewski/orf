@@ -1,0 +1,32 @@
+{
+	"formulas": [
+		{
+			"ref": "armor_class.unarmored",
+			"dependencies": [
+				"ability.modifier.dexterity"
+			],
+			"expression": "10 + ability.modifier.dexterity"
+		},
+		{
+			"ref": "character.initiative",
+			"dependencies": [
+				"ability.modifier.dexterity"
+			],
+			"expression": "ability.modifier.dexterity"
+		},
+		{
+			"ref": "character.level",
+			"dependencies": [
+				"class.*.level"
+			],
+			"expression": "sum(getFromAll(class, \"level\"))"
+		},
+		{
+			"ref": "character.proficiency_bonus",
+			"dependencies": [
+				"character.level"
+			],
+			"expression": "2 + (character.level - 1) / 4"
+		}
+	]
+}
