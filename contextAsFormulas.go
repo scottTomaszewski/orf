@@ -27,7 +27,7 @@ func From(source orf.ORFFile) *ContextAsFormulas {
 
 	// kinda cheating here, but whatever
 	flattened := make(map[string]interface{})
-	orf.Flatten("", source.Variables, flattened)
+	util.Flatten("", source.Variables, flattened)
 
 	for k, v := range flattened {
 		value := v
@@ -53,17 +53,6 @@ func From(source orf.ORFFile) *ContextAsFormulas {
 		formulaHierarchy: formulaHierarchy,
 	}
 }
-
-//func (f *ContextAsFormulas) GetAllMatchingWildcard(dotSeparatedPath string) []orf.DependentFormula {
-//	path := strings.Replace(dotSeparatedPath, ".*", "", -1)
-//	matches := make([]orf.DependentFormula, 0)
-//	for id, formula := range f.refToFormula {
-//		if strings.HasPrefix(id, path) {
-//			matches = append(matches, formula)
-//		}
-//	}
-//	return matches
-//}
 
 func (f *ContextAsFormulas) FindAllMatching(wildcardPath string) []interface{} {
 	return f.formulaHierarchy.GetAll(wildcardPath)

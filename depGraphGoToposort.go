@@ -34,21 +34,6 @@ func orderTopologically(formulas ContextAsFormulas) ([]string, error) {
 						graph.AddEdge(depRefMatchingWildcard, formula.Ref)
 					}
 				}
-
-				//if strings.HasSuffix(dependencyRef, ".*") {
-				//	// find all formulas that match the dependency ref-wildcard
-				//	depsMatchingWildcard := formulas.GetAllMatchingWildcard(dependencyRef)
-				//
-				//	// for each formula that matches the wildcard (other than itself), add an edge
-				//	for _, dependency := range depsMatchingWildcard {
-				//		depRefMatchingWildcard := dependency.Ref
-				//		if depRefMatchingWildcard != formula.Ref {
-				//			fmt.Printf("Adding wildcard edge from %s to %s\n", depRefMatchingWildcard, formula.Ref)
-				//			graph.AddNode(depRefMatchingWildcard)
-				//			graph.AddEdge(depRefMatchingWildcard, formula.Ref)
-				//		}
-				//	}
-				//
 			} else {
 				graph.AddEdge(formula.Dependencies[depIndex], formula.Ref)
 			}
