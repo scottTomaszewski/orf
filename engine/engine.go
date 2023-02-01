@@ -21,12 +21,10 @@ func Run(formulaRootDir string, defaultsRootDir string, characterFile string) (*
 	}
 	orfData.Upsert(orfDefaults)
 
-	// TODO - output to debug logger
 	log.Debugf("Base Values: %v\n", orfData.Variables)
 
 	// Load character
-	// TODO - output to info logger
-	log.Infof("Loading orf data from %s", characterFile)
+	log.Debugf("Loading orf data from %s", characterFile)
 	characterOrf, err := orf.FromFile(characterFile)
 	if err != nil {
 		return nil, fmt.Errorf("failed to load character data: %s", err)
@@ -35,7 +33,6 @@ func Run(formulaRootDir string, defaultsRootDir string, characterFile string) (*
 	// Add the character data, overwriting the regular data
 	orfData.Upsert(characterOrf)
 
-	// TODO - output to debug logger
 	log.Debugf("Base Values: %v\n", orfData.Variables)
 
 	contextAsFormulas := From(*orfData)
