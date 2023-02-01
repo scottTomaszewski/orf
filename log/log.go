@@ -112,7 +112,7 @@ func Debug(args ...interface{}) {
 	wrappedLogger.Debug(args...)
 }
 
-// Debugf output log formated msg in debug mode
+// Debugf output log formatted msg in debug mode
 func Debugf(format string, args ...interface{}) {
 	wrappedLogger.Debugf(format, args...)
 }
@@ -122,7 +122,7 @@ func Info(args ...interface{}) {
 	wrappedLogger.Info(args...)
 }
 
-// Infof outputs log formated msg in info mode
+// Infof outputs log formatted msg in info mode
 func Infof(format string, args ...interface{}) {
 	wrappedLogger.Infof(format, args...)
 }
@@ -132,7 +132,7 @@ func Warn(args ...interface{}) {
 	wrappedLogger.Warn(args...)
 }
 
-// Warnf outputs log formated msg in warn mode
+// Warnf outputs log formatted msg in warn mode
 func Warnf(format string, args ...interface{}) {
 	wrappedLogger.Warnf(format, args...)
 }
@@ -142,7 +142,7 @@ func Error(args ...interface{}) {
 	wrappedLogger.Error(args...)
 }
 
-// Errorf outputs log formated msg in error mode
+// Errorf outputs log formatted msg in error mode
 func Errorf(format string, args ...interface{}) {
 	wrappedLogger.Errorf(format, args...)
 }
