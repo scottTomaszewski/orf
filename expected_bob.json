@@ -22,7 +22,11 @@
 	},
 	"age": "29",
 	"armor_class": {
-		"unarmored": 12
+		"unarmored": 12,
+		"modifier": {
+			"barbarian": 1,
+			"monk": 0
+		}
 	},
 	"character": {
 		"level": 6,
@@ -48,11 +52,47 @@
 		}
 	},
 	"class": {
-		"fighter": {
+		"artificer": {
+			"level": 0
+		},
+		"barbarian": {
 			"level": 1
+		},
+		"bard": {
+			"level": 0
+		},
+		"cleric": {
+			"level": 0
+		},
+		"druid": {
+			"level": 0
+		},
+		"fighter": {
+			"level": 0
+		},
+		"monk": {
+			"level": 0
+		},
+		"paladin": {
+			"level": 0
+		},
+		"ranger": {
+			"level": 0
+		},
+		"rogue": {
+			"level": 0
 		},
 		"sorcerer": {
 			"level": 5
+		},
+		"warlock": {
+			"level": 0
+		},
+		"wizard": {
+			"level": 0
+		},
+		"blood_hunter": {
+			"level": 0
 		}
 	},
 	"gender": "male",
