@@ -25,7 +25,7 @@ func Run(formulaRootDir string, defaultsRootDir string, characterFile string) (*
 
 	// Load character
 	log.Debugf("Loading orf data from %s", characterFile)
-	characterOrf, err := orf.FromFile(characterFile)
+	characterOrf, err := orf.FromJsonFile(characterFile)
 	if err != nil {
 		return nil, fmt.Errorf("failed to load character data: %s", err)
 	}

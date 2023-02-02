@@ -1,0 +1,21 @@
+formulas:
+   -  ref: armor_class.unarmored
+      dependencies:
+         - ability.modifier.dexterity
+      expression: 10 + ability.modifier.dexterity
+
+   -  ref: armor_class.modifier.barbarian
+      dependencies:
+         - ability.modifier.constitution
+         - class.barbarian.level
+      conditions:
+         - class.barbarian.level > 0
+      expression: ability.modifier.constitution
+
+   -  ref: armor_class.modifier.monk
+      dependencies:
+         - ability.modifier.wisdom
+         - class.monk.level
+      conditions:
+         - class.monk.level > 0
+      expression: ability.modifier.wisdom
