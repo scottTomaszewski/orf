@@ -27,7 +27,25 @@
 	"character": {
 		"level": 6,
 		"proficiency_bonus": 3,
-		"initiative": 2
+		"initiative": 2,
+		"speed": {
+			"walk": {
+				"default": 30,
+				"total": 30
+			},
+			"fly": {
+				"default": 0,
+				"total": 0
+			},
+			"swim": {
+				"default": 15,
+				"total": 15
+			},
+			"climb": {
+				"default": 15,
+				"total": 15
+			}
+		}
 	},
 	"class": {
 		"fighter": {

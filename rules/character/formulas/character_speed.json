@@ -1,0 +1,46 @@
+{
+	"formulas": [
+		{
+			"ref": "character.speed.walk.total",
+			"dependencies": [
+				"character.speed.walk.*"
+			],
+			"expression": "max(character.speed.walk)"
+		},
+		{
+			"ref": "character.speed.climb.default",
+			"dependencies": [
+				"character.speed.walk.default"
+			],
+			"expression": "character.speed.walk.default / 2"
+		},
+		{
+			"ref": "character.speed.climb.total",
+			"dependencies": [
+				"character.speed.climb.*"
+			],
+			"expression": "max(character.speed.climb)"
+		},
+		{
+			"ref": "character.speed.swim.default",
+			"dependencies": [
+				"character.speed.walk.default"
+			],
+			"expression": "character.speed.walk.default / 2"
+		},
+		{
+			"ref": "character.speed.swim.total",
+			"dependencies": [
+				"character.speed.swim.*"
+			],
+			"expression": "max(character.speed.swim)"
+		},
+		{
+			"ref": "character.speed.fly.total",
+			"dependencies": [
+				"character.speed.fly.*"
+			],
+			"expression": "max(character.speed.fly)"
+		}
+	]
+}

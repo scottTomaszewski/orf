@@ -1,9 +1,19 @@
 {
-  "variables": {
-    "name": "",
-    "player_name": "",
-    "age": "",
-    "height": "",
-    "gender": ""
-  }
+	"variables": {
+		"name": "",
+		"player_name": "",
+		"age": "",
+		"height": "",
+		"gender": "",
+		"character": {
+			"speed": {
+				"walk": {
+					"default": 30
+				},
+				"fly": {
+					"default": 0
+				}
+			}
+		}
+	}
 }

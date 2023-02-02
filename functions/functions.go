@@ -2,7 +2,9 @@ package functions
 
 import (
 	"errors"
+	"fmt"
 	"github.com/maja42/goval"
+	"math"
 	"orf/orf"
 )
 
@@ -52,14 +54,41 @@ func sumAll(toSum map[string]interface{}) (interface{}, error) {
 }
 
 func max(args ...interface{}) (interface{}, error) {
-	max := -99999999999999
+	switch args[0].(type) {
+	case map[string]interface{}:
+		// assuming a map of base types
+		return maxValue(args[0].(map[string]interface{}))
+	case []interface{}:
+		return nil, fmt.Errorf("max function of an array is not yet supported")
+	default:
+		// assume
+		return maxInt(args)
+	}
+}
+
+func maxInt(args []interface{}) (interface{}, error) {
+	max := math.MinInt
 	for i := range args {
 		value := args[i].(int)
 		if value > max {
 			max = value
 		}
 	}
-	if max == -99999999999999 {
+	if max == math.MinInt {
+		return nil, errors.New("arguments dont have a max")
+	}
+	return max, nil
+}
+
+func maxValue(args map[string]interface{}) (interface{}, error) {
+	max := math.MinInt
+	for _, v := range args {
+		value := v.(int)
+		if value > max {
+			max = value
+		}
+	}
+	if max == math.MinInt {
 		return nil, errors.New("arguments dont have a max")
 	}
 	return max, nil

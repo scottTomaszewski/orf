@@ -35,5 +35,12 @@ func TestBob(t *testing.T) {
 		t.Fatalf("Failed to load expected output json: %s", err)
 	}
 
+	marshal, err := context.ToJson()
+	if err != nil {
+		t.Fatalf("Failed to convert data to json: %s", err)
+	}
+
+	log.Debug(string(marshal))
+
 	require.JSONEq(t, string(expectedJson), string(actualJson))
 }
