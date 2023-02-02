@@ -7,13 +7,13 @@ import (
 )
 
 type Evaluator interface {
-	Evaluate(formula orf.Formula, context orf.CharacterContext, functions map[string]goval.ExpressionFunction) error
+	Evaluate(formula orf.ReferencedExpression, context orf.CharacterContext, functions map[string]goval.ExpressionFunction) error
 }
 
 type GoValEvaluator struct{}
 
 func (e *GoValEvaluator) Evaluate(
-	formula orf.Formula,
+	formula orf.ReferencedExpression,
 	context orf.CharacterContext,
 	functions map[string]goval.ExpressionFunction) error {
 	//log.Debugf("evaluating %s", formula.Ref)

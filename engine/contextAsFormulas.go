@@ -9,19 +9,19 @@ import (
 )
 
 type ContextAsFormulas struct {
-	// formulas slice of all values converted to orf.DependentFormula
-	formulas []orf.DependentFormula
+	// formulas slice of all values converted to orf.Formula
+	formulas []orf.Formula
 
-	// refToFormula flat map of reference paths to orf.DependentFormula
-	refToFormula map[string]orf.DependentFormula
+	// refToFormula flat map of reference paths to orf.Formula
+	refToFormula map[string]orf.Formula
 
-	// formulaHierarchy nested map of ref components with the leaves as orf.DependentFormula
+	// formulaHierarchy nested map of ref components with the leaves as orf.Formula
 	formulaHierarchy util.NestedMap
 }
 
 func From(source orf.ORFFile) *ContextAsFormulas {
-	allFormulas := make([]orf.DependentFormula, 0)
-	refToFormula := make(map[string]orf.DependentFormula, 0)
+	allFormulas := make([]orf.Formula, 0)
+	refToFormula := make(map[string]orf.Formula, 0)
 	formulaHierarchy := util.NestedMap{Variables: make(map[string]interface{})}
 
 	for _, formula := range source.Formulas.Formulas {
@@ -40,8 +40,8 @@ func From(source orf.ORFFile) *ContextAsFormulas {
 		case string:
 			value = fmt.Sprintf("\"%s\"", v)
 		}
-		depForm := orf.DependentFormula{
-			Formula: orf.Formula{
+		depForm := orf.Formula{
+			ReferencedExpression: orf.ReferencedExpression{
 				Ref:        k,
 				Expression: fmt.Sprintf("%v", value),
 			},
@@ -73,7 +73,7 @@ func (f *ContextAsFormulas) evaluate(evaluator evaluate.GoValEvaluator) (*orf.Ch
 	context := orf.CharacterContext{Variables: make(map[string]interface{}, 0)}
 
 	for _, ref := range orderedFormulaRefs {
-		err := evaluator.Evaluate(f.refToFormula[ref].Formula, context, functions.GetFunctions(context))
+		err := evaluator.Evaluate(f.refToFormula[ref].ReferencedExpression, context, functions.GetFunctions(context))
 		if err != nil {
 			return nil, err
 		}

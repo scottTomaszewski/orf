@@ -27,7 +27,7 @@ func orderTopologically(formulas ContextAsFormulas) ([]string, error) {
 			if strings.Contains(dependencyRef, ".*") {
 				matches := formulas.FindAllMatching(dependencyRef)
 				for _, match := range matches {
-					depForm := match.(orf.DependentFormula)
+					depForm := match.(orf.Formula)
 					depRefMatchingWildcard := depForm.Ref
 					if depRefMatchingWildcard != formula.Ref {
 						log.Debugf("Adding wildcard edge from %s to %s", depRefMatchingWildcard, formula.Ref)

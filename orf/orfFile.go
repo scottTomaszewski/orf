@@ -14,15 +14,15 @@ type ORFFile struct {
 }
 
 type Formulas struct {
-	Formulas []DependentFormula `json:"formulas"`
-}
-
-type DependentFormula struct {
-	Formula
-	Dependencies []string `json:"dependencies,omitempty"`
+	Formulas []Formula `json:"formulas"`
 }
 
 type Formula struct {
+	ReferencedExpression
+	Dependencies []string `json:"dependencies,omitempty"`
+}
+
+type ReferencedExpression struct {
 	Ref        string `json:"ref"`
 	Expression string `json:"expression"`
 }
@@ -89,18 +89,18 @@ func merge(src map[string]interface{}, dest map[string]interface{}) {
 	}
 }
 
-func (df DependentFormula) String() string {
-	return fmt.Sprintf("{DependentFormula form='%s', deps=%s}", df.Formula, df.Dependencies)
+func (df Formula) String() string {
+	return fmt.Sprintf("{Formula form='%s', deps=%s}", df.ReferencedExpression, df.Dependencies)
 }
 
-func (f Formula) String() string {
-	return fmt.Sprintf("{Formula ref='%s', expr='%s'}", f.Ref, f.Expression)
+func (f ReferencedExpression) String() string {
+	return fmt.Sprintf("{ReferencedExpression ref='%s', expr='%s'}", f.Ref, f.Expression)
 }
 
 // TODO - try to delete this?
 // Note: this iterates over the entire formula slice - it is NOT efficient
-func (o *ORFFile) allAsRefToDepFormula() map[string]DependentFormula {
-	var refToFormula = make(map[string]DependentFormula, 0)
+func (o *ORFFile) allAsRefToDepFormula() map[string]Formula {
+	var refToFormula = make(map[string]Formula, 0)
 	for _, formula := range o.Formulas.Formulas {
 		refToFormula[formula.Ref] = formula
 	}
@@ -109,8 +109,8 @@ func (o *ORFFile) allAsRefToDepFormula() map[string]DependentFormula {
 	flattened := make(map[string]interface{})
 	Flatten("", o.Variables, flattened)
 	for k, v := range flattened {
-		refToFormula[k] = DependentFormula{
-			Formula: Formula{
+		refToFormula[k] = Formula{
+			ReferencedExpression: ReferencedExpression{
 				Ref:        k,
 				Expression: fmt.Sprintf("%v", v),
 			},

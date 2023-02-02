@@ -9,7 +9,7 @@ import (
 
 type CharacterContext struct {
 	// TODO - avoid exporting this
-	// `interface{}` here is expected to be a "basic" type (string, number, etc), not a Formula
+	// `interface{}` here is expected to be a "basic" type (string, number, etc), not a ReferencedExpression
 	Variables map[string]interface{}
 }
 
