@@ -64,7 +64,6 @@ func (f *ContextAsFormulas) FindAllMatching(wildcardPath string) []interface{} {
 }
 
 func (f *ContextAsFormulas) evaluate(evaluator evaluate.GoValEvaluator) (*orf.CharacterContext, error) {
-
 	orderedFormulaRefs, err := orderTopologically(*f)
 	if err != nil {
 		return nil, fmt.Errorf("failed to topologically sort: %w", err)
@@ -73,13 +72,44 @@ func (f *ContextAsFormulas) evaluate(evaluator evaluate.GoValEvaluator) (*orf.Ch
 	context := orf.CharacterContext{Variables: make(map[string]interface{}, 0)}
 
 	for _, ref := range orderedFormulaRefs {
-		err := evaluator.Evaluate(f.refToFormula[ref].ReferencedExpression, context, functions.GetFunctions(context))
+		formula := f.refToFormula[ref]
+
+		// check if conditions are satisfied for this formula
+		conditionsSatisfied, err := f.allConditionsSatisfied(evaluator, formula, context)
+		if err != nil {
+			return nil, err
+		}
+
+		// If at least one condition is not satisfied, skip this formula
+		if !conditionsSatisfied {
+			continue
+		}
+
+		err = evaluator.EvaluateAndPersist(formula.ReferencedExpression, context, functions.GetFunctions(context))
 		if err != nil {
 			return nil, err
 		}
 	}
 
 	return &context, nil
+}
+
+func (f *ContextAsFormulas) allConditionsSatisfied(
+	evaluator evaluate.GoValEvaluator,
+	formula orf.Formula,
+	context orf.CharacterContext) (bool, error) {
+	if len(formula.Conditions) > 0 {
+		for _, v := range formula.Conditions {
+			result, err := evaluator.EvaluateBoolean(v, context.Variables, functions.GetFunctions(context))
+			if err != nil {
+				return false, fmt.Errorf("failed to evaluate condition '%s': %v", v, err)
+			}
+			if !result {
+				return false, nil
+			}
+		}
+	}
+	return true, nil
 }
 
 func (f *ContextAsFormulas) Print() {

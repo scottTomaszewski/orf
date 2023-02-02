@@ -19,11 +19,19 @@ type Formulas struct {
 
 type Formula struct {
 	ReferencedExpression
+
+	//Dependencies slice of ReferencedExpression.Ref that need to be evaluated before this Formula
 	Dependencies []string `json:"dependencies,omitempty"`
+
+	//Conditions slice of maja42/goval expressions that all must evaluate to true in order to eval this Formula
+	Conditions []string `json:"conditions,omitempty"`
 }
 
 type ReferencedExpression struct {
-	Ref        string `json:"ref"`
+	//Ref dot-separated components of a "path" in nested json
+	Ref string `json:"ref"`
+
+	//Expression maja42/goval expression
 	Expression string `json:"expression"`
 }
 

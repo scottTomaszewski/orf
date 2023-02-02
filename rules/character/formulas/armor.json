@@ -13,7 +13,10 @@
 				"ability.modifier.constitution",
 				"class.barbarian.level"
 			],
-			"expression": "class.barbarian.level > 0 ? ability.modifier.constitution : 0"
+			"conditions": [
+				"class.barbarian.level > 0"
+			],
+			"expression": "ability.modifier.constitution"
 		},
 		{
 			"ref": "armor_class.modifier.monk",
@@ -21,7 +24,10 @@
 				"ability.modifier.wisdom",
 				"class.monk.level"
 			],
-			"expression": "class.monk.level > 0 ? ability.modifier.wisdom : 0"
+			"conditions": [
+				"class.monk.level > 0"
+			],
+			"expression": "ability.modifier.wisdom"
 		}
 	]
 }

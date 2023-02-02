@@ -24,8 +24,7 @@
 	"armor_class": {
 		"unarmored": 12,
 		"modifier": {
-			"barbarian": 1,
-			"monk": 0
+			"barbarian": 1
 		}
 	},
 	"character": {
