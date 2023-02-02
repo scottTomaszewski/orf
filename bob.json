@@ -29,6 +29,11 @@
 			"fighter": {
 				"level": 1
 			}
+		},
+		"skill": {
+			"proficiency": {
+				"stealth": true
+			}
 		}
 	}
 }

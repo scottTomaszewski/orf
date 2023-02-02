@@ -159,7 +159,7 @@
 				"proficiency": 0
 			},
 			"stealth": {
-				"proficiency": 0
+				"proficiency": 3
 			},
 			"survival": {
 				"proficiency": 0
@@ -181,7 +181,7 @@
 				"persuasion": 2,
 				"religion": 1,
 				"sleight_of_hand": 2,
-				"stealth": 2,
+				"stealth": 5,
 				"survival": 0
 			}
 		},
@@ -190,7 +190,6 @@
 			"animal_handling": false,
 			"arcana": false,
 			"athletics": false,
-			"cha": false,
 			"deception": false,
 			"history": false,
 			"insight": false,
@@ -203,7 +202,7 @@
 			"persuasion": false,
 			"religion": false,
 			"sleight_of_hand": false,
-			"stealth": false,
+			"stealth": true,
 			"survival": false
 		}
 	}
