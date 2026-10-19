@@ -50,3 +50,22 @@ test("Create stays disabled until every stat value is placed exactly once and th
   expect((screen.getByRole("button", { name: /^create$/i }) as HTMLButtonElement).disabled).toBe(true);
   expect(screen.getByText(/each value once/i)).toBeTruthy();
 });
+
+test("placing a Balanced value removes it from the other stats' options", async () => {
+  const content = realContent();
+  render(<App loader={async () => content} homebrew={memoryHomebrewStore()} storage={localStorage} />);
+  await screen.findByRole("heading", { name: /create/i });
+  fireEvent.click(screen.getByLabelText(/Balanced/));   // [2, 1, 1, 0]
+  const options = (stat: string) => Array.from((screen.getByLabelText(stat) as HTMLSelectElement).options).map((o) => o.textContent);
+  const place = (stat: string, v: string) => fireEvent.change(screen.getByLabelText(stat), { target: { value: v } });
+  expect(options("DEX")).toEqual(["—", "+2", "+1", "+0"]);
+  place("STR", "2");
+  expect(options("DEX")).toEqual(["—", "+1", "+0"]);
+  place("DEX", "1");
+  expect(options("INT")).toEqual(["—", "+1", "+0"]);     // one +1 left
+  place("INT", "1");
+  expect(options("WIL")).toEqual(["—", "+0"]);
+  place("STR", "0");                                     // free the +2 again
+  expect(options("WIL")).toEqual(["—", "+2"]);
+  expect(options("STR")).toEqual(["—", "+2", "+0"]);       // own value stays listed
+});

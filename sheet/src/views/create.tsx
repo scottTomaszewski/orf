@@ -14,6 +14,16 @@ const SKILLS: { id: string; name: string; stat: Stat }[] = [
   { id: "finesse", name: "Finesse", stat: "dex" }, { id: "stealth", name: "Stealth", stat: "dex" }, { id: "might", name: "Might", stat: "str" },
   { id: "influence", name: "Influence", stat: "wil" }, { id: "insight", name: "Insight", stat: "wil" }, { id: "naturecraft", name: "Naturecraft", stat: "wil" }, { id: "perception", name: "Perception", stat: "wil" },
 ];
+/** Array values still available to `stat`: the multiset minus what the other stats hold, deduplicated, keeping the stat's own value. */
+export function remainingValues(values: number[], placed: Record<Stat, string>, stat: Stat): number[] {
+  const pool = [...values];
+  for (const s of STATS) {
+    if (s === stat || placed[s] === "") continue;
+    const i = pool.indexOf(Number(placed[s]));
+    if (i !== -1) pool.splice(i, 1);
+  }
+  return pool.filter((v, i, arr) => arr.indexOf(v) === i);
+}
 const slug = (s: string) => s.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "") || "hero";
 
 function Picker({ title, name, options, value, onPick }: { title: string; name: string; options: Option[]; value: string; onPick: (id: string) => void }) {
@@ -101,7 +111,7 @@ function CreateForm({ docs, storage }: { docs: Map<string, Document>; storage: S
             <label key={s} class="row"><span class="steel-label">{s.toUpperCase()}</span>
               <select class="steel-select" aria-label={s.toUpperCase()} value={placed.value[s]} onChange={(e) => (placed.value = { ...placed.value, [s]: (e.target as HTMLSelectElement).value })}>
                 <option value="">—</option>
-                {(array.value?.values ?? []).filter((v, i, arr) => arr.indexOf(v) === i).map((v) => <option key={v} value={String(v)}>{v >= 0 ? `+${v}` : v}</option>)}
+                {remainingValues(array.value?.values ?? [], placed.value, s).map((v) => <option key={v} value={String(v)}>{v >= 0 ? `+${v}` : v}</option>)}
               </select>
             </label>
           ))}
