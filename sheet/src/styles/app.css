@@ -5,7 +5,7 @@
 .app__brand .sub { font-family: var(--font-sub); font-weight: var(--sub-weight); font-variant: small-caps; letter-spacing: .06em; color: var(--fg-2); font-size: .85rem; text-transform: lowercase; }
 .app__main { padding: 1rem; max-width: 64rem; width: 100%; box-sizing: border-box; margin: 0 auto; padding-bottom: calc(1rem + 64px); }
 .app__tabs { position: fixed; bottom: 0; left: 0; right: 0; display: grid; grid-auto-flow: column; grid-auto-columns: 1fr; background: var(--bg-raised); border-top: 1px solid var(--fx-metal-line); box-shadow: var(--fx-bevel); z-index: 5; padding-bottom: env(safe-area-inset-bottom); }
-.app__tab { min-height: 56px; border: 0; background: none; color: var(--fg-2); font-family: var(--font-sub); font-weight: var(--sub-weight); font-variant: small-caps; letter-spacing: .04em; font-size: .78rem; cursor: pointer; display: grid; place-items: center; gap: .1rem; }
+.app__tab { min-height: 56px; border: 0; background: none; color: var(--fg-2); font-family: var(--font-sub); font-weight: var(--sub-weight); font-variant: small-caps; letter-spacing: .02em; font-size: .7rem; padding: 0 .1rem; white-space: nowrap; cursor: pointer; display: grid; place-items: center; gap: .1rem; }
 .app__tab[aria-selected="true"] { color: var(--accent); box-shadow: inset 0 -3px 0 var(--accent); }
 .app__tab .glyph { font-size: 1.1rem; line-height: 1; color: var(--fg-3); }
 .app__tab[aria-selected="true"] .glyph { color: var(--accent); }

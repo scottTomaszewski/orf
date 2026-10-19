@@ -114,7 +114,7 @@ function Editor({ loaded, path }: { loaded: Loaded; path?: string }) {
                 <label class="field field--wide"><span class="steel-label">id</span><input class="steel-input steel-mono" aria-label="id" value={String(fm.value.id ?? "")} onInput={(e) => { idTouched.value = true; setKey("id", (e.target as HTMLInputElement).value); }} /></label>
                 {[...suggested, ...others].map((k) => <PropertyField key={k} name={k} value={fm.value[k]} onChange={(v) => setKey(k, v)} />)}
               </div>
-              <p class="small muted">Add any property in the source on the right; it is kept and shown, never rejected.</p>
+              <p class="small muted">Add any property in the source panel; it is kept and shown, never rejected.</p>
             </Panel>
             <Panel title="Effects" right={<button type="button" class="steel-btn small" onClick={() => setKey("effects", [...effects.value, { target: "", add: "" }])}>add effect</button>}>
               {effects.value.length === 0 && <p class="small muted">How this document changes a character's numbers. Many documents have none.</p>}
