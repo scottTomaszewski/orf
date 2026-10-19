@@ -1,536 +1,511 @@
 # Open Rules Format: design
 
-Date: 2026-10-18. Status: draft for review. Tracker: Linear SC-451 (project "Open Rules
-Format"). The name "ORF" / "Open Rules Format" is a **placeholder**; a real name is an open
-item and nothing in this document depends on it.
+Date: 2026-10-18. Status: approved in principle 2026-10-18 (5e-first draft); **revised the same
+day to Nimble-first** after Scott's product decision; revision pending Scott's read. Tracker:
+Linear SC-451 (project "Open Rules Format"). "ORF" / "Open Rules Format" is a **placeholder
+name**; nothing depends on it.
 
-Companion research: [`../research/2026-10-18-prior-art-survey.md`](../research/2026-10-18-prior-art-survey.md)
-(Foundry Active Effects, D&D Beyond Modifiers, GCS, PCGen, Dicecloud, expression languages,
-and the 2023 ORF prototype). Claims below about those systems are sourced there.
+Companion research:
+- [`../research/2026-10-18-prior-art-survey.md`](../research/2026-10-18-prior-art-survey.md):
+  Foundry Active Effects, D&D Beyond Modifiers, GCS, PCGen, Dicecloud, expression languages,
+  the 2023 ORF prototype.
+- [`../research/2026-10-18-nimble-recon.md`](../research/2026-10-18-nimble-recon.md): Nimble's
+  license, character model, rest cycle, choice points, ugly rules, tooling, community.
 
-Where a choice was made by Scott in conversation it is stated as a decision. Where I made a
-call it is marked **(my call)** so it can be overturned cheaply.
+Where a choice was made by Scott it is stated as a decision. Where I made a call it is marked
+**(my call)** so it can be overturned cheaply.
 
 ## 1. Intent
 
-TTRPG content (rules, classes, spells, monsters, items, whole systems) is published as PDFs,
-print, or one proprietary data format per digital tool. Every VTT, character-sheet app, and
-notes plugin re-enters the same content by hand, and creators without programmers cannot
-reach any of them. Communities like 5eTools exist because no open interchange format does.
+TTRPG content is published as PDFs, print, or one proprietary data format per digital tool.
+Every VTT, sheet app, and notes plugin re-enters the same content by hand, and creators without
+programmers reach none of them. This project is an **open, system-agnostic content format**
+plus a reference engine: a creator writes a spell, a feat, a class, or a whole system once, and
+every tool that speaks the format picks it up, including errata as new revisions. Format and
+engine are free and open.
 
-This project is an **open, system-agnostic content format** plus a reference engine, built so
-that a non-technical creator can write a spell, a monster, a class, or an entire system once,
-publish it, and have every tool that speaks the format pick it up immediately, including
-errata as new revisions. The format and the engine are free and open. End-user products built
-on them (a character-sheet site, a reader) may later be freemium; that is out of scope here.
+**Product first, format underneath (decision, Scott).** Standards that got adopted in this
+hobby came out of working software people already used, not out of specs. So the first
+deliverable is a **free, data-driven character sheet for Nimble** that Scott will use at his
+own table (he plays Nimble with his kids and there is no cross-device, level-up-aware sheet for
+it). The format is the implementation detail that makes homebrew "just work" in that sheet.
+The interest test is the sheet, posted to the Nimble Discord and subreddit and sent to Sly
+Flourish, who is actively running Nimble. Judge interest by whether tool authors or Nimble Co.
+want to integrate, not by upvotes.
 
-The lessons come from Steel Compendium, which already does annotated-text-to-structured-data
-for one system (Draw Steel), and from the 2023 ORF prototype, which computed a 5e character's
-derived values from inputs. Steel Compendium is expected to eventually consume this format
-rather than the other way round.
+**Business shape (decision, Scott, bounded by licenses).** Nimble's creator license lets a
+tool embed the rules only if the tool is **completely free** (donations allowed), so the Nimble
+sheet is the free proving ground. The Draw Steel Creator License permits selling, so a paid or
+freemium **Draw Steel sheet** built on the same engine is the eventual product, and the
+Steel Compendium pipeline becomes a content source for it. 5e stays a stress test for the
+engine, not a product.
 
-**Why now, and what success looks like.** The first deliverable is an interest test: a
-recorded screen capture of the demo, posted to Reddit and relevant Discords. If the community
-responds, Scott invests evenings and weekends. The personal motivation that outlives the
-interest test: Scott plays Nimble with his kids and there is no decent online character sheet
-for it, so a Nimble sheet built on this format is the first real use after the demo. That
-keeps "system-agnostic" honest: 5e is the stress test, Nimble is the second system, and
-nothing in the design may assume 5e.
+Lessons carried in: Steel Compendium (annotated text to structured data for Draw Steel) and
+the 2023 ORF prototype (computed 5e derived values from inputs; see the prior-art survey for
+what to keep and drop).
 
 ## 2. Goals, non-goals, anti-goals
 
 **Goals**
 
-- A creator with no programming background can author content in a web form in minutes,
-  including values that compute from character state.
-- The same content renders as readable prose in a reader and as resolved numbers on a
-  character sheet, from one source.
-- Content from authors who have never met composes: a new feat can modify Armor Class without
-  the system definition or the sheet knowing the feat exists.
-- The engine expresses real 5e rules cleanly, including the ugly ones (Unarmored Defense
-  variants, "use the higher of", multiclass spell slots, conditional bonuses).
-- Content is versioned so errata is a new revision that consumers can adopt or pin.
-- The format works as plain files outside our tools (an Obsidian vault of these files is
-  valid content).
+- A Nimble player at the table can track HP, Wounds, Hit Dice, mana and class resources,
+  Field Rests and Safe Rests, with the sheet applying the rules (what refreshes when, what a
+  spent Hit Die heals) instead of the player remembering.
+- Character creation and level-up are guided: the sheet offers the choices the class grants at
+  each level and attaches the chosen content.
+- The sheet works on a phone at the table and a laptop at home, with the character saved
+  across devices.
+- Content from authors who have never met composes: a homebrew ancestry or background can
+  modify max Wounds or Hit Dice without the sheet or the system template knowing it exists.
+- The same content renders as readable rules text and as resolved numbers from one source.
+- The engine expresses real Nimble rules cleanly, including the ugly ones (recon §6), and the
+  nastiest 5e shapes (competing base formulas, same-source stacking) as insurance.
+- Content and system templates are versioned; Nimble's first and second printings are the
+  first real test.
+- The format works as plain files outside our tools.
 
-**Non-goals (for this phase)**
+**Non-goals (this phase)**
 
-- Modeling character-building choices (level-up options, slot selection). Deferred to the
-  phase after the demo. Section 11 records the direction.
-- A marketplace, payments, accounts beyond what publishing needs.
-- Translations, accessibility work, offline sync. All are requirements of the eventual product
-  and must not be designed out, but none is built now.
-- Draw Steel or Nimble content. 5e SRD is the sole system for this phase. Nimble is the
-  declared next system, so the torture test should be read with "would this also express
-  Nimble?" in mind, but no Nimble template is written now.
-- Per-system UI component libraries and theming.
+- 5e as a product. A handful of 5e rules may appear in the torture test; no 5e template ships.
+- Draw Steel content. Design nothing that blocks it; build none of it now.
+- A creator-facing authoring web app. Homebrew for the MVP is hand-written Markdown; the form
+  comes after the sheet exists.
+- Combat automation beyond resource tracking: no attack resolution, no monster side, no
+  initiative tracker.
+- Translations, accessibility work, offline sync, accounts beyond what saving a character
+  across devices needs. Requirements of the eventual product; not designed out; not built now.
+- All eleven classes. The MVP ships the system core plus the classes Scott's table plays
+  (default **Mage and Berserker**, the two whose second-printing PDFs were read for this
+  design). The template structure must make adding a class a data task.
 
-**Anti-goals** (would make this a failure even if it technically works)
+**Anti-goals** (failure even if it technically works)
 
-- A format only programmers can author. If the torture test (section 7.4) cannot be written in
-  a form a homebrewer would read and nod at, stop and redesign rather than ship.
-- A closed vocabulary of modifiable things. D&D Beyond's 1,900 enumerated subtypes are the
-  cautionary tale.
+- A format only programmers can author.
+- A closed vocabulary of modifiable things (D&D Beyond's 1,900 enumerated subtypes).
 - Conditions as free text the engine ignores (D&D Beyond, GCS). Every `when` is evaluated.
 - Silent no-ops: content that saves fine and does nothing. Unknown targets and variables are
-  errors with a location.
-- Imperative mutation of variables by content (`AC = AC + 1`). Content contributes; the system
-  folds.
+  located errors.
+- Imperative mutation of variables by content. Content contributes; the system folds.
+- Violating the Nimble license: any paid tier, or shipping without the required notice.
 
-## 3. The demo (acceptance scenario)
+## 3. The MVP (acceptance scenario)
 
-The first milestone is one scripted demo that shows the value of a standard to an ecosystem.
-Audience: TTRPG creators and tool authors, not programmers. It must be digestible in a few
-minutes, which is why it is a spell and not a class.
+A free web app, usable on a phone, carrying the Nimble license notice prominently.
 
-**Decision (Scott):** the demo runs locally on one laptop and is recorded as a screen capture
-for a Reddit post and Discord posts. Nothing is deployed, no accounts, no public registry.
-The demo is an interest test, so it is sized to be the smallest thing that makes the
-"ripple across tools" point. **My call:** two consumers (Reader and Sheet) are the minimum
-that proves the point; the Card renderer is built only if cheap.
+1. **Create**: pick class, ancestry, background, stat array and placement, 4 skill points,
+   starting kit. Every option comes from content documents; the sheet shows the rules text of
+   each option as the player picks.
+2. **Play**: the sheet shows current/max HP, Wounds, Hit Dice, mana or class pool, Defense
+   with its formula visible, skills, saves with advantage/disadvantage flags, inventory slots,
+   known spells by school and tier. Buttons: take damage (handles temp HP, 0 HP → Wound +
+   Dying), spend a Hit Die (Catch Breath vs Make Camp formula), spend mana, **Field Rest**,
+   **Safe Rest** (restores all HP/HD/mana, heals 1 Wound, expires temp HP). Hovering any
+   number shows where it came from ("Defense 5 = 3 Cheap Hides + DEX 2").
+3. **Level up**: the sheet lists what the new level grants, prompts for each choice (subclass
+   at 3, Spellshaper picks, Key or Secondary stat bump, skill point and optional move, HP roll
+   or average), and attaches the chosen content.
+4. **Homebrew ripples**: a hand-written Markdown ancestry file dropped into the content folder
+   appears as an option at creation and its effects (say, +1 max Wounds) show on the sheet
+   with provenance. Edit the number, reload, the sheet updates. This is the format's proof and
+   the clip for the post.
 
-1. In the web authoring app, the creator clicks **New**, picks system **D&D 5e SRD** and type
-   **Spell**, names it, and fills a short property form (level, school, range, components,
-   duration). They type the description. Where a number depends on the caster they type an
-   expression; autocomplete offers the system's variables (`spell.mod`, `spell.save_dc`,
-   `spell.attack`). At least one value in the demo spell is computed.
-2. They click **Publish**. The spell gets a stable identifier and revision 1.
-3. Three consumers we built update with no change on their side: a **Reader** showing the
-   spell as rules text ("1d10 + your spellcasting modifier"), a **Character Sheet** showing it
-   for a specific wizard ("1d10 + 4", "DC 15"), and a **Card** renderer (statblock-style).
-4. The creator changes one number, publishes revision 2, and all three consumers show the
-   change.
-
-The hover-to-see-provenance affordance ("DC 15 = 8 + prof 3 + int.mod 4") should be in the sheet
-if cheap; it is the proof that the engine, not a template, produced the number.
-
-A monster is an acceptable substitute for the spell if it demos better; the engine
-requirements are the same.
+Scott's own table is the first user. The post goes out when the sheet has survived a few
+sessions.
 
 ## 4. Architecture overview
 
-Five parts. Only the first three are "the standard"; the last two are our reference
-implementations and anyone may build others.
-
-1. **Content documents**: Markdown with YAML frontmatter. One document per entity (a spell, a
-   feat, a monster, a class feature). Section 5.
-2. **System templates**: a package of documents that defines a game system: its variables and
-   how they compute, its content types and their suggested properties, its fold and stacking
-   policies, its predicate vocabulary, its tables. Section 8. A system template is itself
-   content in the same format.
-3. **The engine**: parses documents, resolves a character's variables by folding contributions
-   from all active content, evaluates expressions in two phases (compile-time numbers,
-   roll-time dice), and reports provenance and errors. Sections 6 and 7.
-4. **Registry / publishing**: stable identifiers, revisions, and a way for consumers to fetch
-   and subscribe. Section 9.
-5. **Consumers**: the authoring web app, Reader, Sheet, Card. Section 10.
+1. **Content documents**: Markdown with YAML frontmatter, one per entity (ancestry, background,
+   class, class level, subclass, feature, spell, item, boon, character). Section 5.
+2. **System templates**: a package of documents defining a system: variables and formulas,
+   **resources** and their refresh triggers, content types and their suggested properties,
+   fold and stacking policies, predicate vocabulary, tables, **choice slots**. A template is
+   content in the same format. Section 8.
+3. **The engine**: parses documents, folds contributions from all active content into a
+   character's variables, evaluates expressions in two phases (compile-time numbers,
+   roll-time dice), applies **events** to character state (damage, spend, rest), reports
+   provenance and diagnostics. Sections 6 and 7.
+4. **Registry / publishing**: stable ids, revisions, dependency declarations. For the MVP, a
+   folder of files. Section 9.
+5. **Consumers**: the Nimble sheet (the product), and a Reader view inside it. Section 10.
 
 ```
-creator ──► authoring app ──► content doc (md+yaml) ──► registry (id@rev)
-                                                           │
-            system template (md+yaml, same format) ───────┤
-                                                           ▼
-                                   engine: parse ─► fold contributions ─► evaluate ─► provenance
-                                                           │
-                              ┌────────────────────────────┼─────────────────────┐
-                              ▼                            ▼                     ▼
-                           Reader                        Sheet                  Card
-                      (prose, symbolic)          (resolved per character)   (statblock)
+content docs (md+yaml) ──┐
+system template (same) ──┼──► engine: parse ─► registry ─► fold ─► evaluate ─► provenance
+character doc (same) ────┘                 │                      ▲
+                                           │ events: damage, spend HD, rest, level-up
+                                           ▼
+                                  sheet (phone/laptop)  ·  reader view
 ```
 
 ## 5. Content format
 
-**Decision (Scott):** Markdown body + YAML frontmatter, with the authoring UI rendering the
-frontmatter as a property form (Obsidian-Properties style) so creators never see raw YAML.
-Frontmatter alone "might scare people off"; a mix of fields and prose is the target.
+**Decision (Scott):** Markdown body + YAML frontmatter; a UI renders frontmatter as a property
+form so creators never see raw YAML; custom fields are essential. Aliases for "frontmatter
+might scare people off": the file is the format, the form is the authoring surface (later).
 
 ### 5.1 Document shape
 
 ```markdown
 ---
-id: srd5e.homebrew.ember-lash        # stable identity, see §9
-type: spell                          # a content type the system template declares
-system: srd5e@5.1                    # which system template this is written against
-name: Ember Lash
-level: 1
-school: evocation
-casting_time: 1 action
-range: 60 feet
-components: [V, S]
-duration: instantaneous
-tags: [fire, homebrew]
-effects: []                          # §6; empty for a plain spell
+id: nimble.ancestries.dwarf
+type: ancestry
+system: nimble
+name: Dwarf
+size: medium
+effects:
+  - target: hit_dice.max
+    add: 2
+  - target: wounds.max
+    add: 1
+  - target: speed
+    add: -1
 ---
-A whip of cinders lashes out from your hand. Make a ranged spell attack
-({{ spell.attack }} to hit) against one creature in range. On a hit, the target
-takes {{ 1d10 + spell.mod }} fire damage and must succeed on a Dexterity saving
-throw (DC {{ spell.save_dc }}) or be knocked prone.
-
-**At Higher Levels.** The damage increases by 1d10 for each slot level above 1st.
+Stout and stubborn. You have {{ hit_dice.max }} Hit Dice and can suffer
+{{ wounds.max }} Wounds before dying.
 ```
 
-- **Properties are open.** The system template *suggests* properties per content type (that is
-  what populates the form). Creators may add any property. Unknown properties are preserved
-  and rendered, never rejected. **Decision (Scott):** custom fields are essential; we cannot
-  predict every variable a creator needs.
-- **Reserved properties** (`id`, `type`, `system`, `name`, `effects`, `requires`, `tags`) have
-  defined meaning. Everything else is the creator's.
-- **Property values may be expressions.** A property whose value is a string containing
-  `{{ }}` is computed like body text. (Suggested convention: a property named `*_formula` or a
-  value wrapped in `{{ }}`. **My call:** use `{{ }}` everywhere; one rule to learn.)
+- **Properties are open.** The system template suggests properties per content type (that is
+  what a form would show); creators may add any. Unknown properties are preserved and
+  rendered, never rejected.
+- **Reserved properties**: `id`, `type`, `system`, `name`, `effects`, `grants`, `choices`,
+  `variables`, `resources`, `requires`, `tags`, `version`.
+- **Property values may be expressions**: any string containing `{{ }}` is computed like body
+  text **(my call: one rule to learn)**.
 
 ### 5.2 Inline expressions in prose
 
-`{{ expr }}` in body text or property values is evaluated by the engine. Two renderings:
-
-- **Symbolic** (reader): variables render as their display names from the system template
-  (`{{ 1d10 + spell.mod }}` → "1d10 + your spellcasting ability modifier").
-- **Resolved** (sheet): variables substitute for the character; dice stay dice
-  (`1d10 + 4`); pure numbers collapse (`DC 15`).
-
-An optional display override follows a pipe, borrowed from 5eTools: `{{ spell.save_dc | your
-spell save DC }}`. **My call:** keep this; 5eTools' prose reads well precisely because authors
-control the text.
-
-Expressions are sandboxed and total: they cannot call out, loop, or mutate. Section 7.
+`{{ expr }}` renders **symbolically** in a reader (identifiers become their registry display
+names: "your Intelligence") and **resolved** on a sheet (`(INT×3)+LVL` → 14). Dice stay dice.
+Display override after a pipe, borrowed from 5eTools: `{{ mana.max | your maximum mana }}`
+**(my call)**. Expressions are sandboxed and total.
 
 ### 5.3 Character documents (my call)
 
-A character is a document in the same format. Its frontmatter holds inputs (ability scores,
-name) and **references to attached content by id**: classes with levels, features, spells,
-and equipment, where an equipment entry carries instance state (`equipped: true`,
-`attuned: true`). An effect is active on a character when its document is referenced by the
-character, its `when` holds, and its lifecycle allows (an item's `transfer` and equipped
-state; a spell effect's duration). Predicates like `equipped(armor)` and `has(feature)`
-consult this list. Content in the registry that no character references does nothing to
-anyone.
+A character is a document. Frontmatter holds **inputs** (stats, name), **attached content by
+id** (ancestry, background, class levels, chosen features, equipment with instance state),
+**choice results** keyed by slot, **current resource values**, and a **level history**.
 
 ```yaml
 ---
-id: demo.characters.mira
+id: scott.characters.pip
 type: character
-system: srd5e
-name: Mira
-abilities: {str: 8, dex: 14, con: 12, int: 18, wis: 10, cha: 11}
-classes: [{id: srd5e.classes.wizard, level: 5}]
-features: [srd5e.features.wizard.arcane-recovery]
-spells: [srd5e.spells.fire-bolt, srd5e.homebrew.ember-lash]
-equipment: [{id: srd5e.items.quarterstaff, equipped: true}]
+system: nimble@2          # package revision; see §8
+name: Pip
+stats: {str: -1, dex: 2, int: 3, wil: 0}
+ancestry: nimble.ancestries.gnome
+background: nimble.backgrounds.scholar
+classes: [{id: nimble.classes.mage, level: 4}]
+skills: {arcana: 3, lore: 2, examination: 1, perception: 2}
+levels:                    # per-level history; HP is a sum of these
+  - {level: 1, hp: 10}
+  - {level: 2, hp: 4, source: average}
+  - {level: 3, hp: 6, source: roll}
+  - {level: 4, hp: 4, source: average}
+choices:
+  nimble.classes.mage.level-3.subclass: [nimble.subclasses.mage.control]
+  nimble.classes.mage.level-4.spellshaper: [nimble.features.mage.spellshaper.far-reach, nimble.features.mage.spellshaper.…]
+  nimble.classes.mage.level-4.key-stat: [int]
+equipment:
+  - {id: nimble.items.armor.adventurers-garb, equipped: true}
+  - {id: nimble.items.weapons.dagger, equipped: true}
+state:
+  hp: 17
+  wounds: 1
+  hit_dice: 2
+  mana: 6
+  temp_hp: 0
+  conditions: []
 ---
 ```
 
-For the demo, the sample wizard's spell list includes the id the creator will publish, so
-revision 2 of the spell flows to the sheet with no edit to the character. (Alternative, if
-it demos better: the character subscribes to a collection, `spells: [..., demo.homebrew.*]`.)
+An effect is active when its document is attached (directly, via a class level the character
+has reached, or via a choice), its `when` holds, and its lifecycle allows (`transfer`,
+equipped state, duration). Predicates like `equipped(armor)`, `has(id)`, `level(mage)`,
+`dying` consult this document. `state` is the only part the engine **writes**, via events.
 
 ### 5.4 Why Markdown + frontmatter
 
-It is the one authoring format with an existing ecosystem (Obsidian, Hugo, every static-site
-tool), it keeps the Steel Compendium lessons applicable, and it means the format works from
-day one as plain files. The cost is that "computed value" and "custom field" semantics have
-no Markdown standard and are defined by this project.
+The one authoring format with an ecosystem (Obsidian, Hugo, static-site tools); keeps Steel
+Compendium's lessons; works as plain files on day one. Cost: "computed value", "custom field",
+"effect", "resource" semantics are defined by this project, since Markdown has none.
 
-## 6. The effects model: how content changes a character
+## 6. The effects model
 
-This is the core of the design and the part the prior-art survey most informs.
+### 6.1 Declarative contributions (decision, Scott, on my proposal)
 
-### 6.1 The problem
-
-A system template can define `AC`. It cannot know about every feat, spell, subclass, or item
-that will ever modify AC, including ones written years from now. The naive answer, letting
-content assign to variables (`OTHER_AC_BONUSES = OTHER_AC_BONUSES + 1`), makes the result
-depend on evaluation order and makes every feature know the formula it is poking.
-
-### 6.2 Declarative contributions
-
-**Decision (Scott, on my proposal):** content never assigns. It **contributes** to a named
-variable with an operation, optionally guarded by a condition, and the system template owns
-how contributions fold. Every mature sheet engine surveyed converged on target + operation +
-value; this design adds first-class conditions and stack identity, which they lack.
+Content never assigns to a variable. It **contributes** with an operation, optionally guarded
+by a condition, and the system template owns the fold. Every surveyed engine converged on
+target + operation + value; this design adds first-class conditions and stack identity.
 
 ```yaml
-# Feat granting +1 AC
+# Background: Devoted Protector
 effects:
-  - target: ac.bonus
-    add: 1
+  - target: wounds.max
+    add: 3
+    when: ally_nearby            # a boolean the player toggles; see predicates
 
-# Monk: Unarmored Defense
+# Armor item: Chain Shirt
 effects:
-  - target: ac.base
-    base: 10 + dex.mod + wis.mod
-    when: not equipped(armor) and not equipped(shield)
-    source: unarmored-defense
+  - target: defense.base
+    base: 9 + min(dex, 2)
+    transfer: equipped
+    source: armor
+requires: {str: 2}
 
-# Spell: Mage Armor (while active on the target)
+# Class feature: Berserker Mighty Endurance
 effects:
-  - target: ac.base
-    base: 13 + dex.mod
-    when: not equipped(armor)
-    source: mage-armor
-    duration: 8 hours
+  - target: wounds.max
+    add: 4
 ```
-
-An effect record has:
 
 | field | meaning |
 |---|---|
-| `target` | a variable from the system's registry (open namespace, dotted). Unknown target = error. |
-| one operation key | `base` (candidates compete, highest wins), `add`, `mul`, `min`, `max`, `set` (hard override, applied last). **My call:** these six are Dicecloud's proven minimal set. `base` is the op for "alternative formulas for the same thing" (AC calculations, speed sources). `set` is rare and a variable must declare that it accepts `set`; an `add` to a variable that ends up `set` is reported as a shadowed contribution in provenance and as a lint warning, never silently dropped. `advantage`/`disadvantage` style flag ops come when 5e rolls need them. |
-| `when` | a predicate in the expression grammar's boolean subset. Omitted = always. Evaluated, never decorative. |
-| `source` | stack key, defaults to the document `id`. Used by stacking policy. |
-| `duration`, `transfer` | lifecycle hints for consumers (how long an effect lasts; whether an item's effect applies while carried or only when equipped). **My call:** define the fields now, implement minimally. |
+| `target` | a registry variable (open namespace, dotted). Unknown = error. |
+| one op | `base` (candidates compete, highest wins), `add`, `mul`, `min`, `max`, `set` (hard override, rare, variable must allow it; shadowed contributions reported, never dropped) **(my call: Dicecloud's proven set)** |
+| `when` | predicate in the grammar's boolean subset; evaluated, never decorative |
+| `source` | stack key, default = document id; stacking policy groups by it |
+| `transfer` | `always` (default for features) / `equipped` / `carried` |
+| `duration` | lifecycle hint: `encounter`, `safe-rest`, `until-full-hp`, a time, or an event name (§6.4) |
 
-### 6.3 Fold rules
-
-Each variable in the system registry declares how contributions fold. The default fold,
-taken from Dicecloud because it is the cleanest statement of what 5e needs:
+### 6.2 Fold (default; a variable may override)
 
 ```
 value = (max(base contributions) + Σ add) × Π mul
 value = clamp(value, largest min, smallest max)
-if any set: value = largest set          # after stacking policy has deduped
-round per the variable's declared rounding (5e: floor)
+if any set: value = largest set
+round per the variable's rounding
 ```
 
-"Choose the highest AC formula" therefore needs no special case: Unarmored Defense, Mage
-Armor, and Draconic Resilience each contribute a `base` to `ac.base` and the largest applicable
-one wins. Armor items also contribute a `base`, so when armor is equipped the unarmored
-formulas drop out via their `when` and the armor's value stands. The system template composes `ac = ac.base + ac.bonus +
-ac.shield`.
+Nimble Defense: unarmored contributes `base: dex`; each armor contributes its own `base`
+while equipped; shield contributes `add`. Highest base wins, so no special case for "armor
+vs unarmored". Empty contribution set = the variable's default, never a crash.
 
-A variable may override the default fold (e.g. `speed` folds as max of alternatives; `hp.max`
-folds as sum). Empty contribution set = the variable's declared default, never a crash (the
-ORF prototype crashed here).
+### 6.3 Stacking
 
-### 6.4 Stacking policy
+Effects carry `source`. The template declares a policy per variable or globally:
+`same-source: highest` (default), `sum`, or a typed-bonus table for d20-style systems later.
 
-5e: "the effects of the same spell cast multiple times don't combine"; typed bonuses in other
-d20 games don't stack within a type. No surveyed engine except PCGen models this. Here:
+### 6.4 Resources, state, and events (new in this revision; my call on shape)
 
-- Every effect carries a `source` (defaults to document id). The system template declares a
-  stacking policy per variable or globally: `same-source: highest` (5e default), `sum`, or a
-  typed-bonus table (PCGen-style, for Pathfinder-likes later).
-- Contributions are grouped by `source` and reduced by the policy *before* the fold.
+Nimble's sheet is mostly resource bookkeeping, so **resources are first-class**, not plain
+variables. A resource has a `max` (a variable, folded like any other), a `current` value stored
+in the character's `state`, and **refresh rules** tied to events.
 
-### 6.5 Variable registry and errors
+```yaml
+# in the system template
+resources:
+  - id: hp
+    max: hp.max
+    refresh: [{on: safe-rest, to: max}]
+    floor: 0
+  - id: wounds
+    max: wounds.max
+    refresh: [{on: safe-rest, add: -1}]          # heals one Wound
+  - id: hit_dice
+    max: hit_dice.max
+    refresh: [{on: safe-rest, to: max}]
+  - id: temp_hp
+    refresh: [{on: safe-rest, to: 0}]
 
-The system template publishes every variable with: id, display name (for symbolic rendering),
-type (integer, dice, boolean, text, list), fold rule, allowed operations, default, and
-rounding. The authoring app's autocomplete reads this registry. Content may **declare new
-variables** in its own frontmatter (a subclass adding `ki.points`), which join the registry
-for that character.
+# in the Mage class document
+resources:
+  - id: mana
+    max: mana.max                                 # mana.max declared below
+    refresh: [{on: safe-rest, to: max}]
+    when: level(mage) >= 2
+variables:
+  - {id: mana.max, name: your maximum mana, formula: "(max(int, 0) * 3) + level"}
+```
 
-**Identifier convention (my call):** one canonical form, lowercase dotted (`dex.mod`,
-`spell.save_dc`, `ac.base`, `prof`). The registry may declare short aliases (`DEX` for
-`dex.mod`) that the grammar accepts and autocomplete offers; the torture test decides whether
-aliases earn their keep. Prose never shows identifiers: symbolic rendering uses display names.
+**Events** are the verbs the sheet exposes: `damage(n, crit)`, `heal(n)`, `spend(resource,
+n)`, `restore(resource, n)`, `catch-breath(hit_dice: k)`, `make-camp(hit_dice: k)`,
+`safe-rest`, `encounter-start`, `encounter-end`, `turn-end`, `level-up`, plus
+**template-declared events** (`gain-wound`, `full-hp`, `rage-end`) that content can refresh
+on (`refresh: [{on: gain-wound, to: max}]` for the Dragonborn ability). Event handlers are
+declared in the template as ordered rules in the expression grammar; e.g. `damage` applies to
+`temp_hp` first, then `hp`, and on reaching 0 fires `gain-wound(1)` and sets the `dying`
+condition. Content may **not** define new event handlers in this phase; it may contribute to
+the variables those handlers read (`hit_die.heal.bonus add: key when: in_wilderness` for Wild
+One).
 
-**Instance scope (my call):** most variables are character-global. Content that is an
-*instance* (an armor, a weapon, an attack) has its own properties, and effects or expressions
-inside that document may reference them with a `this.` prefix (`this.max_dex_bonus`,
-`this.strength_requirement`). Nothing else is scoped. This is enough for armor caps and
-weapon-specific damage riders in the torture test; attacks as first-class objects are not in
-this phase, so item 15 is judged on Dueling and Defense, not Great Weapon Fighting's reroll.
+**Conditions** (Dying, Bloodied, Raging, Concentrating) are boolean variables in `state`,
+set by events, readable in `when`.
 
-Errors are loud and located. Unknown variable, unknown target, type mismatch, and dependency
-cycles (with the cycle's members named) are reported per variable. The engine returns partial
-results plus diagnostics rather than aborting. Resolving unknowns to zero, as PCGen, Dicecloud
-and GCS do, is explicitly rejected.
+### 6.5 Variable registry, identifiers, scope, errors
+
+The template publishes every variable: id, display name, type, default, fold, allowed ops,
+rounding; and every resource, event, predicate, and function. Content may declare new
+variables and resources in its frontmatter; they join the registry for that character.
+
+**Identifiers (my call):** canonical lowercase dotted (`dex`, `wounds.max`, `mana.max`,
+`defense.base`); registry may declare upper-case aliases (`DEX`, `KEY`); prose never shows
+identifiers. **`key`** resolves to the higher of the class's two Key stats and `secondary`
+likewise, both declared by the class document.
+
+**Instance scope (my call):** an item's effects and expressions may reference the item's own
+properties with `this.` (`this.strength_requirement`). Nothing else is scoped.
+
+**Errors are loud and located**: unknown variable or target, type mismatch, cycle (members
+named), event referencing an undeclared resource. Partial results plus diagnostics, never
+abort, never silent zero.
 
 ### 6.6 Provenance
 
-Every resolved value carries its contribution list (`ac = 15: base 10 + DEX 3 + WIS 2 from
-unarmored-defense`). Consumers render it on hover. This is both the creator's feedback loop
-(the D&D Beyond failure is "it saved and did nothing") and the demo's proof.
+Every value carries its contribution list. The sheet renders it on hover. This is the
+creator's feedback loop and the proof the engine produced the number.
 
 ## 7. Expression and condition language
 
 ### 7.1 Requirements
 
-- Dice literals first-class (`1d10`, `4d6kh3`), arithmetic, comparison, boolean operators.
-- Dotted identifiers resolving to registry variables; display names for symbolic rendering.
-- A fixed function set: `floor`, `ceil`, `round`, `max`, `min`, `if(cond, a, b)`, `abs`,
-  plus system-template-defined helpers (section 8). No user-defined functions in content.
-- One lookup form into system tables (`table(spell_slots, caster_level, 3)`).
-- Predicates for conditions: `equipped(armor)`, `has(feature)`, `level(monk) >= 5`,
-  `proficient(skill)`. The vocabulary comes from the system template; the grammar is shared.
-- **Two evaluation phases**: *compile* (substitute variables, fold, keep dice symbolic:
-  `{monk.level}d8` → `4d8`) and *roll* (a consumer rolls). Taken from Dicecloud. Sheets show
-  compile-phase results; readers show symbolic.
-- Integer semantics defined by the system (5e: floor division), not by the host language.
-- Total and sandboxed: no loops, no I/O, no mutation. Unknown identifier is a hard error with
-  position.
+Dice literals (`1d6`, `2d4`; Nimble's "WIL d8" meaning WIL dice of d8 is `dice(wil, 8)`, with
+`wil d8` accepted as sugar **(my call)**), arithmetic, comparison, boolean `and or not`, dotted identifiers, fixed functions
+`floor ceil round abs max min if table dice`, template-defined helpers, one table lookup form,
+predicates (`equipped(kind)`, `has(id)`, `level(class)`, `proficient(thing)`, state booleans
+like `dying`), **two evaluation phases** (compile: variables substituted, dice symbolic; roll:
+consumer-side), system-defined integer semantics, sandboxed and total, unknown identifier = hard
+error with position.
 
-### 7.2 Choice of language
+### 7.2 Choice of language (my call)
 
-The survey found nothing off the shelf with dice literals, conditionals, and matching
-implementations in more than one host language. Nunjucks and Liquid have no dice and silent
-undefineds. CEL has Go and partial TypeScript but no dice and programmer syntax. Spreadsheet
-formulas have no shared engine. JavaScript-eval approaches are not a sandbox for untrusted
-homebrew.
+Nothing off the shelf has dice literals, conditionals, and matching implementations across
+host languages (survey §6). A small purpose-built PEG grammar with a language-neutral JSON
+conformance corpus. Reference implementation TypeScript; a second implementation later
+proves the spec. Syntax leans toward what players read: Roll20/Foundry dice notation, plain
+arithmetic, words for logic.
 
-**My call:** a small purpose-built grammar, specified as a PEG, with a language-neutral JSON
-conformance corpus (expression, environment, expected symbolic output, expected resolved
-output, expected errors). The reference implementation is TypeScript (section 10). A second
-implementation in another language later proves the spec by passing the same corpus. The cost
-is owning a grammar forever; the mitigation is keeping it small and freezing it early.
+### 7.3 The torture test (go/no-go gate; Scott judges)
 
-Syntax leans toward what players already read: Roll20/Foundry dice notation, plain
-`+ - * /`, and words rather than symbols for logic (`and`, `or`, `not`) in `when` clauses.
+Written as content documents in the proposed syntax **before** grammar or engine code beyond a
+spike. If a Nimble homebrewer would not read them and nod, redesign. Nimble items, from recon
+§6, plus two 5e shapes as insurance:
 
-### 7.3 Prose rendering rules
-
-Readers render `{{ }}` symbolically using the registry display names; sheets render resolved.
-Display overrides via `|`. A variable with no display name renders as its id, which is a lint
-warning for the system template, not an error for the content.
-
-### 7.4 The torture test (go/no-go gate)
-
-Before any grammar or engine code is written beyond a spike, write the following 5e rules as
-content documents in the proposed syntax and judge readability. If a homebrewer would not read
-them and nod, redesign. This is the foundational work SC-451 asked for. **Scott judges the
-gate**; the plan has a blocking review checkpoint here, not builder self-certification.
-
-1. Monk Unarmored Defense (10 + DEX + WIS, no armor, no shield).
-2. Barbarian Unarmored Defense (10 + DEX + CON, shield allowed).
-3. Draconic Resilience (13 + DEX when unarmored; also +1 HP per level).
-4. Mage Armor as a timed effect on another creature.
-5. Light/medium/heavy armor AC with max-DEX caps and strength requirements.
-6. Shield +2 only when equipped.
-7. A feat granting +1 AC unconditionally.
-8. Jack of All Trades (half proficiency to checks you are not proficient in).
-9. Expertise on two chosen skills (choice deferred; model it as two fixed skills).
-10. Multiclass spell slots (sum of caster-level fractions, table lookup).
-11. Proficiency bonus from total level.
-12. Speed: highest of several sources, plus unconditional bonuses (Mobile feat).
-13. Same spell twice does not stack (Bless from two clerics).
-14. Hit point maximum: sum of per-level contributions plus CON per level plus Tough.
-15. A conditional damage bonus (Great Weapon Fighting / Dueling style).
-
-The spell from the demo is the easy case and is not on this list on purpose.
+1. Defense: unarmored `dex`, Cloth `n + dex`, Mail `n + min(dex, 2)`, Plate flat; STR
+   requirements; shields add; the highest applicable base wins.
+2. Catch Breath vs Make Camp Hit Die healing (roll vs max, + STR with sign), with Oozeling
+   (always max) and Wild One (+KEY in the wild) overrides.
+3. Mage mana max `(max(int,0)*3)+level`, unlocked at level 2.
+4. Elemental Surge: temporary mana at Initiative, encounter lifetime, scaling WIL →
+   WIL+1d4 → WIL+2d4 by level.
+5. Fury Dice: pool capped by KEY, die size by level, added to STR attacks, spendable for
+   STR+DEX mitigation, zeroed on `rage-end`.
+6. Devoted Protector: `wounds.max add: 3 when: ally_nearby`.
+7. Initiative → starting actions by digit count (an event handler in the template).
+8. Mana cost modifiers: upcast ceiling; Methodical Spellweaver −2 (min 1) for +1 action.
+9. Event refreshes: Dragonborn "recharges whenever you gain a Wound"; Gnome "resets at full HP".
+10. Level-up HP as per-level history (roll with advantage or class average).
+11. Non-proficient armor: Defend costs 2 actions; non-proficient weapon cannot crit.
+12. Dying state machine with Enduring Rage and Unstoppable Force overrides.
+13. Spells known = schools × unlocked tier; Mage tier N at level 2N.
+14. 5e insurance: Monk Unarmored Defense vs Mage Armor vs armor (competing bases).
+15. 5e insurance: Bless cast twice does not stack (`same-source: highest`).
 
 ## 8. System templates
 
-A system template is a package of documents in the same format whose `type` values are
-system-level (`variable`, `content-type`, `table`, `helper`, `policy`). It declares:
+A package of documents (`type: variables | resources | events | predicates | functions |
+table | content-type | slots | package`). The `nimble` package declares: the four stats and
+`key`/`secondary`; skills (10) with points and cap; saves with advantage flags; `hp.max`
+(fold `add`, fed by the level history), `wounds.max` (default 6), `hit_dice.max` (default
+`level`), `hit_die.size` (fold base=max; class contributes), `defense.base`/`defense`;
+`initiative`; `speed` 6; `inventory.slots` `10 + str`; `languages` `1 + int`; resources
+`hp wounds hit_dice temp_hp actions`; events of §6.4; predicates; the Field Rest / Safe
+Rest handlers; content types with suggested properties; **choice slots** (§11).
 
-- **Variables** (section 6.5): id, display name, type, default, fold, rounding, allowed ops,
-  and for derived variables their formula (`prof = 2 + floor((level - 1) / 4)`).
-- **Content types** and their suggested properties (what the form shows for a Spell).
-- **Tables** (spell slots by caster level, XP by level, carrying capacity).
-- **Helper functions** callable from expressions (`caster_level(class)`). These are the
-  successor to the ORF prototype's hardcoded `sum`/`max`/`getFromAll`. **My call:** helpers are
-  defined in the system template, not in content, and are themselves expressions over the
-  grammar, not host code.
-- **Predicates** available in `when` (`equipped`, `has`, `proficient`, `level`).
-- **Stacking policy** (section 6.4) and the system's rounding.
-- **Display names** for symbolic rendering.
+**Packaging and versioning (my call):** a manifest document (`type: package`, `id: nimble`)
+lists members; integer revisions with a human `label`. Content declares `system: nimble`
+(latest) or `system: nimble@2`. **Printing (decision, Scott: 3.0 files are playtest, not
+final):** the template encodes the **second-printing** rules where they differ (Defense, skill
+cap 10, HP average option) because that is what will be current when the sheet ships, and
+carries `label: "Second printing (playtest Oct 2026)"`; first-printing values are kept as a
+documented diff so a `nimble@1` revision can be cut if needed. **Scott to confirm** which
+printing his table plays; the sheet shows the label.
 
-The 5e SRD template for this phase covers only what the demo and the torture test need:
-abilities and modifiers, proficiency, level and class levels, AC, HP, speed, saves, skills,
-spellcasting variables, the spell-slot table. It is CC-BY licensed content; the template cites
-the SRD version it implements.
+Required notices (both verbatim, prominent in the app and in the package manifest):
+"This app is free to use for anyone who already owns the content, is trying the system out, or
+cannot afford to buy it right now. If you enjoy Nimble and are able, please support the game by
+purchasing the official content at nimbleRPG.com." and "[Product Name] is an independent
+product published under the Nimble 3rd Party Creator License. Nimble TTRPG © Nimble Co."
 
-**Packaging and versioning (my call):** a system template is a **package**: a manifest
-document (`type: package`) whose id is the package id (`srd5e`) and whose frontmatter lists
-member document ids. Packages use the same integer revisions as every document
-(`srd5e@3`); the manifest may carry a human-readable `label: "SRD 5.1"`. Content declares
-`system: srd5e` (latest) or `system: srd5e@3` (pinned). Publishing a new manifest revision
-is how a template update reaches consumers. Variables are grouped as lists inside a few
-documents (`abilities.md`, `combat.md`, `spellcasting.md`), not one document each; the
-registry loader flattens them. `requires` uses the same package mechanism for content that
-depends on other content.
+## 9. Identity, versioning, publishing (my calls, MVP-sized)
 
-## 9. Identity, versioning, publishing
+- Ids: `namespace.collection.slug`, modeled on Steel Compendium's SCC codes.
+- Revisions: integers per id; `id@N` pins. Supersede, never delete.
+- Registry for the MVP: a folder of files (the app bundles the `nimble` package and reads a
+  user content folder or upload). Characters are documents the app stores; cross-device sync
+  is a thin hosted store of character documents keyed by a share link **(my call: simplest
+  thing that satisfies the phone + laptop goal; auth later)**.
+- Dependencies: `system` and `requires` (content ids or stat minimums). Missing = load error.
 
-**My calls, all of them**, sized for the demo:
+## 10. Reference implementation
 
-- **Identity**: a dotted code `namespace.collection.slug`, modeled on Steel Compendium's SCC
-  codes, which already serve as permalinks, API keys, and cross-reference links there.
-  Namespaces are owned by publishers. `srd5e.homebrew.ember-lash`.
-- **Revisions**: integers per id. A publish creates `id@N`. Consumers may reference `id`
-  (latest) or `id@N` (pinned). Deleting a revision is not supported; superseding is.
-- **Registry (demo scale)**: a small HTTP service backed by files, serving documents by id and
-  revision, with a feed or subscription endpoint consumers poll or receive pushes from. Plain
-  files on disk are an equally valid registry (a folder in an Obsidian vault), which keeps the
-  "works as plain files" goal honest.
-- **Dependencies**: a document's `system` and `requires` declare what it needs. Missing
-  dependencies are errors at load, not at render.
+**Repo (decision, Scott):** `scottTomaszewski/orf` until a name exists. **My call:** Go
+prototype tagged `prototype-2023` and removed from `main`; standalone repo, not a Steel
+Compendium submodule; code MIT; spec licence open item; Nimble content under the Nimble
+notice, in its own directory with its own LICENSE note.
 
-Authentication, ownership, moderation, and a marketplace are later phases.
+**Stack (my call):** TypeScript throughout. Engine as a dependency-free library passing the
+conformance corpus. Sheet as a web app installable to a phone home screen. Framework, editor,
+state library, hosting are the builder's.
 
-## 10. Reference implementations for the demo
+- **Engine**: document parser, registry, fold, expression evaluator (compile/roll), events
+  and resource state machine, provenance, diagnostics.
+- **Sheet**: create, play, level-up views (§3); provenance hover; Reader view of any attached
+  document; content folder/upload for homebrew; license notice.
+- **Nimble package**: core + Mage + Berserker + the ancestries and backgrounds (data entry;
+  the official Foundry system's compendium JSON is a cross-check, not a source to copy).
 
-**Repo (decision, Scott):** build in the existing `scottTomaszewski/orf` repo until a real
-name exists; a rename later is cheap. **My call:** the 2023 Go prototype is tagged
-`prototype-2023` and removed from `main` (history keeps it; the survey documents what it did).
-The repo is standalone, not a Steel Compendium workspace submodule, so the workspace's
-worktree and deploy rules do not apply. Code stays MIT; the licence for the format
-specification itself is an open item.
+## 11. Choices (pulled forward in this revision; my call on shape)
 
-**My call on stack:** TypeScript throughout for this phase. The authoring app and consumers
-are web pages, an eventual Obsidian plugin is TypeScript, and one language keeps the engine
-and UI in one repo. The grammar spec and conformance corpus are language-neutral so a Go (or
-other) implementation can follow when tooling needs it; Steel Compendium's pipeline is Go, so
-that port is plausible but not scheduled.
+A usable sheet needs level-up, so the Dicecloud **slot** model is in scope. A class-level
+document `grants` content unconditionally and declares `choices` as slots:
 
-- **Engine** (library): parser for documents and expressions, registry loader, fold and
-  evaluation, provenance, diagnostics. No UI dependencies. Passes the conformance corpus.
-- **Authoring app**: system picker, type picker, property form generated from the system's
-  suggested properties plus "add property", body editor with `{{ }}` autocomplete from the
-  registry, live Reader and Sheet preview, Publish button. Validation on save: unknown
-  variables and targets are shown inline before publish.
-- **Reader**: renders a document symbolically with system display names.
-- **Sheet**: a fixed sample character (a 5th-level wizard) whose state is a document too;
-  renders content resolved, with provenance on hover.
-- **Card** (optional): statblock/card view of the same document; exists to make "three tools" true and
-  to show a third rendering with no engine changes.
-- **Registry**: as in section 9.
+```yaml
+---
+id: nimble.classes.mage.level-4
+type: class-level
+class: nimble.classes.mage
+level: 4
+grants: [nimble.features.mage.tier-2]
+choices:
+  - slot: spellshaper
+    count: 2
+    from: {type: feature, tags: [mage, spellshaper]}
+    unique: character
+  - slot: key-stat
+    count: 1
+    from: {options: [int, wil]}
+    effect: {target: "{{ choice }}", add: 1}
+---
+```
 
-Left to the builder: framework choices, editor component, how previews subscribe to the
-registry (polling is fine for the demo), build tooling, test framework beyond "the corpus
-runs in CI".
-
-## 11. Deferred: choices and mutable character state
-
-Not built in this phase. Direction, so nothing designed now blocks it: Dicecloud's **slot**
-model (a slot declares what type and tags it accepts, how many, uniqueness, and a condition;
-library content declares which slots it can fill) is the strongest portable choice model
-surveyed and maps onto "you are a level 2 Wizard, pick one of these spells". Character state
-over time (level-ups, revisions of a character) should reuse the same revision mechanism as
-content. The engine's contribution model already handles the result of a choice (a chosen
-feature is just more content attached to the character), so choices are an authoring and
-data-model concern, not an engine redesign.
+Choice results live in the character's `choices` map keyed by `<class-level id>.<slot>`.
+Chosen content is attached like any other. Retraining = editing a choice. The engine
+validates `count`, `unique`, and `from`; the sheet renders the picker. Deferred: choices
+whose options depend on earlier choices beyond tag filters; multiclassing UI.
 
 ## 12. Order of work
 
-Each step is gated by the one before it.
+Each step gated by the one before.
 
-1. **Torture test on paper.** Write the fifteen rules of section 7.4 as documents in proposed
-   syntax. Iterate on syntax until readable. Output: the examples, which become the first
-   conformance cases. Go/no-go for the whole project.
-2. **Grammar spec and conformance corpus.** PEG for expressions and predicates; JSON cases
-   for parse, symbolic render, resolved value, and errors.
-3. **Engine.** Document parser, registry, fold, evaluate, provenance, diagnostics. Driven by
-   the corpus.
-4. **5e SRD system template** sufficient for the torture test and the demo.
-5. **Authoring app + Reader + Sheet + registry** (Card if cheap).
-6. **The demo** of section 3, rehearsed end to end and recorded.
-7. **Post** to Reddit and Discords. Interest decides whether the next phase (Nimble template,
-   choices, a real character sheet) is funded with evenings and weekends.
+1. **Torture test on paper** (§7.3) in proposed syntax, linted for shape and references.
+   **Gate: Scott judges readability.**
+2. **Grammar spec and conformance corpus** (expressions, predicates, events).
+3. **Engine**: parser, registry, fold, evaluator, resources and events, choices, provenance.
+4. **Nimble package**: core, Mage, Berserker, ancestries, backgrounds, armor and weapons.
+5. **Sheet**: create → play → level-up, phone-first, license notice, homebrew folder.
+6. **Table test**: Scott's game for a few sessions; fix what hurts.
+7. **Post**: Nimble Discord, subreddit, note to Sly Flourish, with a short clip of the
+   homebrew ripple. Interest decides the next phase (remaining classes, authoring form,
+   Draw Steel package).
 
 ## 13. Open items
 
 For Scott:
 
 - The project's name.
-- Whether the demo entity is a spell or a monster (both acceptable; spell is the default).
-- Licence for the specification text (code is MIT).
+- Which printing the table plays (template default: second printing with label).
+- Which classes the kids play (template default: Mage and Berserker).
+- Licence for the specification text (code MIT; Nimble content under the Nimble notice).
 
-Resolved 2026-10-18: laptop demo, recorded (section 3). Time budget: the demo is an
-unsized spare-time interest test and should be planned as the smallest credible version;
-sustained evenings-and-weekends investment follows only if the posts draw interest.
-
-Builder's calls (not decisions, just flagged): exact PEG syntax for `when` clauses; whether
-property-level expressions use `{{ }}` or a naming convention; registry transport details;
-the sample character.
+Builder's calls, flagged: exact PEG for `when`; `wil d8` sugar; the hosted character store;
+framework and hosting; how the sheet renders provenance on a phone.

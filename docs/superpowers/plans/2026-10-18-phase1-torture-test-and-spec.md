@@ -2,36 +2,32 @@
 
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
 
-**Goal:** Produce the go/no-go packet for the format: fifteen 5e rules written as content documents in the proposed syntax, a draft grammar spec, a minimal 5e SRD system template, and a linter that proves the documents are well-formed and reference only real variables.
+**Goal:** Produce the go/no-go packet for the format: Nimble's hardest rules written as content documents in the proposed syntax, a draft grammar spec covering expressions, effects, resources, events and choice slots, a minimal Nimble system template, and a linter proving the documents are well-formed and reference only declared things.
 
-**Architecture:** This phase is steps 1 and 2 of the design doc's order of work, up to Scott's gate. No expression evaluator is built. A small TypeScript package parses Markdown+frontmatter documents, builds a variable registry from system-template documents, and lints content documents (effect shape, target existence, identifier references inside `{{ }}` and `when`). The torture-test documents, the demo spell, and the sample character are the linter's fixtures and the gate's exhibits.
+**Architecture:** Steps 1 and 2 of the design doc's order of work, up to Scott's gate. No evaluator is built. A small TypeScript package parses Markdown+frontmatter, builds a registry (variables, resources, events, predicates, functions, tables, slots) from system-template documents, and lints content documents: effect shape, target existence, identifier references inside `{{ }}` and `when`, resource/refresh shape, character-document shape, choice-slot shape. The torture-test documents, the Nimble core template, and a sample character are the fixtures and the gate exhibits.
 
-**Tech Stack:** TypeScript 5, Node 20 (on PATH via nvm), npm, vitest, `yaml` package. No framework. No parser generator yet (the grammar is specified in prose and PEG in this phase; implementation is Phase 2).
+**Tech Stack:** TypeScript 5, Node 20 (on PATH via nvm), npm, vitest, `yaml`. No framework, no parser generator yet.
 
-**Spec:** `docs/superpowers/specs/2026-10-18-open-rules-format-design.md`. Sections referenced below by number.
+**Spec:** `docs/superpowers/specs/2026-10-18-open-rules-format-design.md` (Nimble-first revision). Research: `docs/superpowers/research/2026-10-18-nimble-recon.md` (page cites for every rule).
 
 ## Global Constraints
 
-- Documents are Markdown with YAML frontmatter; frontmatter delimited by `---` lines at the top of the file (spec 5.1).
-- Reserved properties: `id`, `type`, `system`, `name`, `effects`, `requires`, `tags`. All other properties are the creator's and must be preserved, never rejected (spec 5.1).
-- Document ids are dotted lowercase: `^[a-z0-9-]+(\.[a-z0-9-]+)+$` (spec 9).
-- Variable ids are dotted lowercase: `^[a-z][a-z0-9_]*(\.[a-z][a-z0-9_]*)*$`; aliases are `^[A-Z][A-Z0-9_]*$` (spec 6.5).
-- Effect operation keys, exactly one per effect: `base`, `add`, `mul`, `min`, `max`, `set` (spec 6.2).
-- Unknown variable, unknown target, duplicate variable id: errors with file path and location. Never resolve to zero silently (spec 6.5, anti-goals).
-- Inline expressions are `{{ expr }}` or `{{ expr | display text }}` (spec 5.2).
-- Conditions use words `and`, `or`, `not` (spec 7.2).
-- Repo is standalone `scottTomaszewski/orf`; Go prototype tagged `prototype-2023` and removed from `main` (spec 10). Commit messages carry no AI attribution (Scott's global rule).
-- 5e content is SRD 5.1 (CC-BY-4.0); the template cites it.
+- Documents are Markdown with YAML frontmatter delimited by `---` at the top (spec 5.1).
+- Reserved properties: `id`, `type`, `system`, `name`, `effects`, `grants`, `choices`, `variables`, `resources`, `requires`, `tags`, `version`. Others preserved, never rejected (spec 5.1).
+- Document ids: `^[a-z0-9-]+(\.[a-z0-9-]+)+$`. Variable, resource, event, slot ids: `^[a-z][a-z0-9_]*(\.[a-z][a-z0-9_]*)*$`. Aliases: `^[A-Z][A-Z0-9_]*$` (spec 6.5, 9).
+- Effect ops, exactly one per effect: `base add mul min max set` (spec 6.1). `transfer` ∈ `always equipped carried`.
+- Unknown variable, target, resource, event, slot, or duplicate id: error with path and line. Never silent zero (spec 6.5).
+- Inline expressions `{{ expr }}` / `{{ expr | display }}`; logic words `and or not` (spec 5.2, 7.2).
+- Nimble content lives under `systems/nimble/` and `examples/nimble/` with the license notice in `systems/nimble/LICENSE-NOTICE.md`; code is MIT (spec 10). The template encodes second-printing values with first-printing differences noted in a `printing_diff` property (spec 8).
+- Repo `scottTomaszewski/orf`; Go prototype tagged `prototype-2023` and removed from `main`. Commit messages carry no AI attribution.
 
 ## Review Focus
 
-Inputs the spec implies but no task's test would otherwise exercise:
-
-1. A body containing a `---` horizontal rule must not be mistaken for a second frontmatter block; a file with no frontmatter is a lint error, not a crash. (Task 2)
-2. An effect with zero or two operation keys is an error naming the effect's index. (Task 4)
-3. An identifier that is an alias (`DEX`) or `this.`-scoped resolves; a near-miss (`wis.modifier` for `wis.mod`) is an error that names the file, the expression, and the identifier. (Task 4)
-4. The same variable id declared in two template documents is an error naming both files. (Task 3)
-5. Unbalanced or nested `{{` in a body is an error with the line number. (Task 4)
+1. A `---` horizontal rule in the body is body, not frontmatter; no frontmatter is a lint error, not a crash. (Task 2)
+2. An effect with zero or two op keys errors naming `effects[i]`. (Task 4)
+3. An alias (`DEX`), `key`, or `this.x` resolves; a near miss (`wound.max` for `wounds.max`) errors naming file, expression, identifier. (Task 4)
+4. The same variable or resource id declared in two documents errors naming both files. (Task 3)
+5. A `refresh.on` naming an undeclared event, or a `choices[].from` with neither `type` nor `options`, errors with the document id and index. (Task 4)
 
 ---
 
@@ -41,59 +37,36 @@ Inputs the spec implies but no task's test would otherwise exercise:
 - Create: `package.json`, `tsconfig.json`, `.gitignore` (replace), `README.md`, `src/smoke.test.ts`
 - Delete: all Go sources and data (`*.go`, `go.mod`, `go.sum`, `main`, `bob.json`, `expected_bob.json`, `rules/`, `log/`, `engine/`, `evaluate/`, `functions/`, `orf/`, `util/`)
 
-**Interfaces:**
-- Produces: `npm test` runs vitest; `npm run lint-docs` is wired in Task 5.
+**Interfaces:** Produces `npm test` (vitest) and the `lint-docs` script wired in Task 5.
 
 - [ ] **Step 1: Tag the prototype**
-
 ```bash
 cd /home/scott/code/orf && git tag prototype-2023 545bc86 && git push origin prototype-2023
 ```
-
-- [ ] **Step 2: Remove Go sources from main**
-
+- [ ] **Step 2: Remove Go sources**
 ```bash
 git rm -r -q '*.go' go.mod go.sum main bob.json expected_bob.json rules log engine evaluate functions orf util
 ```
 Expected: `git ls-files` shows only `LICENSE`, `.gitignore`, `docs/`.
-
-- [ ] **Step 3: Scaffold**
-
-`package.json`: name `orf` (placeholder), `"type": "module"`, scripts `test: vitest run`, `lint-docs: tsx src/cli.ts systems examples`, devDependencies `typescript ^5`, `vitest ^2`, `tsx ^4`, `@types/node ^20`; dependencies `yaml ^2`. `tsconfig.json`: `strict`, `module: NodeNext`, `target: ES2022`, `rootDir: src`, `noEmit: true`. `.gitignore`: `node_modules/`, `dist/`, `.superpowers/`. `README.md`: three lines: placeholder name, one-sentence purpose, pointer to the design doc.
-
-- [ ] **Step 4: Smoke test**
-
-`src/smoke.test.ts`:
-```ts
-import { expect, test } from "vitest";
-test("vitest runs", () => expect(1 + 1).toBe(2));
-```
-Run: `npm install && npm test`. Expected: 1 passed.
-
-- [ ] **Step 5: Commit**
-
-```bash
-git add -A && git commit -m "chore: archive Go prototype under tag prototype-2023; TypeScript scaffold"
-```
+- [ ] **Step 3: Scaffold.** `package.json`: name `orf`, `"type": "module"`, scripts `test: vitest run`, `lint-docs: tsx src/cli.ts systems examples`; devDependencies `typescript ^5`, `vitest ^2`, `tsx ^4`, `@types/node ^20`; dependencies `yaml ^2`. `tsconfig.json`: `strict`, `module: NodeNext`, `target: ES2022`, `noEmit: true`. `.gitignore`: `node_modules/`, `dist/`, `.superpowers/`. `README.md`: placeholder name, one-sentence purpose, link to the design doc, the Nimble attribution line.
+- [ ] **Step 4: Smoke test** `src/smoke.test.ts` asserting `1 + 1 === 2`. Run `npm install && npm test`. Expected: 1 passed.
+- [ ] **Step 5: Commit** `chore: archive Go prototype under tag prototype-2023; TypeScript scaffold`
 
 ---
 
 ### Task 2: Document parser
 
-**Files:**
-- Create: `src/document.ts`, `src/document.test.ts`
+**Files:** Create `src/document.ts`, `src/document.test.ts`
 
 **Interfaces:**
-- Produces:
-  ```ts
-  export interface Document { path: string; frontmatter: Record<string, unknown>; body: string; bodyStartLine: number; }
-  export class DocumentError extends Error { constructor(public path: string, message: string, public line?: number) }
-  export function parseDocument(text: string, path: string): Document;   // throws DocumentError
-  export function loadDocuments(dirs: string[]): Document[];              // recursive, *.md only, sorted by path
-  ```
+```ts
+export interface Document { path: string; frontmatter: Record<string, unknown>; body: string; bodyStartLine: number; }
+export class DocumentError extends Error { constructor(public path: string, message: string, public line?: number) }
+export function parseDocument(text: string, path: string): Document;   // throws DocumentError
+export function loadDocuments(dirs: string[]): Document[];              // recursive *.md, sorted by path
+```
 
-- [ ] **Step 1: Write failing tests**
-
+- [ ] **Step 1: Failing tests**
 ```ts
 test("parses frontmatter and body", () => {
   const d = parseDocument("---\nid: a.b\ntype: spell\n---\nHello\n", "x.md");
@@ -101,7 +74,7 @@ test("parses frontmatter and body", () => {
   expect(d.body).toBe("Hello\n");
   expect(d.bodyStartLine).toBe(5);
 });
-test("a horizontal rule in the body is body, not frontmatter", () => {
+test("a horizontal rule in the body is body", () => {
   const d = parseDocument("---\nid: a.b\n---\nabove\n\n---\n\nbelow\n", "x.md");
   expect(d.body).toContain("---");
   expect(d.frontmatter).toEqual({ id: "a.b" });
@@ -113,238 +86,236 @@ test("invalid YAML is a DocumentError with a line", () => {
   expect(() => parseDocument("---\nid: [\n---\n", "z.md")).toThrow(DocumentError);
 });
 ```
-
-- [ ] **Step 2: Run, expect failure** (`npm test`, "Cannot find module ./document").
-
-- [ ] **Step 3: Implement** `parseDocument` with a line-based splitter (first line must be `---`; frontmatter ends at the next line that is exactly `---`); parse with `yaml.parse`; empty frontmatter object if the block is empty. `loadDocuments` uses `fs.readdirSync` recursively.
-
+- [ ] **Step 2: Run, expect failure.**
+- [ ] **Step 3: Implement** with a line splitter (first line `---`, block ends at the next line that is exactly `---`); `yaml.parse`; empty block → `{}`.
 - [ ] **Step 4: Run, expect pass.**
-
 - [ ] **Step 5: Commit** `feat: document parser for markdown+frontmatter`
 
 ---
 
 ### Task 3: Registry from system-template documents
 
-**Files:**
-- Create: `src/registry.ts`, `src/registry.test.ts`
+**Files:** Create `src/registry.ts`, `src/registry.test.ts`
 
 **Interfaces:**
-- Consumes: `Document` from Task 2.
-- Produces:
-  ```ts
-  export interface VariableDef { id: string; name: string; type: "integer"|"dice"|"boolean"|"text"|"list"; default?: unknown; formula?: string; alias?: string; ops?: string[]; fold?: Record<string,string>; rounding?: "floor"|"ceil"|"round"|"none"; declaredIn: string; }
-  export interface TableDef { id: string; columns: string[]; rows: unknown[][]; declaredIn: string; }
-  export interface Registry { variables: Map<string, VariableDef>; aliases: Map<string, string>; tables: Map<string, TableDef>; predicates: Set<string>; functions: Set<string>; }
-  export function buildRegistry(docs: Document[]): { registry: Registry; diagnostics: Diagnostic[] };
-  export interface Diagnostic { path: string; message: string; line?: number; }
-  ```
-- Template document shapes the builder reads (these are the spec 8 declarations, pinned here):
-  - `type: variables` → `variables: VariableDef[]` (without `declaredIn`).
-  - `type: table` → `columns: string[]`, `rows: unknown[][]`; table id = document `id`.
-  - `type: predicates` → `predicates: [{id, name, args: string[]}]`.
-  - `type: functions` → `functions: [{id, name, args: string[]}]` (built-ins `floor ceil round max min abs if table` are always present).
-  - Content documents may declare `variables: [...]` too (spec 6.5 "content may declare new variables"); those are included.
-
-- [ ] **Step 1: Write failing tests**
-
 ```ts
-test("collects variables, aliases, tables, predicates", () => {
-  const { registry, diagnostics } = buildRegistry([varsDoc, tableDoc, predDoc]);
+export interface Diagnostic { path: string; message: string; line?: number; }
+export interface VariableDef { id: string; name: string; type: "integer"|"dice"|"boolean"|"text"|"list"; default?: unknown; formula?: string; alias?: string; ops?: string[]; fold?: Record<string,string>; rounding?: "floor"|"ceil"|"round"|"none"; declaredIn: string; }
+export interface ResourceDef { id: string; max?: string; floor?: number; refresh: { on: string; to?: string|number; add?: number }[]; when?: string; declaredIn: string; }
+export interface EventDef { id: string; args: string[]; declaredIn: string; }
+export interface PredicateDef { id: string; name: string; args: string[]; declaredIn: string; }
+export interface TableDef { id: string; columns: string[]; rows: unknown[][]; declaredIn: string; }
+export interface SlotDef { id: string; declaredIn: string; }   // "<class-level id>.<slot>"
+export interface Registry {
+  variables: Map<string, VariableDef>; aliases: Map<string, string>;
+  resources: Map<string, ResourceDef>; events: Map<string, EventDef>;
+  predicates: Map<string, PredicateDef>; functions: Set<string>;
+  tables: Map<string, TableDef>; slots: Map<string, SlotDef>;
+  packages: Map<string, { id: string; label?: string; members: string[] }>;
+  documentIds: Set<string>;
+}
+export function buildRegistry(docs: Document[]): { registry: Registry; diagnostics: Diagnostic[] };
+```
+Template document shapes the builder reads (spec 8, pinned here):
+- `type: variables` → `variables: VariableDef[]`; `type: resources` → `resources: ResourceDef[]`; `type: events` → `events: EventDef[]`; `type: predicates` → `predicates: PredicateDef[]`; `type: functions` → `functions: [{id, args}]` on top of built-ins `floor ceil round abs max min if table dice`; `type: table` → `columns`, `rows`, id = document id; `type: package` → `label`, `members`.
+- **Any** document may carry `variables:` and `resources:` (spec 6.5); they are included. `type: class-level` documents contribute slots: each `choices[i].slot` registers `<doc id>.<slot>`.
+- Built-in events always present: `damage heal spend restore catch-breath make-camp safe-rest encounter-start encounter-end turn-end level-up` (spec 6.4).
+
+- [ ] **Step 1: Failing tests**
+```ts
+test("collects variables, aliases, resources, events, predicates, tables, slots, packages", () => {
+  const { registry, diagnostics } = buildRegistry([varsDoc, resDoc, evDoc, predDoc, tableDoc, classLevelDoc, pkgDoc]);
   expect(diagnostics).toEqual([]);
-  expect(registry.variables.get("dex.mod")?.name).toBe("your Dexterity modifier");
-  expect(registry.aliases.get("DEX")).toBe("dex.mod");
-  expect(registry.tables.get("srd5e.tables.spell-slots")?.columns[0]).toBe("caster_level");
-  expect(registry.predicates.has("equipped")).toBe(true);
-  expect(registry.functions.has("floor")).toBe(true);
+  expect(registry.variables.get("wounds.max")?.default).toBe(6);
+  expect(registry.aliases.get("DEX")).toBe("dex");
+  expect(registry.resources.get("hit_dice")?.refresh[0]).toEqual({ on: "safe-rest", to: "max" });
+  expect(registry.events.has("gain-wound")).toBe(true);
+  expect(registry.events.has("safe-rest")).toBe(true);           // built-in
+  expect(registry.predicates.get("equipped")?.args).toContain("armor");
+  expect(registry.tables.get("nimble.tables.hit-die-average")?.columns[0]).toBe("die");
+  expect(registry.slots.has("nimble.classes.mage.level-4.spellshaper")).toBe(true);
+  expect(registry.packages.get("nimble")?.members).toContain("nimble.system.core");
 });
 test("duplicate variable id across two documents names both files", () => {
-  const { diagnostics } = buildRegistry([docWith("a.md", "ac.base"), docWith("b.md", "ac.base")]);
-  expect(diagnostics[0].message).toMatch(/ac\.base.*a\.md.*b\.md/);
+  const { diagnostics } = buildRegistry([varDoc("a.md", "wounds.max"), varDoc("b.md", "wounds.max")]);
+  expect(diagnostics[0].message).toMatch(/wounds\.max.*a\.md.*b\.md/);
 });
+test("duplicate resource id is a diagnostic", () => { /* same shape for resources */ });
 test("malformed variable id is a diagnostic", () => {
-  const { diagnostics } = buildRegistry([docWith("a.md", "AC.Base")]);
-  expect(diagnostics[0].message).toMatch(/AC\.Base/);
+  expect(buildRegistry([varDoc("a.md", "Wounds.Max")]).diagnostics[0].message).toMatch(/Wounds\.Max/);
 });
 ```
-
 - [ ] **Step 2: Run, expect failure.**
-- [ ] **Step 3: Implement** `buildRegistry`. Validate ids against the Global Constraints regexes; validate `ops` ⊆ the six operation keys.
+- [ ] **Step 3: Implement.** Validate ids against the regexes; `ops` ⊆ the six; `refresh[].on` is checked in Task 4 (needs the full registry).
 - [ ] **Step 4: Run, expect pass.**
-- [ ] **Step 5: Commit** `feat: variable registry from system-template documents`
+- [ ] **Step 5: Commit** `feat: registry of variables, resources, events, predicates, tables, slots`
 
 ---
 
 ### Task 4: Expression reference extraction and lint rules
 
-**Files:**
-- Create: `src/expr-refs.ts`, `src/expr-refs.test.ts`, `src/lint.ts`, `src/lint.test.ts`
+**Files:** Create `src/expr-refs.ts`, `src/expr-refs.test.ts`, `src/lint.ts`, `src/lint.test.ts`, fixtures under `src/__fixtures__/`
 
 **Interfaces:**
-- Consumes: `Document`, `Registry`, `Diagnostic`.
-- Produces:
-  ```ts
-  export function extractInlineExpressions(body: string, startLine: number): { expr: string; display?: string; line: number }[]; // throws on unbalanced/nested {{
-  export function extractReferences(expr: string): string[]; // identifiers not followed by "(", excluding keywords and, or, not, true, false
-  export function lintDocument(doc: Document, registry: Registry): Diagnostic[];
-  export function lintAll(docs: Document[], registry: Registry): Diagnostic[];
-  ```
-- Lint rules, each producing one `Diagnostic` with `path` and, where known, `line`:
-  1. `id` present and matches the document-id regex; `type`, `system`, `name` present on every document type.
-  2. Every `effects[i]` has `target` (string) and exactly one op key; `when`, `source` if present are strings. Message includes `effects[i]`.
-  3. `target` resolves in `registry.variables` (aliases allowed, resolved to the canonical id). If the target's `ops` is declared, the op must be in it.
-  4. Every identifier from `extractReferences` on each effect's op value and `when`, on every `{{ }}` in the body, and on every string property containing `{{ }}` must resolve: canonical id, alias, `this.<anything>`, a table id (as first arg of `table(...)`), or a predicate/function name. Message: `unknown identifier "wis.modifier" in "{{ 10 + dex.mod + wis.modifier }}"`.
-  5. `type: character` documents: `abilities` object with six integer keys `str dex con int wis cha`; `classes[]` entries `{id, level}`; `equipment[]` entries `{id, equipped: boolean}`; `features`, `spells` arrays of strings. Referenced ids must exist among the loaded documents' `id`s.
-  6. `system` is a string. If any loaded document has `type: package`, `system` must equal one of their `id`s (Task 7 adds `srd5e`; Task 4's own fixtures include a one-line package doc so this rule is tested here).
+```ts
+export function extractInlineExpressions(body: string, startLine: number): { expr: string; display?: string; line: number }[]; // throws DocumentError on unbalanced/nested {{
+export function extractReferences(expr: string): { identifiers: string[]; calls: { name: string; args: string[] }[] };
+export function lintDocument(doc: Document, registry: Registry): Diagnostic[];
+export function lintAll(docs: Document[], registry: Registry): Diagnostic[];
+```
+`extractReferences`: strip dice (`\b\d*d\d+(kh|kl|dh|dl)?\d*\b`), numbers, double-quoted strings; identifiers are `[A-Za-z_][A-Za-z0-9_.]*` not followed by `(`; keywords `and or not true false` dropped; calls recorded with their raw argument identifiers.
 
-- [ ] **Step 1: Write failing tests**
+Lint rules (each one `Diagnostic` with path and line where known):
+1. `id` matches the document-id regex; `type`, `system`, `name` present. `system` (bare or `@N`) names a loaded package if any package is loaded.
+2. `effects[i]`: `target` string; exactly one op key; `when`, `source` strings if present; `transfer` ∈ allowed set.
+3. `target` resolves to a variable (alias allowed → canonical). If the variable declares `ops`, the op must be in it.
+4. Every identifier in: effect op values and `when`; `{{ }}` in body; string properties containing `{{ }}`; variable `formula`; resource `max` and `when` — must resolve to a canonical id, alias, `key`/`secondary`, `this.*`, a state boolean (`dying bloodied raging concentrating`, declared as variables in the template), a predicate/function name, or a table id as first arg of `table(`. Predicate arguments must be in that predicate's declared `args`. Message: `unknown identifier "wound.max" in "{{ wound.max }}"`.
+5. `resources[i].refresh[j].on` names a declared or built-in event; `to` is `"max"`, `0`, or a number; `add` is a number; `max` identifier resolves.
+6. `type: character`: `stats` object with integer `str dex int wil`; `ancestry`, `background` document ids that exist; `classes[]` `{id, level}`; `levels[]` `{level, hp}`; `choices` keys are registered slots and values are arrays of existing document ids or stat names; `equipment[]` `{id, equipped: boolean}`; `state` object with keys that are declared resource ids or `conditions`.
+7. `type: class-level`: `class` and `level` present; `grants[]` ids exist; `choices[i]` has `slot`, `count` (integer ≥ 1), and `from` with either `type` (+ optional `tags`) or `options`; `unique` ∈ `slot character` if present.
+8. `requires` if present is an object of `{stat: integer}` or a list of document ids that exist.
 
+- [ ] **Step 1: Failing tests**
 ```ts
 test("extracts expressions with display override and line numbers", () => {
-  const xs = extractInlineExpressions("a\n{{ 1d10 + spell.mod }} b {{ spell.save_dc | your spell save DC }}\n", 5);
-  expect(xs).toEqual([
-    { expr: "1d10 + spell.mod", line: 6 },
-    { expr: "spell.save_dc", display: "your spell save DC", line: 6 },
-  ]);
+  const xs = extractInlineExpressions("a\n{{ 1d6 + str }} b {{ mana.max | your maximum mana }}\n", 5);
+  expect(xs).toEqual([{ expr: "1d6 + str", line: 6 }, { expr: "mana.max", display: "your maximum mana", line: 6 }]);
 });
 test("unbalanced braces throw with line", () => {
-  expect(() => extractInlineExpressions("x\n{{ dex.mod\n", 1)).toThrow(/line 2/);
+  expect(() => extractInlineExpressions("x\n{{ dex\n", 1)).toThrow(/line 2/);
 });
-test("references skip functions, keywords, numbers and dice", () => {
-  expect(extractReferences("floor((str.score - 10) / 2) + 1d8 and not equipped(armor)")).toEqual(["str.score", "armor"]);
+test("references skip functions, keywords, numbers, dice; calls carry args", () => {
+  const r = extractReferences("(max(int, 0) * 3) + level and not equipped(armor) + dice(wil, 8)");
+  expect(r.identifiers).toEqual(["int", "level", "wil"]);
+  expect(r.calls).toEqual([{ name: "max", args: ["int"] }, { name: "equipped", args: ["armor"] }, { name: "dice", args: ["wil"] }]);
 });
-test("effect with two ops is an error naming the index", () => {
-  const d = lintDocument(docWithEffects([{ target: "ac.bonus", add: 1, set: 2 }]), reg);
-  expect(d[0].message).toMatch(/effects\[0\].*exactly one/);
+test("effect with two ops errors naming the index", () => {
+  expect(lintDocument(withEffects([{ target: "wounds.max", add: 1, set: 2 }]), reg)[0].message).toMatch(/effects\[0\].*exactly one/);
 });
-test("alias and this. resolve; near-miss is named", () => {
-  const d = lintDocument(docWithBody("{{ DEX }} {{ this.max_dex_bonus }} {{ wis.modifier }}"), reg);
+test("alias, key, and this. resolve; near miss is named", () => {
+  const d = lintDocument(withBody("{{ DEX }} {{ key }} {{ this.strength_requirement }} {{ wound.max }}"), reg);
   expect(d).toHaveLength(1);
-  expect(d[0].message).toMatch(/wis\.modifier/);
+  expect(d[0].message).toMatch(/wound\.max/);
 });
 test("op not allowed on target", () => {
-  const d = lintDocument(docWithEffects([{ target: "ac.base", add: 1 }]), regWhereAcBaseOpsIsBaseOnly);
-  expect(d[0].message).toMatch(/add.*ac\.base/);
+  expect(lintDocument(withEffects([{ target: "defense.base", add: 1 }]), regWhereDefenseBaseIsBaseOnly)[0].message).toMatch(/add.*defense\.base/);
+});
+test("refresh on undeclared event", () => {
+  expect(lintDocument(withResources([{ id: "x", refresh: [{ on: "long-rest", to: "max" }] }]), reg)[0].message).toMatch(/long-rest/);
+});
+test("choice without from.type or from.options", () => {
+  expect(lintDocument(classLevelWith([{ slot: "s", count: 1, from: {} }]), reg)[0].message).toMatch(/choices\[0\].*from/);
+});
+test("character state key must be a declared resource", () => {
+  expect(lintDocument(characterWith({ state: { ki: 3 } }), reg)[0].message).toMatch(/ki/);
 });
 ```
-Note on the third test: `armor` is a predicate argument. Predicate arguments are a template-declared vocabulary (spec 8); for this phase the linter treats an identifier appearing as a predicate's argument as resolved if it is listed in that predicate's `args` in the registry. Adjust the test fixture's predicate `equipped` to have `args: ["armor", "shield", "weapon"]`, and assert `armor` is **not** reported by `lintDocument` even though `extractReferences` returns it.
-
 - [ ] **Step 2: Run, expect failure.**
-- [ ] **Step 3: Implement.** `extractReferences` tokenizes with one regex pass: strip dice `\b\d+d\d+(kh|kl|dh|dl)?\d*\b`, numbers, and quoted strings; take `[A-Za-z_][A-Za-z0-9_.]*` not followed by `\s*\(`; drop keywords. Predicate-argument handling: a second pass records `name(args)` pairs so the linter can accept declared args.
+- [ ] **Step 3: Implement.** Fixtures: `src/__fixtures__/clean/` (a one-document package, a variables doc with `dex`, `key`, `wounds.max`, `defense.base` with `ops: [base]`, state booleans, a predicates doc with `equipped` args, a resources doc) and `src/__fixtures__/bad/bad.md` (unknown identifier) for Task 5.
 - [ ] **Step 4: Run, expect pass.**
-- [ ] **Step 5: Commit** `feat: lint rules for effects, targets, and expression references`
+- [ ] **Step 5: Commit** `feat: lint rules for effects, references, resources, characters, choice slots`
 
 ---
 
 ### Task 5: CLI
 
-**Files:**
-- Create: `src/cli.ts`, `src/cli.test.ts`
+**Files:** Create `src/cli.ts`, `src/cli.test.ts`
 
-**Interfaces:**
-- Consumes: `loadDocuments`, `buildRegistry`, `lintAll`.
-- Produces: `npx tsx src/cli.ts <dir>...` prints one line per diagnostic as `path:line: message`, sorted by path, exits 1 if any; prints `OK: N documents, V variables` and exits 0 otherwise. `DocumentError`s are reported as diagnostics, not stack traces.
+**Interfaces:** `npx tsx src/cli.ts <dir>...` prints `path:line: message` per diagnostic sorted by path, exits 1 if any; else `OK: N documents, V variables, R resources` and exits 0. `DocumentError`s become diagnostics.
 
-- [ ] **Step 1: Test** via `child_process.execFileSync` on two fixture dirs under `src/__fixtures__/` (one clean, one with an unknown identifier); assert exit code and that the error line matches `/bad\.md:\d+: unknown identifier/`.
+- [ ] **Step 1: Test** via `execFileSync` on `src/__fixtures__/clean` (exit 0, stdout starts `OK:`) and on `clean` + `bad` (exit 1, a line matching `/bad\.md:\d+: unknown identifier/`).
 - [ ] **Step 2: Run, expect failure.**
-- [ ] **Step 3: Implement** `main(argv: string[]): number` and call it when run directly.
+- [ ] **Step 3: Implement** `main(argv: string[]): number`.
 - [ ] **Step 4: Run, expect pass.**
-- [ ] **Step 5: Commit** `feat: orf lint CLI`
+- [ ] **Step 5: Commit** `feat: lint CLI`
 
 ---
 
-### Task 6: Expression and condition grammar spec (draft)
+### Task 6: Grammar and format spec (draft)
 
-**Files:**
-- Create: `docs/spec/expressions.md`
+**Files:** Create `docs/spec/expressions.md`, `docs/spec/effects-resources-events.md`, `docs/spec/choices.md`
 
-No code. This is the syntax the torture-test documents use; it is what the gate judges. Pin exactly:
+No code. This is what the gate judges. Pin exactly:
 
-- [ ] **Step 1: Write the spec** with these sections and values:
-  - **Lexical:** integers; dice `NdM` with optional `kh N | kl N | dh N | dl N`; identifiers (dotted lowercase) and aliases (upper); `this.` prefix; strings in double quotes only as function arguments.
-  - **Operators**, lowest to highest precedence: `or`; `and`; `not`; comparison `< <= > >= == !=`; `+ -`; `* /`; unary `-`; call; parentheses. `/` on integers rounds per the target variable's `rounding` (5e: floor). Division with dice operands is an error.
-  - **Functions:** `floor(x) ceil(x) round(x) abs(x) max(a, b, ...) min(a, b, ...) if(cond, a, b) table(id, rowKey, column)`. System templates may add helpers (`type: functions`), defined as expressions over this grammar with named args.
-  - **Predicates** (boolean, template-declared): `equipped(kind)`, `has(id)`, `proficient(skill)`, `level(class)` returns integer, `wearing(kind)` is **not** defined (one word per concept).
-  - **Inline form:** `{{ expr }}`, `{{ expr | display text }}`. Symbolic rendering substitutes each identifier with its registry `name`; dice and literals print as written; `+ -` print with spaces. Resolved rendering substitutes values, folds arithmetic between literals, leaves dice.
-  - **Evaluation phases:** compile (variables → values, dice symbolic) and roll (consumer-side). Reader uses symbolic; Sheet uses compile.
-  - **Effects grammar:** the YAML shape from spec 6.2 restated, with `when` as a predicate expression, the six ops, `source`, `duration`, `transfer: equipped | carried | always`.
-  - **Fold:** spec 6.3 formula verbatim; stacking policy spec 6.4.
-  - **Errors:** unknown identifier, unknown target, type mismatch, division by dice, cycle (members named). All carry path and position.
-  - **Deliberately absent:** loops, assignment, user-defined functions in content, string manipulation, JavaScript.
-  - A PEG block for the expression grammar (≈25 rules).
-
-- [ ] **Step 2: Commit** `docs: draft expression and condition grammar`
+- [ ] **Step 1: `expressions.md`.** Lexical: integers; dice `NdM` with optional `kh N | kl N | dh N | dl N`; `dice(count, sides)` function and `wil d8` sugar; identifiers (dotted lowercase), aliases (upper), `key`, `secondary`, `this.`; double-quoted strings only as arguments. Precedence low→high: `or`; `and`; `not`; `< <= > >= == !=`; `+ -`; `* /`; unary `-`; call; parentheses. `/` rounds per the target variable's `rounding`. Functions `floor ceil round abs max min if table dice`; template helpers as named-arg expressions. Predicates: `equipped(kind)`, `has(id)`, `level(class)`, `proficient(thing)`, and state booleans. Inline form and both renderings (symbolic uses registry names; resolved folds literals, leaves dice). Phases compile/roll. Errors. Deliberately absent. A PEG block (≈25 rules).
+- [ ] **Step 2: `effects-resources-events.md`.** Effect record (spec 6.1 table), fold (6.2), stacking (6.3). Resource record (`id max floor refresh[] when`), refresh rule (`on to add`), built-in events with argument lists, template-declared events, and the **handler language**: a template `type: events` document declares handlers as ordered steps, e.g.
+  ```yaml
+  handlers:
+    damage:
+      - spend: temp_hp, amount: min(amount, temp_hp.current)
+      - spend: hp, amount: amount - spent
+      - when: hp.current == 0 and not dying
+        fire: gain-wound, amount: 1
+        set: dying
+    gain-wound:
+      - spend: wounds, amount: amount        # wounds count up; "spend" lowers remaining
+    catch-breath:
+      - repeat: hit_dice
+        restore: hp, amount: roll(hit_die.size) + str + hit_die.heal.bonus
+  ```
+  State: `<resource>.current` readable in expressions; conditions as booleans. Content may contribute to variables handlers read (`hit_die.heal.bonus`) but may not declare handlers in this phase.
+- [ ] **Step 3: `choices.md`.** Class-level document, `grants`, `choices[]` (`slot count from{type,tags}|from{options} unique effect`), character `choices` map keyed `<class-level id>.<slot>`, attachment semantics, retraining as edit, validation rules (count, unique, from), what is deferred.
+- [ ] **Step 4: Commit** `docs: draft grammar, effects/resources/events, and choices specs`
 
 ---
 
-### Task 7: Minimal 5e SRD system template
+### Task 7: Minimal Nimble system template
 
-**Files:**
-- Create: `systems/srd5e/package.md`, `systems/srd5e/abilities.md`, `systems/srd5e/core.md`, `systems/srd5e/combat.md`, `systems/srd5e/skills.md`, `systems/srd5e/spellcasting.md`, `systems/srd5e/tables/spell-slots.md`, `systems/srd5e/tables/multiclass-spell-slots.md`, `systems/srd5e/predicates.md`, `systems/srd5e/content-types.md`
+**Files:** Create `systems/nimble/LICENSE-NOTICE.md`, `systems/nimble/package.md`, `systems/nimble/core.md`, `systems/nimble/skills.md`, `systems/nimble/combat.md`, `systems/nimble/resources.md`, `systems/nimble/events.md`, `systems/nimble/predicates.md`, `systems/nimble/content-types.md`, `systems/nimble/tables/hit-die-average.md`
 
-Only what the torture test (spec 7.4) and the demo spell need. All `system: srd5e`, ids `srd5e.system.<file>`.
+Second-printing values; first-printing differences recorded in a `printing_diff` property on the affected document. Every rule cites a recon §/page in an `## Sources` body section.
 
 - [ ] **Step 1: Write the documents.**
-  - `package.md`: `id: srd5e`, `type: package`, `label: "SRD 5.1"`, `license: CC-BY-4.0`, `members: [...]` listing every other id.
-  - `abilities.md` (`type: variables`): for each of `str dex con int wis cha`: `<a>.score` (integer, default 10, alias e.g. `STR_SCORE`) and `<a>.mod` (formula `floor((<a>.score - 10) / 2)`, alias `STR`, name "your Strength modifier").
-  - `core.md`: `level` (integer input supplied by the character document; there is no wildcard sum in the grammar, and a Phase 2 lint checks it equals the sum of class levels), `prof` (formula `2 + floor((level - 1) / 4)`, alias `PROF`, name "your proficiency bonus"), `hp.max` (fold add=sum, ops `[add]`), `speed` (fold base=max add=sum, ops `[base, add]`, default base 30), `class.<c>.level` for `wizard monk barbarian sorcerer fighter cleric bard rogue` (integer inputs, default 0).
-  - `combat.md`: `ac.base` (ops `[base]`, fold base=max, default 10), `ac.bonus` (ops `[add]`), `ac.shield` (ops `[add]`), `ac` (formula `ac.base + ac.bonus + ac.shield`, alias `AC`, name "your Armor Class", rounding floor), `armor.max_dex` (ops `[min]`; `ac.base` formulas reference it), saves `save.<a>` for six abilities (formula `<a>.mod + if(proficient(save.<a>), prof, 0)`, ops `[add]`).
-  - `skills.md`: the 18 SRD skills as `skill.<name>` (formula `<a>.mod + skill.<name>.prof_bonus`, name "your <Skill> modifier") and `skill.<name>.prof_bonus` (integer, default 0, ops `[base, add]`, fold base=max). Proficiency contributes `base: prof`, expertise `base: 2 * prof`, Jack of All Trades `base: floor(prof / 2)`; max picks the best.
-  - `spellcasting.md`: `spell.ability_mod` (ops `[base]`, name "your spellcasting ability modifier", alias `SPELL_MOD`), `spell.attack` (formula `prof + spell.ability_mod`, alias `SPELL_ATTACK`, name "your spell attack bonus"), `spell.save_dc` (formula `8 + prof + spell.ability_mod`, alias `SPELL_SAVE_DC`, name "your spell save DC"), `caster.level` (ops `[add]`, name "your caster level"), `spell.slots.<1..9>` (formula `table(srd5e.tables.multiclass-spell-slots, caster.level, <n>)`).
-  - `tables/spell-slots.md` and `tables/multiclass-spell-slots.md` (`type: table`, `columns: [caster_level, 1, 2, ..., 9]`, 20 rows from the SRD).
-  - `predicates.md` (`type: predicates`): `equipped(kind)` args `[armor, shield, weapon, light_armor, medium_armor, heavy_armor]`; `has(id)`; `proficient(thing)` args: the 18 skills and `save.<a>`; `level(class)` args: the eight classes.
-  - `content-types.md` (`type: content-types`): `spell` with suggested properties `level school casting_time range components duration`; `feat`; `feature` (with `class`); `item` with `equippable`, `kind`; `armor` with `kind base_ac max_dex strength_requirement`; `character`.
-
-- [ ] **Step 2: Lint** `npx tsx src/cli.ts systems`. Expected: `OK`. Fix any id/alias mistakes.
-- [ ] **Step 3: Commit** `feat(srd5e): minimal system template for the torture test`
+  - `LICENSE-NOTICE.md`: both required Nimble notices verbatim (spec 8).
+  - `package.md`: `id: nimble`, `type: package`, `label: "Second printing (playtest Oct 2026)"`, `members: [...]`.
+  - `core.md` (`type: variables`): `str dex int wil` (integer, default 0, aliases `STR DEX INT WIL`, names "your Strength" etc.); `key` and `secondary` (declared as variables with `fold: {base: max}`, ops `[base]`; class documents contribute `base: int` etc.); `level` (integer input); `hp.max` (ops `[add]`, name "your maximum Hit Points"; the character's `levels[].hp` entries contribute `add`); `wounds.max` (default 6, ops `[add, set]`, name "your maximum Wounds"); `hit_dice.max` (formula `level`, ops `[add]`); `hit_die.size` (type integer, ops `[base]`, fold base=max; class contributes `base: 6` etc.); `hit_die.heal.bonus` (ops `[add]`, default 0); `speed` (default 6, ops `[add]`); `inventory.slots` (formula `10 + str`); `languages` (formula `1 + int`); `initiative.bonus` (formula `dex`, ops `[add]`); state booleans `dying bloodied raging concentrating in_wilderness ally_nearby` (type boolean, default false).
+  - `skills.md`: 10 skills `skill.<name>` with formula `<stat> + skill.<name>.points`, `skill.<name>.points` integer input default 0; `skill.cap` default 10 with `printing_diff: {first: 12}`.
+  - `combat.md`: `defense.base` (ops `[base]`, default formula contribution `dex` from the template itself, name "your Defense"), `defense.shield` (ops `[add]`), `defense` (formula `defense.base + defense.shield`, alias `DEFENSE`), saves `save.<stat>` (formula `<stat>`), `save.<stat>.advantage` (integer, ops `[add]`, +1 advantaged / −1 disadvantaged; class and ancestry contribute), `actions.max` (default 3), `dc.hero` (formula `10 + key`).
+  - `resources.md` (`type: resources`): `hp` (max `hp.max`, floor 0, refresh safe-rest to max), `temp_hp` (refresh safe-rest to 0), `wounds` (max `wounds.max`, refresh safe-rest add −1), `hit_dice` (max `hit_dice.max`, refresh safe-rest to max), `actions` (max `actions.max`, refresh turn-end to max).
+  - `events.md` (`type: events`): declares `gain-wound full-hp rage-end` and handlers for `damage heal spend restore catch-breath make-camp safe-rest encounter-start encounter-end turn-end level-up` per the Task 6 handler language, including Initiative → starting actions (`actions.current = if(initiative_roll >= 20, 3, if(initiative_roll >= 10, 2, 1))` on `encounter-start`).
+  - `predicates.md`: `equipped(kind)` args `armor shield weapon light_armor cloth leather mail plate`; `has(id)`; `level(class)` args the 11 classes; `proficient(thing)` args `armor weapon` plus armor categories.
+  - `content-types.md`: `ancestry`, `background` (`requires`), `class` (`key_stats`, `hit_die`, `starting_hp`, `saves`), `class-level`, `subclass`, `feature`, `spell` (`school tier cost actions range`), `item`, `armor` (`category defense dex_cap strength_requirement`), `weapon`, `boon`, `character`.
+  - `tables/hit-die-average.md`: columns `die, average`; rows `4,3 / 6,4 / 8,5 / 10,7 / 12,8`.
+- [ ] **Step 2: Lint** `npx tsx src/cli.ts systems`. Expected `OK`.
+- [ ] **Step 3: Commit** `feat(nimble): minimal system template, second printing`
 
 ---
 
-### Task 8: Torture-test documents, demo spell, sample character
+### Task 8: Torture-test documents, Mage and Berserker skeletons, sample character
 
-**Files:**
-- Create: `examples/torture-test/01-monk-unarmored-defense.md` … `15-fighting-style-dueling-and-defense.md` (one per spec 7.4 item, numbered), `examples/demo/ember-lash.md`, `examples/demo/mira.md`, `examples/demo/fire-bolt.md`, `examples/srd/items/{leather-armor,chain-mail,plate,shield}.md`, `examples/srd/features/{wizard-spellcasting,bless}.md` as needed by the fixtures.
+**Files:** Create `examples/nimble/torture-test/01-…15-*.md` (one per spec 7.3 item), `examples/nimble/classes/mage.md`, `examples/nimble/classes/mage/level-{1..5}.md`, `examples/nimble/classes/berserker.md`, `examples/nimble/classes/berserker/level-{1..5}.md`, `examples/nimble/items/armor/{adventurers-garb,cheap-hides,chain-shirt,half-plate,wooden-buckler}.md`, `examples/nimble/ancestries/{dwarf,gnome,oozeling,dragonborn,human}.md`, `examples/nimble/backgrounds/{devoted-protector,wild-one}.md`, `examples/nimble/features/…` as the torture items need, `examples/nimble/characters/pip.md`, and for items 14–15 `examples/insurance-5e/` with a 12-line `systems/srd5e-mini/` template (just `dex.mod wis.mod ac.base save.*` and an `armor` predicate).
 
-Each torture-test document: frontmatter per spec 5.1; body = the SRD rule text (CC-BY) followed by an `## Encoding notes` section stating what the effects say in plain words. Effects per the Task 6 grammar. Pinned encodings for the non-obvious ones (the rest follow from the template):
+Each torture document: frontmatter per spec; body = the rule's text paraphrased (cite recon §/page) then `## Encoding notes` in plain words. Pinned encodings for the non-obvious:
 
-- 01 Monk: `target: ac.base`, `base: 10 + dex.mod + wis.mod`, `when: not equipped(armor) and not equipped(shield)`, `source: unarmored-defense`.
-- 02 Barbarian: same with `con.mod`, `when: not equipped(armor)`.
-- 03 Draconic Resilience: `ac.base base: 13 + dex.mod when: not equipped(armor)`; plus `hp.max add: level`.
-- 04 Mage Armor: `ac.base base: 13 + dex.mod when: not equipped(armor)`, `source: mage-armor`, `duration: 8 hours`, `transfer: always`. Body prose uses `{{ 13 + dex.mod | 13 + the target's Dexterity modifier }}`.
-- 05 Armor: `armor` content type; leather `ac.base base: 11 + dex.mod`, chain mail `ac.base base: 16`, `transfer: equipped`; medium armor (scale mail) `base: 14 + min(dex.mod, 2)`; strength requirement is a property (`strength_requirement: 13`) plus `speed add: -10 when: str.score < this.strength_requirement`.
-- 06 Shield: `ac.shield add: 2`, `transfer: equipped`.
-- 07 Feat: `ac.bonus add: 1`.
-- 08 Jack of All Trades: for each skill, `skill.<n>.prof_bonus base: floor(prof / 2)`; `when: level(bard) >= 2`. (Fifteen-plus effects in one document is acceptable and is itself a data point for the gate: note it in the README.)
-- 09 Expertise (fixed to Stealth and Perception): `skill.stealth.prof_bonus base: 2 * prof`, same for perception.
-- 10 Multiclass slots: wizard class feature `caster.level add: class.wizard.level`; paladin-style half caster `caster.level add: floor(class.paladin.level / 2)`; slots come from the template formula. Include a character with wizard 3 / cleric 2 in the encoding notes with the expected `spell.slots.2` = 3.
-- 11 Proficiency bonus: no content needed; document shows the template formula and a `{{ prof }}` in prose.
-- 12 Speed: Mobile feat `speed add: 10`; a race document `speed base: 25`; monk Unarmored Movement `speed add: 10 when: not equipped(armor) and not equipped(shield) and level(monk) >= 2`.
-- 13 Bless twice: two documents `bless.md` (effect `save.str add: 1d4` … for the six saves, `source: bless`) and an encoding note that the stacking policy `same-source: highest` reduces two Bless instances to one. Attack-roll bonus is omitted (attacks are out of phase).
-- 14 HP max: rolled-per-level HP needs per-level state (deferred with choices), so encode the fixed-average rule: wizard class doc `hp.max add: 6 + (class.wizard.level - 1) * 4`; a `srd5e.rules.hp-constitution` document `hp.max add: con.mod * level`; Tough feat `hp.max add: 2 * level`. Note the deferral in the encoding notes.
-- 15 Fighting styles: Defense `ac.bonus add: 1 when: equipped(armor)`; Dueling: pinned as a `when` on a `damage.melee_bonus` variable **declared in the document itself** (`variables: [{id: damage.melee_bonus, ...}]`) with `add: 2 when: equipped(weapon) and not equipped(shield)` and an encoding note that one-weapon-only cannot be expressed without attack objects. This gap is reported honestly in the README.
-- `ember-lash.md`: spec 5.1 example verbatim, ids adjusted to `demo.homebrew.ember-lash`.
-- `mira.md`: spec 5.3 example, with `features` including `srd5e.features.wizard.spellcasting` and that feature doc setting `spell.ability_mod base: int.mod` and `caster.level add: class.wizard.level`.
+- 01 Defense: template contributes `defense.base base: dex`; Adventurer's Garb `base: 2 + dex`; Cheap Hides `base: 3 + dex`; Chain Shirt `base: 9 + min(dex, 2)`, `requires: {str: 2}`; Half Plate `base: 14`, `requires: {str: 3}`; Wooden Buckler `defense.shield add: 2`. All `transfer: equipped`, `source: armor`.
+- 02 Hit Die healing: lives in the template handler (`catch-breath` roll + str + bonus; `make-camp` max + str + bonus). Oozeling: `hit_die.heal.mode set: "max"` is **not** allowed (text set); pin instead a boolean variable `hit_die.heal.always_max` (template-declared, ops `[set]`) that the handler reads; Oozeling `set: true`. Wild One: `hit_die.heal.bonus add: key when: in_wilderness`.
+- 03 Mage mana: `mage.md` declares `resources: [{id: mana, max: mana.max, refresh: [{on: safe-rest, to: max}], when: level(mage) >= 2}]` and `variables: [{id: mana.max, formula: "(max(int, 0) * 3) + level"}]`.
+- 04 Elemental Surge: a second resource `mana.surge` with `max: if(level(mage) >= 17, wil + 2d4, if(level(mage) >= 10, wil + 1d4, wil))`, `refresh: [{on: encounter-start, to: max}, {on: encounter-end, to: 0}]`; encoding note: `spend: mana` draws from `mana.surge` first (handler rule in the Mage doc is **not** allowed this phase; note the gap honestly).
+- 05 Fury Dice: resource `fury_dice` with `max: key`, `refresh: [{on: rage-end, to: 0}]`; variable `fury_die.size` with formula `if(level(berserker) >= 17, 12, if(level(berserker) >= 13, 10, if(level(berserker) >= 9, 8, if(level(berserker) >= 6, 6, 4))))`; a feature granting `damage.str_attack.bonus add: dice(fury_dice.current, fury_die.size)`; encoding note on spend-for-mitigation.
+- 06 Devoted Protector: `wounds.max add: 3 when: ally_nearby`.
+- 07 Initiative: template handler only; the document is the Human ancestry `initiative.bonus add: 1` and encoding notes quoting the handler.
+- 08 Mana cost: Methodical Spellweaver `spell.cost.modifier add: -2`, `spell.cost.min set: 1` **as declared variables on the Mage doc**; encoding note that cost application is a Phase 2 handler.
+- 09 Event refreshes: Dragonborn resource `breath` `{max: 1, refresh: [{on: safe-rest, to: max}, {on: gain-wound, to: max}]}`; Gnome `{on: full-hp, to: max}`.
+- 10 Level-up HP: `pip.md` `levels[]` with `source: roll|average`; encoding note that `hp.max` folds the entries.
+- 11 Proficiency: `defend.cost` (template variable default 1) `add: 1 when: equipped(armor) and not proficient(armor)`; `crit.allowed set: false when: equipped(weapon) and not proficient(weapon)`.
+- 12 Dying: handler rules in the template plus Berserker features `actions.dying_cap base: 2` (Enduring Rage) and `wound.damage_while_dying set: 1` (Unstoppable Force), both template-declared variables.
+- 13 Spells known: Mage `spells.tier.max` formula `floor(level(mage) / 2)`; schools as `grants` of `nimble.spell-schools.fire` etc.; encoding note on "every spell in known schools up to tier".
+- 14 5e competing bases, 15 Bless stacking: as in the prior plan revision, under `examples/insurance-5e/`.
+- `pip.md`: spec 5.3 example, consistent with the Mage level documents written.
 
 - [ ] **Step 1: Write the documents.**
-- [ ] **Step 2: Lint** `npm run lint-docs`. Expected: `OK: N documents, V variables`. Every unknown identifier is a real mistake or a missing template variable; fix in the right place (template vs document).
-- [ ] **Step 3: Add a vitest** `examples.test.ts` that runs `loadDocuments(["systems","examples"])`, `buildRegistry`, `lintAll` and asserts zero diagnostics, so CI guards the fixtures.
-- [ ] **Step 4: Commit** `feat(examples): torture-test documents, demo spell, sample character`
+- [ ] **Step 2: Lint** `npm run lint-docs`. Expected `OK`. Fix in the right place (template vs document).
+- [ ] **Step 3: Add `src/examples.test.ts`** running `loadDocuments(["systems", "examples"])`, `buildRegistry`, `lintAll`, asserting zero diagnostics.
+- [ ] **Step 4: Commit** `feat(examples): Nimble torture-test documents, class skeletons, sample character`
 
 ---
 
 ### Task 9: Gate packet
 
-**Files:**
-- Create: `examples/torture-test/README.md`
-- Modify: `docs/superpowers/specs/2026-10-18-open-rules-format-design.md` (status line only), `README.md`
+**Files:** Create `examples/nimble/torture-test/README.md`; modify the design doc status line, `README.md`
 
-- [ ] **Step 1: Write `examples/torture-test/README.md`** for Scott to judge from. For each of the 15 items: the rule in one line, the effects YAML block copied verbatim from the document, and one line of "what a homebrewer reads this as". Then a **Known gaps** section: Dueling's one-weapon condition, Great Weapon Fighting's reroll, per-level HP without choices, Jack of All Trades' verbosity. Then **What you're approving**: (1) this syntax is readable enough to proceed to the grammar implementation and engine; (2) the five-op fold model; (3) the identifier convention (dotted lowercase + aliases). Approve = Phase 2 plan is written; decline = redesign the named parts.
-- [ ] **Step 2: Update** the design doc's status line to `Status: approved 2026-10-18; Phase 1 (torture test) in review` and add a `docs/spec/expressions.md` link under section 7.
-- [ ] **Step 3: Run** `npm test && npm run lint-docs`. Expected: all pass, `OK`.
-- [ ] **Step 4: Commit and push**
-
-```bash
-git add -A && git commit -m "docs: torture-test gate packet" && git push origin main
-```
-
-- [ ] **Step 5: Stop.** Scott judges the gate (spec 7.4). Phase 2 (grammar implementation, conformance corpus, engine) is planned only after approval.
+- [ ] **Step 1: Write the README** for Scott to judge from: per item, the rule in one line, the YAML copied verbatim, one line of "what a homebrewer reads this as". **Known gaps** section: surge-first mana spending, cost application, one-weapon Dueling (5e), anything that needed a template-declared helper variable rather than plain content. **What you're approving**: (1) this syntax is readable enough to build the grammar and engine against; (2) the six-op fold; (3) resources + events as first-class with the handler language owned by the template; (4) the slot model for choices; (5) identifier convention. Approve = Phase 2 plan; decline = redesign the named parts.
+- [ ] **Step 2: Update** the design doc status to `Status: Nimble-first revision approved <date>; Phase 1 in review`, link the three spec files from section 7.
+- [ ] **Step 3: Run** `npm test && npm run lint-docs`. Expected: pass, `OK`.
+- [ ] **Step 4: Commit and push** `docs: torture-test gate packet`; `git push origin main`.
+- [ ] **Step 5: Stop.** Scott judges the gate.
