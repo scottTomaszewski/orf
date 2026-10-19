@@ -31,7 +31,7 @@ resources:
 ---
 Wounds count up: at `wounds.max` you die (CR2 p.9). Safe Rest restores all HP, Hit Dice, mana
 and class resources, heals 1 Wound, and expires temp HP (CR2 p.17). Field Rests restore nothing
-by themselves; Hit Dice spent during them heal HP (see events).
+by themselves; Hit Dice spent during them heal HP (engine procedure; see `events.md`).
 
 ## Sources
 Core Rules 2.0.3 p.9, p.17.

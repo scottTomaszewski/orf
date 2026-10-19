@@ -7,4 +7,4 @@ class: nimble.classes.oathsworn
 tags: [oathsworn]
 effects: []
 ---
-Action: touch a creature and spend any amount of your {{ oathsworn.healing.max | 5 × level }} pool to heal that many HP; the pool refreshes at a Safe Rest (H2 p.38). Encoded as the `oathsworn.healing` resource.
+Action: touch a creature and spend any amount of your {{ oathsworn.lay_on_hands.pool | 5 × level }} pool to heal that many HP; the pool refreshes at a Safe Rest (H2 p.38). Encoded as the `oathsworn.lay_on_hands` resource.

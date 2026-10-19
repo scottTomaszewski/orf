@@ -5,7 +5,7 @@ system: nimble
 name: Oathsworn, level 2
 class: nimble.classes.oathsworn
 level: 2
-grants: [nimble.features.oathsworn.zealot, nimble.features.oathsworn.paragon-of-virtue, nimble.spell-schools.radiant]
+grants: [nimble.features.oathsworn.mana, nimble.features.oathsworn.zealot, nimble.features.oathsworn.paragon-of-virtue, nimble.spell-schools.radiant]
 choices: []
 ---
 What a Oathsworn gains at level 2. See the class read for the full table.

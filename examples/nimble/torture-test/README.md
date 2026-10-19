@@ -21,8 +21,8 @@ effects:
 
 ```yaml
 effects:
-  - {target: armor.base, base: "2 + dex", transfer: equipped, source: armor}
-  - {target: defend.cost, add: 1, when: "not proficient(cloth)", transfer: equipped, source: unproficient-armor}
+  - {target: armor.base, base: "2 + dex", when: equipped, source: armor}
+  - {target: defend.cost, add: 1, when: "equipped and not proficient(cloth)", source: unproficient-armor}
 ```
 
 `examples/nimble/items/armor/chain-shirt.md`
@@ -30,8 +30,8 @@ effects:
 ```yaml
 requires: {str: 2}
 effects:
-  - {target: armor.base, base: "9 + min(dex, 2)", transfer: equipped, source: armor}
-  - {target: defend.cost, add: 1, when: "not proficient(mail)", transfer: equipped, source: unproficient-armor}
+  - {target: armor.base, base: "9 + min(dex, 2)", when: equipped, source: armor}
+  - {target: defend.cost, add: 1, when: "equipped and not proficient(mail)", source: unproficient-armor}
 ```
 
 `examples/nimble/items/armor/half-plate.md`
@@ -39,15 +39,15 @@ effects:
 ```yaml
 requires: {str: 3}
 effects:
-  - {target: armor.base, base: "14", transfer: equipped, source: armor}
-  - {target: defend.cost, add: 1, when: "not proficient(plate)", transfer: equipped, source: unproficient-armor}
+  - {target: armor.base, base: "14", when: equipped, source: armor}
+  - {target: defend.cost, add: 1, when: "equipped and not proficient(plate)", source: unproficient-armor}
 ```
 
 `examples/nimble/items/armor/wooden-buckler.md`
 
 ```yaml
 effects:
-  - {target: armor.bonus, add: 2, transfer: equipped, source: shield}
+  - {target: armor.bonus, add: 2, when: equipped, source: shield}
 ```
 
 **Encoding notes.** The template contributes `armor.base base: dex` as the unarmored floor. Each worn armor contributes its own `base` while equipped; the fold keeps the highest, so no armor-vs-unarmored special case exists. Mail's DEX cap is `min(dex, 2)` inside the formula; Plate's is a flat number. Shields `add` to `armor.bonus`. STR requirements are a `requires: {str: n}` property the engine enforces at equip time.
@@ -352,8 +352,8 @@ choices:
 ```yaml
 requires: {str: 2}
 effects:
-  - {target: armor.base, base: "9 + min(dex, 2)", transfer: equipped, source: armor}
-  - {target: defend.cost, add: 1, when: "not proficient(mail)", transfer: equipped, source: unproficient-armor}
+  - {target: armor.base, base: "9 + min(dex, 2)", when: equipped, source: armor}
+  - {target: defend.cost, add: 1, when: "equipped and not proficient(mail)", source: unproficient-armor}
 ```
 
 `examples/nimble/items/weapons/staff.md`
@@ -458,14 +458,14 @@ effects:
 
 ```yaml
 effects:
-  - {target: ac.base, base: "13 + dex.mod", when: "not equipped(armor)", source: mage-armor, transfer: always, duration: 8 hours}
+  - {target: ac.base, base: "13 + dex.mod", when: "not equipped(armor)", source: mage-armor, duration: 8 hours}
 ```
 
 `examples/insurance-5e/chain-mail.md`
 
 ```yaml
 effects:
-  - {target: ac.base, base: 16, transfer: equipped, source: armor}
+  - {target: ac.base, base: 16, when: equipped, source: armor}
 ```
 
 **Encoding notes.** Same shape as Nimble Armor: three `base` contributions to `ac.base` with `when` clauses; the highest applicable wins. Proves the fold is not Nimble-specific. Lives in `examples/insurance-5e/` with a 12-line `srd5e-mini` template.
