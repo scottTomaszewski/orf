@@ -1,10 +1,12 @@
-# Expression and condition language (draft, Phase 1)
+# Expression and condition language (draft, revised 2026-10-18)
 
 Status: draft for the readability gate. Changes freely until the conformance corpus exists.
 Design context: `../superpowers/specs/2026-10-18-open-rules-format-design.md` §7.
 
 One grammar serves three places: `{{ }}` inline in prose and property values, effect operation
-values (`add: 2 + str`), and conditions (`when:`), which are the boolean subset.
+values (`add: 2 + str`) and lookup rows, and conditions (`when:`), which are the boolean subset.
+Level ladders are not written in this grammar at all: use a lookup
+(`effects-and-resources.md` §2).
 
 ## 1. Lexical
 
@@ -17,7 +19,7 @@ values (`add: 2 + str`), and conditions (`when:`), which are the boolean subset.
 | scoped | `this.strength_requirement` | an instance property of the document the expression lives in (items) |
 | current | `mana.current`, `wounds.current` | the current value of a resource |
 | string | `"nimble.tables.starting-gold"`, `"gold"` | only as function arguments: table ids and column names |
-| engine words | `key`, `secondary`, `amount`, `spent`, `choice` | provided by the engine in the contexts that define them (§5) |
+| engine words | `key`, `secondary`, `choice`, `equipped`, `carried` | provided by the engine in the contexts that define them (§5) |
 | keywords | `and`, `or`, `not`, `true`, `false` | |
 
 Nimble's "WIL d8" (roll WIL dice of d8) is `dice(wil, 8)`; the grammar also accepts `wil d8` as
@@ -50,7 +52,6 @@ Built-in, always available:
 | `max(a, b, ...)`, `min(a, b, ...)` | at least two arguments |
 | `if(cond, a, b)` | both branches typed alike |
 | `dice(count, sides)` | a dice value; `count` may be an expression (`dice(wil, 8)`) |
-| `roll(sides, advantage?)` | **handlers only**: one die, rolled by the consumer, with advantage when the second argument is true |
 | `table("id", row_key, "column")` | lookup in a system table: the row whose first column equals `row_key`, returning `column`. Table id and column are quoted strings. Missing row = error. |
 
 System templates may add **helpers** (`type: functions`), each defined as an expression over
@@ -64,24 +65,25 @@ argument vocabulary the linter checks:
 | predicate | Nimble vocabulary |
 |---|---|
 | `equipped(kind)` | `armor shield weapon cloth leather mail plate` |
+| `equipped`, `carried` (bare) | **item documents only**: this item is worn/wielded, or is in the inventory |
 | `has("id")` | a quoted document id (ids contain hyphens, which identifiers cannot) |
 | `level(class)` | a class short name; returns an integer, so `level(mage) >= 2` |
 | `proficient(thing)` | `armor weapon` and armor categories |
 
-State booleans are ordinary boolean variables set by events and readable anywhere: `dying`,
-`bloodied`, `raging`, `concentrating`, plus player-toggled ones such as `in_wilderness`,
-`ally_nearby`.
+State booleans are ordinary boolean variables readable anywhere: derived ones have a formula
+(`bloodied`), engine-maintained ones are set by the system module (`dying`), and player-toggled
+ones are plain state (`in_wilderness`, `ally_nearby`, `raging`, `concentrating`). Prefer a
+formula to a flag whenever the state can be computed.
 
 ## 5. Where expressions live
 
 | place | extra words available | result type |
 |---|---|---|
 | `{{ }}` in body or property | none | number, dice, or text |
-| effect `base/add/mul/min/max/set` | `choice` (the picked option, in a choice's `effect`) | number or dice |
-| effect `when`, resource `when`, choice `when` | none | boolean |
-| variable `formula` | none | number |
+| effect `base/add/mul/at_least/at_most/set`, lookup `by` and row values | `choice` (the picked option, in a choice's `effect`) | number or dice |
+| effect `when`, resource `when`, choice `when` | `equipped`, `carried` on item documents | boolean |
+| variable `formula` (or lookup) | none | number, dice, or boolean |
 | resource `max` | none | number |
-| event handler steps (template only) | `amount`, `spent`, the event's declared args | per step |
 
 ## 6. Rendering `{{ }}`
 
@@ -99,8 +101,8 @@ State booleans are ordinary boolean variables set by events and readable anywher
 
 **Compile**: variables → values, contributions folded, dice kept symbolic. Sheets display this.
 **Roll**: a consumer rolls the remaining dice when the player acts. The engine never rolls on
-its own; `roll(...)` exists only inside template event handlers (`catch-breath` heals
-`roll(hit_die.size) + str`), where the consumer supplies the roll.
+its own; where a system procedure needs a roll (Catch Breath), the system module asks the
+consumer for it.
 
 ## 8. Errors
 
@@ -117,8 +119,9 @@ Unknown names never resolve to zero.
 
 ## 9. Deliberately absent
 
-Loops, assignment, user-defined functions in content, string manipulation, regular
-expressions, host-language escape hatches, floats, implicit boolean coercion.
+Loops, assignment, user-defined functions in content, event handlers or any other
+sequencing, string manipulation, regular expressions, host-language escape hatches, floats,
+implicit boolean coercion.
 
 ## 10. PEG (draft)
 
