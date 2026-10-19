@@ -14,6 +14,7 @@ resources:
   - id: wounds
     max: wounds.max
     floor: 0
+    start: 0
     refresh: [{on: safe-rest, add: -1}]
   - id: hit_dice
     max: hit_dice.max

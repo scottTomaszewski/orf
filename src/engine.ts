@@ -3,12 +3,12 @@ import type { Document } from "./document.js";
 import { extractInlineExpressions } from "./expr-refs.js";
 import { evaluate, EvalError, type Env } from "./expr/evaluate.js";
 import { parse, ParseError } from "./expr/parser.js";
-import { bool, formatValue, int, text, type Value } from "./expr/value.js";
+import { bool, formatValue, int, text, ValueError, type Value } from "./expr/value.js";
 import { fold, type Contribution, type Op, type Provenance } from "./fold.js";
 import { isLookup, OPS, type Diagnostic, type Lookup, type Registry, type VariableDef } from "./registry.js";
 
 export interface SheetVariable { id: string; name: string; description?: string; value: Value; provenance: Provenance }
-export interface SheetResource { id: string; max: number | undefined; current: number; floor: number }
+export interface SheetResource { id: string; max: number | undefined; /** set when the max is a dice expression the consumer rolls */ maxDice?: string; current: number; floor: number }
 export interface Sheet {
   variables: Map<string, SheetVariable>;
   resources: Map<string, SheetResource>;
@@ -36,7 +36,7 @@ export function evaluateCharacter(character: Document, registry: Registry, docs:
   const assembly = assembleCharacter(character, registry, docs);
   const diagnostics: Diagnostic[] = [...assembly.diagnostics];
   const seenMsg = new Set<string>(diagnostics.map((d) => d.message));
-  const diag = (message: string, path = character.path) => { if (!seenMsg.has(message)) { seenMsg.add(message); diagnostics.push({ path, message }); } };
+  const diag = (message: string, path = character.path, severity?: "warning") => { if (!seenMsg.has(message)) { seenMsg.add(message); diagnostics.push(severity ? { path, message, severity } : { path, message }); } };
   const state: FM = isObj(fm.state) ? fm.state : {};
   const stats: FM = isObj(fm.stats) ? fm.stats : {};
 
@@ -46,7 +46,6 @@ export function evaluateCharacter(character: Document, registry: Registry, docs:
   interface RawEffect { attachment: Attachment; effect: FM }
   const effectsByTarget = new Map<string, RawEffect[]>();
   for (const a of assembly.attachments) {
-    if (a.item && !a.item.requirementsMet) continue;
     const effects = a.effectOverride ? [a.effectOverride] : list(a.doc.frontmatter.effects).filter(isObj);
     for (const effect of effects) {
       if (typeof effect.target !== "string") continue;
@@ -86,7 +85,7 @@ export function evaluateCharacter(character: Document, registry: Registry, docs:
       return evaluate(parse(src), makeEnv(ctx, rounding));
     } catch (e) {
       if (e instanceof CycleError) throw e;
-      if (e instanceof EvalError || e instanceof ParseError) { diag(`${label} "${src}": ${e.message}`); return undefined; }
+      if (e instanceof EvalError || e instanceof ParseError || e instanceof ValueError) { diag(`${label} "${src}": ${e.message}`, ctx.attachment?.doc.path ?? character.path); return undefined; }
       throw e;
     }
   };
@@ -165,6 +164,37 @@ export function evaluateCharacter(character: Document, registry: Registry, docs:
     return undefined;
   };
 
+  /** Stat requirements of an equipped item, checked against the folded stats (a cycle through the stat is reported as a cycle). */
+  const requirementsMet = new Map<Attachment, boolean>();
+  const meetsRequirements = (a: Attachment): boolean => {
+    if (!a.item?.equipped) return true;
+    const hit = requirementsMet.get(a);
+    if (hit !== undefined) return hit;
+    const req = isObj(a.doc.frontmatter.requires) ? a.doc.frontmatter.requires : {};
+    let ok = true;
+    for (const s of STATS) {
+      const need = req[s];
+      if (typeof need !== "number") continue;
+      const have = resolve(s).value;
+      if (have.kind !== "int" || have.value < need) {
+        ok = false;
+        diag(`equipment ${String(a.doc.frontmatter.id)}: requires ${s} ${need}, you have ${have.kind === "int" ? have.value : "?"}; its effects are inactive`, character.path, "warning");
+      }
+    }
+    requirementsMet.set(a, ok);
+    return ok;
+  };
+
+  const typeOk = (def: VariableDef, v: Value): boolean => {
+    switch (def.type) {
+      case "integer": return v.kind === "int";
+      case "dice": return v.kind === "int" || v.kind === "dice";
+      case "boolean": return v.kind === "bool";
+      case "text": return v.kind === "text";
+      case "list": return true;
+    }
+  };
+
   const resolve = (id: string): SheetVariable => {
     const hit = memo.get(id);
     if (hit) return hit;
@@ -211,11 +241,13 @@ export function evaluateCharacter(character: Document, registry: Registry, docs:
     // formula
     if (def.formula !== undefined) {
       const v = toValue(def.formula, {}, `${def.id} formula`, def.rounding);
-      if (v) contribs.push({ op: "base", value: v, source: "<formula>", origin: "<formula>" });
+      if (v && !typeOk(def, v)) diag(`${def.id} formula: ${def.id} is ${def.type}, got ${v.kind}`, def.declaredIn);
+      else if (v) contribs.push({ op: def.type === "boolean" ? "set" : "base", value: v, source: "<formula>", origin: "<formula>", path: def.declaredIn });
     }
     // effects
     for (const { attachment, effect } of effectsByTarget.get(def.id) ?? []) {
       const origin = String(attachment.doc.frontmatter.id);
+      if (!meetsRequirements(attachment)) continue;
       const ctx: Ctx = { attachment };
       if (typeof effect.when === "string") {
         const w = evalText(effect.when, ctx, `${origin} when`);
@@ -227,10 +259,11 @@ export function evaluateCharacter(character: Document, registry: Registry, docs:
       if (!op) continue;
       const v = toValue(effect[op], ctx, `${origin} ${op}`, def.rounding);
       if (!v) continue;
-      contribs.push({ op, value: v, source: typeof effect.source === "string" ? effect.source : origin, origin, note: typeof effect.note === "string" ? effect.note : undefined, whenText: typeof effect.when === "string" ? effect.when : undefined });
+      if (!typeOk(def, v)) { diag(`${origin} ${op}: ${def.id} is ${def.type}, got ${v.kind === "int" ? "integer" : v.kind}`, attachment.doc.path); continue; }
+      contribs.push({ op, value: v, source: typeof effect.source === "string" ? effect.source : origin, origin, path: attachment.doc.path, note: typeof effect.note === "string" ? effect.note : undefined, whenText: typeof effect.when === "string" ? effect.when : undefined });
     }
     const r = fold(def, contribs);
-    for (const d of r.diagnostics) diag(d.message, d.path);
+    for (const d of r.diagnostics) diag(d.message, d.path, d.severity === "warning" ? "warning" : undefined);
     return { id: def.id, name: def.name, description: def.description, value: r.value, provenance: r.provenance };
   };
 
@@ -246,27 +279,39 @@ export function evaluateCharacter(character: Document, registry: Registry, docs:
     }
     if (!present) { resourceMemo.set(id, null); return null; }
     let max: number | undefined;
+    let maxDice: string | undefined;
     if (typeof def.max === "number") max = def.max;
     else if (typeof def.max === "string") {
       const v = evalText(def.max, {}, `resource ${id} max`);
-      if (v && v.kind === "int") max = v.value; else if (v) diag(`resource ${id} max "${def.max}": not an integer`);
+      if (v && v.kind === "int") max = v.value;
+      else if (v && v.kind === "dice") maxDice = formatValue(v);   // the consumer rolls it
+      else if (v) diag(`resource ${id} max "${def.max}": not a number or dice`);
     }
     const floor = def.floor ?? 0;
-    let current = typeof state[id] === "number" ? (state[id] as number) : (max ?? 0);
+    const start = def.start === undefined || def.start === "max" ? (max ?? 0) : def.start;
+    let current = typeof state[id] === "number" ? (state[id] as number) : start;
     if (max !== undefined) current = Math.min(current, max);
     current = Math.max(current, floor);
-    const r: SheetResource = { id, max, current, floor };
+    const r: SheetResource = maxDice ? { id, max, maxDice, current, floor } : { id, max, current, floor };
     resourceMemo.set(id, r);
     return r;
   };
 
-  // ---- compute everything ----
-  for (const id of registry.variables.keys()) { try { resolve(id); } catch (e) { if (!(e instanceof CycleError)) throw e; } }
+  // ---- compute everything declared on an attached document (template docs attach implicitly) ----
+  const attachedPaths = new Set(assembly.attachments.map((a) => a.doc.path));
+  const variables = new Map<string, SheetVariable>();
+  for (const [id, def] of registry.variables) {
+    if (!attachedPaths.has(def.declaredIn)) continue;
+    try { variables.set(id, resolve(id)); } catch (e) { if (!(e instanceof CycleError)) throw e; }
+  }
   const resources = new Map<string, SheetResource>();
-  for (const id of registry.resources.keys()) { const r = resource(id); if (r) resources.set(id, r); }
+  for (const [id, def] of registry.resources) {
+    if (!attachedPaths.has(def.declaredIn)) continue;
+    const r = resource(id); if (r) resources.set(id, r);
+  }
 
   const sheet: Sheet = {
-    variables: memo,
+    variables,
     resources,
     attachments: assembly.attachments,
     classLevels: assembly.classLevels,

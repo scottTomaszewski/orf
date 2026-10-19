@@ -1,6 +1,6 @@
 import type { Expr } from "./ast.js";
 import { parse } from "./parser.js";
-import { addValues, bool, dice, int, scaleValue, text, average, type Value } from "./value.js";
+import { addValues, bool, dice, int, scaleValue, text, average, ValueError, type Value } from "./value.js";
 
 export class EvalError extends Error {
   constructor(message: string, public pos: number) {
@@ -45,12 +45,25 @@ function roundDiv(a: number, b: number, mode: Env["rounding"]): number {
 }
 
 export function evaluate(e: Expr, env: Env): Value {
+  try {
+    return evaluateInner(e, env);
+  } catch (err) {
+    if (err instanceof ValueError) throw new EvalError(err.message, e.pos);
+    throw err;
+  }
+}
+
+function evaluateInner(e: Expr, env: Env): Value {
   switch (e.kind) {
     case "int": return int(e.value);
     case "bool": return bool(e.value);
     case "string": return text(e.value);
     case "dice": return dice(e.count, e.sides, e.keep);
-    case "diceSugar": return dice(needInt(evaluate(e.count, env), "dice count", e.pos), e.sides);
+    case "diceSugar": {
+      const c = needInt(evaluate(e.count, env), "dice count", e.pos);
+      if (c < 0) throw new EvalError("dice count must not be negative", e.pos);
+      return dice(c, e.sides);
+    }
     case "ident": {
       const v = env.lookup(e.name);
       if (v === undefined) throw new EvalError(`unknown identifier "${e.name}"`, e.pos);
@@ -138,8 +151,9 @@ function call(e: Extract<Expr, { kind: "call" }>, env: Env): Value {
   const vals = args.map((a) => evaluate(a, env));
   switch (name) {
     case "floor": case "ceil": case "round": case "abs": {
-      if (vals.length !== 1) throw new EvalError(`${name}() needs one argument`, pos);
-      const n = needInt(vals[0], `${name}()`, pos);
+      if (args.length !== 1) throw new EvalError(`${name}() needs one argument`, pos);
+      // the argument sees the exact quotient of any division, so ceil(7 / 2) is 4
+      const n = needInt(evaluate(args[0], { ...env, rounding: "none" }), `${name}()`, pos);
       return int(name === "abs" ? Math.abs(n) : name === "floor" ? Math.floor(n) : name === "ceil" ? Math.ceil(n) : Math.round(n));
     }
     case "max": case "min": {

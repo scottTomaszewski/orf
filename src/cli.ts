@@ -26,8 +26,8 @@ function sheet(characterId: string, dirs: string[]): number {
     console.log(`${id}: ${r.current}${r.max !== undefined ? `/${r.max}` : ""}`);
   }
   const all = [...regDiags, ...s.diagnostics];
-  if (all.length) { console.log(""); for (const d of all) console.log(`${d.path}: ${d.message}`); return 1; }
-  return 0;
+  if (all.length) { console.log(""); for (const d of all) console.log(`${d.severity === "warning" ? "warning: " : ""}${d.path}: ${d.message}`); }
+  return all.some((d) => d.severity !== "warning") ? 1 : 0;
 }
 
 export function main(argv: string[]): number {

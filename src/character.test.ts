@@ -18,14 +18,13 @@ test("Pip attaches ancestry, background, class, levels 1-4, grants, picks, subcl
   expect(a.classLevels.get("mage")).toBe(4);
   const bump = a.attachments.find((x) => x.choice === "int")!;
   expect(bump.effectOverride).toEqual({ target: "int", add: 1 });
-  expect(a.attachments.find((x) => x.via === "equipment")!.item).toEqual({ equipped: true, carried: true, requirementsMet: true });
+  expect(a.attachments.find((x) => x.via === "equipment")!.item).toEqual({ equipped: true, carried: true });
   expect(a.diagnostics).toEqual([]);
 });
-test("unmet equipment requirements and unknown ids are diagnostics", () => {
+test("unknown equipment ids are diagnostics; requirements are left to the engine", () => {
   const ch = { ...pip, frontmatter: { ...pip.frontmatter, equipment: [{ id: "nimble.items.armor.half-plate", equipped: true }, { id: "x.nope", equipped: false }] } };
   const a = assembleCharacter(ch, registry, byId);
-  expect(a.attachments.find((x) => String(x.doc.frontmatter.id) === "nimble.items.armor.half-plate")!.item!.requirementsMet).toBe(false);
+  expect(a.attachments.find((x) => String(x.doc.frontmatter.id) === "nimble.items.armor.half-plate")!.item).toEqual({ equipped: true, carried: true });
   const msgs = a.diagnostics.map((d) => d.message).join("\n");
-  expect(msgs).toMatch(/half-plate.*requires str/);
   expect(msgs).toMatch(/x\.nope/);
 });

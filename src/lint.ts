@@ -37,6 +37,7 @@ export function lintDocument(doc: Document, registry: Registry): Diagnostic[] {
   // Reserved list-valued properties must be lists
   for (const k of ["effects", "grants", "tags", "variables", "resources", "members"]) if (k in fm && !Array.isArray(fm[k])) err(`${k} must be a list`);
   if ("choices" in fm && fm.type !== "character" && !Array.isArray(fm.choices)) err(`choices must be a list`);
+  if (fm.type === "functions") err(`helper functions (type: functions) are not implemented yet; the engine would report them as unknown functions`);
   if ("handlers" in fm) err(`handlers were removed from the format: rest, damage, and wound procedures live in the engine's system module, not in content`);
 
   const resolveVar = (id: string): string | undefined => (registry.variables.has(id) ? id : registry.aliases.get(id));
@@ -129,7 +130,12 @@ export function lintDocument(doc: Document, registry: Registry): Diagnostic[] {
         if (def.ops && !def.ops.includes(ops[0])) err(`${label}: op "${ops[0]}" not allowed on ${canon} (allowed: ${def.ops.join(", ")})`);
       }
     }
-    for (const op of ops) checkValue(e[op], `${label}.${op}`, opts);
+    for (const op of ops) {
+      checkValue(e[op], `${label}.${op}`, opts);
+      const def = typeof e.target === "string" ? registry.variables.get(resolveVar(e.target) ?? "") : undefined;
+      if (def && typeof e[op] === "boolean" && def.type !== "boolean") err(`${label}.${op}: ${def.id} is ${def.type}, not boolean`);
+      if (def && typeof e[op] === "number" && def.type === "boolean") err(`${label}.${op}: ${def.id} is boolean, not a number`);
+    }
     for (const k of ["when", "source", "duration", "note"]) if (k in e && typeof e[k] !== "string") err(`${label}.${k} must be a string`);
     if (typeof e.when === "string") checkExpression(e.when, `when: ${e.when}`, undefined, opts);
   };
@@ -162,6 +168,7 @@ export function lintDocument(doc: Document, registry: Registry): Diagnostic[] {
     if (!isObj(raw)) { err(`resources[${i}] must be a mapping`); continue; }
     if (typeof raw.max === "string") checkExpression(raw.max, `resources[${i}].max: ${raw.max}`);
     if (typeof raw.when === "string") checkExpression(raw.when, `resources[${i}].when: ${raw.when}`);
+    if ("start" in raw && raw.start !== "max" && typeof raw.start !== "number") err(`resources[${i}].start must be "max" or a number`);
     if ("refresh" in raw && !Array.isArray(raw.refresh)) err(`resources[${i}].refresh must be a list`);
     for (const [j, rr] of asArray(raw.refresh).entries()) {
       if (!isObj(rr)) { err(`resources[${i}].refresh[${j}] must be a mapping`); continue; }

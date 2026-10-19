@@ -5,7 +5,8 @@ import type { Registry } from "./registry.js";
 export type State = Record<string, unknown>;
 
 export interface MomentChange { resource: string; from: number; to: number; rule: string }
-export interface MomentResult { state: State; changes: MomentChange[] }
+export interface PendingRoll { resource: string; dice: string; rule: string }
+export interface MomentResult { state: State; changes: MomentChange[]; /** refreshes to a dice-valued max: the consumer rolls and sets */ pending: PendingRoll[] }
 
 export function clampResource(sheet: Sheet, id: string, value: number): number {
   const r = sheet.resources.get(id);
@@ -23,6 +24,7 @@ export function applyMoment(moment: string, sheet: Sheet, state: State, registry
   const reg = registry ?? sheet.registry;
   const next: State = { ...state };
   const changes: MomentChange[] = [];
+  const pending: PendingRoll[] = [];
   for (const r of sheet.resources.values()) {
     const def = reg.resources.get(r.id);
     if (!def) continue;
@@ -31,7 +33,11 @@ export function applyMoment(moment: string, sheet: Sheet, state: State, registry
       const from = typeof next[r.id] === "number" ? (next[r.id] as number) : r.current;
       let target: number | undefined;
       let label: string;
-      if (rule.to === "max") { if (r.max === undefined) continue; target = r.max; label = `${moment} to max`; }
+      if (rule.to === "max") {
+        if (r.maxDice) { pending.push({ resource: r.id, dice: r.maxDice, rule: `${moment} to max` }); continue; }
+        if (r.max === undefined) continue;
+        target = r.max; label = `${moment} to max`;
+      }
       else if (typeof rule.to === "number") { target = rule.to; label = `${moment} to ${rule.to}`; }
       else if (typeof rule.add === "number") { target = from + rule.add; label = `${moment} add ${rule.add}`; }
       else continue;
@@ -40,5 +46,5 @@ export function applyMoment(moment: string, sheet: Sheet, state: State, registry
       next[r.id] = to;
     }
   }
-  return { state: next, changes };
+  return { state: next, changes, pending };
 }

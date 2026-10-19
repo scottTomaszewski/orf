@@ -1,4 +1,4 @@
-import { addValues, average, bool, int, scaleValue, type Value } from "./expr/value.js";
+import { addValues, average, bool, formatValue, int, scaleValue, ValueError, type Value } from "./expr/value.js";
 import type { Diagnostic, VariableDef } from "./registry.js";
 
 export type Op = "base" | "add" | "mul" | "at_least" | "at_most" | "set";
@@ -12,6 +12,8 @@ export interface Contribution {
   origin: string;
   note?: string;
   whenText?: string;
+  /** File the contribution came from; used for diagnostics. */
+  path?: string;
 }
 
 export interface Provenance {
@@ -67,8 +69,9 @@ export function fold(def: VariableDef, contributions: Contribution[], opts: { st
 
   if (sets.length > 0) {
     const winner = sets.reduce((a, b) => (rank(b.value) > rank(a.value) ? b : a));
-    if (nonSet.length > 0) {
-      diagnostics.push({ path: def.declaredIn, message: `set on ${def.id} from ${winner.origin} shadows: ${nonSet.map((c) => c.origin).join(", ")}` });
+    const losers = [...nonSet, ...sets.filter((s) => s !== winner)];
+    if (losers.length > 0) {
+      diagnostics.push({ path: winner.path ?? def.declaredIn, severity: "warning", message: `set ${formatValue(winner.value)} on ${def.id} from ${winner.origin} shadows: ${losers.map((c) => `${c.op} ${formatValue(c.value)} from ${c.origin}`).join(", ")}` });
     }
     return { value: applyRounding(winner.value, def), provenance: { contributions: [winner], shadowed: [...nonSet, ...sets.filter((s) => s !== winner)], dropped, usedDefault: false }, diagnostics };
   }
@@ -87,10 +90,13 @@ export function fold(def: VariableDef, contributions: Contribution[], opts: { st
   const best = bases.length > 0 ? bases.reduce((a, b) => (rank(b.value) > rank(a.value) ? b : a)) : undefined;
   let value: Value = best ? best.value : defaultValue(def);
   const used: Contribution[] = best ? [best] : [];
-  for (const c of by("add")) { value = addValues(value, c.value); used.push(c); }
+  const bad = (c: Contribution, why: string) => diagnostics.push({ path: c.path ?? def.declaredIn, message: `${c.op} ${formatValue(c.value)} on ${def.id} from ${c.origin}: ${why}` });
+  for (const c of by("add")) {
+    try { value = addValues(value, c.value); used.push(c); } catch (e) { if (e instanceof ValueError) bad(c, e.message); else throw e; }
+  }
   for (const c of by("mul")) {
-    if (c.value.kind !== "int") { diagnostics.push({ path: def.declaredIn, message: `mul on ${def.id} from ${c.origin} must be an integer` }); continue; }
-    value = scaleValue(value, c.value.value); used.push(c);
+    if (c.value.kind !== "int") { bad(c, "mul must be an integer"); continue; }
+    try { value = scaleValue(value, c.value.value); used.push(c); } catch (e) { if (e instanceof ValueError) bad(c, e.message); else throw e; }
   }
   const floors = by("at_least"), ceilings = by("at_most");
   if (floors.length > 0 || ceilings.length > 0) {

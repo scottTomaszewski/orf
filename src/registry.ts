@@ -4,6 +4,8 @@ export interface Diagnostic {
   path: string;
   message: string;
   line?: number;
+  /** Omitted = error. Warnings do not fail the CLI. */
+  severity?: "error" | "warning";
 }
 
 export const OPS = ["base", "add", "mul", "at_least", "at_most", "set"] as const;
@@ -34,7 +36,7 @@ export const isLookup = (v: unknown): v is Lookup =>
   typeof v === "object" && v !== null && !Array.isArray(v) && ("by" in v || "rows" in v);
 
 export interface RefreshRule { on: string; to?: string | number; add?: number }
-export interface ResourceDef { id: string; max?: string | number; floor?: number; refresh: RefreshRule[]; when?: string; declaredIn: string }
+export interface ResourceDef { id: string; max?: string | number; floor?: number; start?: "max" | number; refresh: RefreshRule[]; when?: string; declaredIn: string }
 export interface EventDef { id: string; description?: string; declaredIn: string }
 export interface PredicateDef { id: string; name: string; args: string[]; declaredIn: string }
 export interface TableDef { id: string; columns: string[]; rows: unknown[][]; declaredIn: string }
@@ -120,6 +122,7 @@ export function buildRegistry(docs: Document[]): { registry: Registry; diagnosti
       registry.resources.set(id, {
         id, max: typeof r.max === "string" || typeof r.max === "number" ? r.max : undefined,
         floor: typeof r.floor === "number" ? r.floor : undefined,
+        start: r.start === "max" || typeof r.start === "number" ? r.start : undefined,
         refresh: asArray(r.refresh) as unknown as RefreshRule[],
         when: typeof r.when === "string" ? r.when : undefined, declaredIn: path,
       });

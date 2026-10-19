@@ -41,12 +41,18 @@ class Run {
     const r = applyMoment(moment, this.sheet, this.state);
     this.state = r.state;
     for (const c of r.changes) this.log.push(`${c.resource}: ${c.from} → ${c.to} (${c.rule})`);
+    for (const p of r.pending) this.log.push(`${p.resource}: roll ${p.dice} and set it (${p.rule})`);
   }
   addWounds(n: number, why: string): void {
     this.set("wounds", this.get("wounds") + n, why);
     this.fire("gain-wound");
     const max = this.sheet.resources.get("wounds")?.max;
     if (max !== undefined && this.get("wounds") >= max) this.log.push(`DEAD: Wounds reached ${max}`);
+  }
+  /** Fire full-hp only on the transition from below max to max. */
+  fullHpCheck(hpBefore: number): void {
+    const max = this.sheet.resources.get("hp")?.max;
+    if (max !== undefined && hpBefore < max && this.get("hp") === max) this.fire("full-hp");
   }
   done(): Outcome { return { state: this.state, fired: this.fired, log: this.log }; }
 }
@@ -76,33 +82,41 @@ export function damage(ctx: Ctx, amount: number, crit = false): Outcome {
 
 export function heal(ctx: Ctx, amount: number): Outcome {
   const r = new Run(ctx.sheet, ctx.state);
-  if (amount > 0) r.set("hp", r.get("hp") + amount, "heal");
+  const before = r.get("hp");
+  if (amount > 0) r.set("hp", before + amount, "heal");
   if (r.get("hp") > 0 && r.state.dying === true) { r.state.dying = false; r.log.push("no longer Dying"); }
-  const max = ctx.sheet.resources.get("hp")?.max;
-  if (max !== undefined && r.get("hp") === max && amount > 0) r.fire("full-hp");
+  r.fullHpCheck(before);
   return r.done();
 }
 
-/** One inner array per Hit Die spent: the roll(s) the player made (two when rolling with advantage). */
+/**
+ * One inner array per Hit Die spent: the roll(s) the player made. With hit_die.heal.advantage the
+ * higher of two counts; without it only the first roll counts. Invalid or empty rolls spend nothing.
+ */
 export function catchBreath(ctx: Ctx, rolls: number[][]): Outcome {
   const r = new Run(ctx.sheet, ctx.state);
+  const before = r.get("hp");
   const size = num(ctx.sheet, "hit_die.size");
   const str = num(ctx.sheet, "str");
   const bonus = num(ctx.sheet, "hit_die.heal.bonus");
   const maximized = flag(ctx.sheet, "hit_die.heal.maximized");
+  const advantage = flag(ctx.sheet, "hit_die.heal.advantage");
   for (const dieRolls of rolls) {
     if (r.get("hit_dice") <= 0) { r.log.push("no Hit Dice left"); break; }
+    const valid = dieRolls.every((x) => Number.isInteger(x) && x >= 1 && x <= size);
+    if (dieRolls.length === 0 || !valid) { r.log.push(`ignored roll [${dieRolls.join(", ")}]: need 1..${size}`); continue; }
     r.set("hit_dice", r.get("hit_dice") - 1, "Catch Breath");
-    const roll = maximized ? size : Math.max(...dieRolls);
+    const roll = maximized ? size : advantage ? Math.max(...dieRolls) : dieRolls[0];
     const healed = Math.max(0, roll + str + bonus);
     r.set("hp", r.get("hp") + healed, `Catch Breath: ${maximized ? "max" : "rolled"} ${roll} + STR ${str}${bonus ? ` + ${bonus}` : ""}`);
   }
   r.fire("catch-breath");
-  return finishRest(r, ctx);
+  return finishRest(r, ctx, before);
 }
 
 export function makeCamp(ctx: Ctx, hitDice: number): Outcome {
   const r = new Run(ctx.sheet, ctx.state);
+  const before = r.get("hp");
   const size = num(ctx.sheet, "hit_die.size");
   const str = num(ctx.sheet, "str");
   const bonus = num(ctx.sheet, "hit_die.heal.bonus");
@@ -111,22 +125,21 @@ export function makeCamp(ctx: Ctx, hitDice: number): Outcome {
     r.set("hp", r.get("hp") + Math.max(0, size + str + bonus), `Make Camp: max ${size} + STR ${str}${bonus ? ` + ${bonus}` : ""}`);
   }
   r.fire("make-camp");
-  return finishRest(r, ctx);
+  return finishRest(r, ctx, before);
 }
 
-function finishRest(r: Run, ctx: Ctx): Outcome {
+function finishRest(r: Run, _ctx: Ctx, hpBefore: number): Outcome {
   if (r.get("hp") > 0 && r.state.dying === true) { r.state.dying = false; r.log.push("no longer Dying"); }
-  const max = ctx.sheet.resources.get("hp")?.max;
-  if (max !== undefined && r.get("hp") === max) r.fire("full-hp");
+  r.fullHpCheck(hpBefore);
   return r.done();
 }
 
 export function safeRest(ctx: Ctx): Outcome {
   const r = new Run(ctx.sheet, ctx.state);
-  const max = ctx.sheet.resources.get("hp")?.max;
-  if (max !== undefined) r.set("hp", max, "Safe Rest");
+  const before = r.get("hp");
   if (r.state.dying === true) { r.state.dying = false; r.log.push("no longer Dying"); }
   r.fire("safe-rest"); // hp/hit dice/mana to max, one Wound healed, temp hp cleared: the resources' own refresh rules
+  r.fullHpCheck(before);
   return r.done();
 }
 

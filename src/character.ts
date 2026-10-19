@@ -5,7 +5,7 @@ export interface Attachment {
   doc: Document;
   /** How the document got here: ancestry | background | class | class-level | grant:<id> | choice:<slot> | subclass-level:<n> | equipment | feature | spell */
   via: string;
-  item?: { equipped: boolean; carried: true; requirementsMet: boolean };
+  item?: { equipped: boolean; carried: true };
   /** For option picks (stat names, schools): the pick itself. */
   choice?: string;
   /** A choice's effect template with "{{ choice }}" substituted. */
@@ -23,7 +23,6 @@ export interface Assembly {
 type FM = Record<string, unknown>;
 const isObj = (v: unknown): v is FM => typeof v === "object" && v !== null && !Array.isArray(v);
 const list = (v: unknown): unknown[] => (Array.isArray(v) ? v : []);
-const STATS = ["str", "dex", "int", "wil"];
 const TEMPLATE_TYPES = ["variables", "resources", "events", "predicates", "functions", "table", "content-types"];
 
 export function assembleCharacter(character: Document, registry: Registry, docs: Map<string, Document>): Assembly {
@@ -56,6 +55,7 @@ export function assembleCharacter(character: Document, registry: Registry, docs:
   if ("background" in fm) attach(fm.background, "background");
 
   const choices = isObj(fm.choices) ? fm.choices : {};
+  const offeredSlots = new Set<string>();
   for (const entry of list(fm.classes)) {
     if (!isObj(entry)) { err(`classes: each entry must be {id, level}`); continue; }
     const cls = attach(entry.id, "class");
@@ -72,7 +72,11 @@ export function assembleCharacter(character: Document, registry: Registry, docs:
       for (const c of list(ld.frontmatter.choices)) {
         if (!isObj(c) || typeof c.slot !== "string") continue;
         const slotId = `${lid}.${c.slot}`;
-        const picks = list(choices[slotId]).map(String);
+        offeredSlots.add(slotId);
+        let picks = list(choices[slotId]).map(String);
+        const count = typeof c.count === "number" ? c.count : 1;
+        if (picks.length > count) { err(`choices ${slotId}: ${picks.length} picks but the slot has count ${count}; extra picks ignored`); picks = picks.slice(0, count); }
+        if (new Set(picks).size !== picks.length) err(`choices ${slotId}: the same pick appears twice`);
         const from = isObj(c.from) ? c.from : {};
         for (const pick of picks) {
           if (Array.isArray(from.options)) {
@@ -91,25 +95,18 @@ export function assembleCharacter(character: Document, registry: Registry, docs:
     }
   }
 
+  for (const slot of Object.keys(choices)) if (!offeredSlots.has(slot)) err(`choices: slot "${slot}" is not offered by any class level this character has reached`);
+
   for (const id of list(fm.features)) attach(id, "feature");
   for (const id of list(fm.spells)) attach(id, "spell");
 
-  const stats = isObj(fm.stats) ? fm.stats : {};
   for (const e of list(fm.equipment)) {
     if (!isObj(e)) { err(`equipment: each entry must be {id, equipped}`); continue; }
     const doc = docs.get(String(e.id));
     if (!doc) { err(`equipment: unknown document id "${String(e.id)}"`); continue; }
-    const req = isObj(doc.frontmatter.requires) ? doc.frontmatter.requires : {};
-    let requirementsMet = true;
-    for (const s of STATS) {
-      const need = req[s];
-      if (typeof need === "number" && (typeof stats[s] !== "number" || (stats[s] as number) < need)) {
-        requirementsMet = false;
-        err(`equipment ${String(e.id)}: requires ${s} ${need}, you have ${typeof stats[s] === "number" ? stats[s] : "none"}; its effects are inactive`);
-      }
-    }
     seen.add(String(e.id));
-    attachments.push({ doc, via: "equipment", item: { equipped: e.equipped === true, carried: true, requirementsMet } });
+    // stat requirements are checked by the engine against the folded stats, not the creation array
+    attachments.push({ doc, via: "equipment", item: { equipped: e.equipped === true, carried: true } });
   }
 
   return { character, attachments, classLevels, diagnostics };

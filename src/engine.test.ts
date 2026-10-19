@@ -63,7 +63,8 @@ test("a formula cycle is one diagnostic naming both members, not a crash", () =>
   const cyc = { path: "cyc.md", body: "", bodyStartLine: 1, frontmatter: { id: "x.cyc", type: "variables", system: "nimble", name: "c",
     variables: [{ id: "cyc.a", name: "a", type: "integer", default: 1, formula: "cyc.b + 1" }, { id: "cyc.b", name: "b", type: "integer", default: 2, formula: "cyc.a + 1" }] } };
   const reg2 = buildRegistry([...docs, cyc]).registry;
-  const s = evaluateCharacter(pip, reg2, byId);
+  const byId2 = new Map(byId); byId2.set("x.cyc", cyc);   // a template doc attaches to every character of the system
+  const s = evaluateCharacter(pip, reg2, byId2);
   expect(s.diagnostics.filter((d) => /cycle/.test(d.message))).toHaveLength(1);
   expect(s.diagnostics.find((d) => /cycle/.test(d.message))!.message).toMatch(/cyc\.a.*cyc\.b/);
   expect(n(s, "cyc.a")).toBe(1);

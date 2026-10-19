@@ -1,5 +1,8 @@
 import type { KeepMode } from "./ast.js";
 
+/** A type error inside value algebra (adding a boolean, negating dice). Callers turn it into a diagnostic. */
+export class ValueError extends Error { constructor(message: string) { super(message); this.name = "ValueError"; } }
+
 export type DiceTerm = { count: number; sides: number; keep?: { mode: KeepMode; n: number } };
 export type Value =
   | { kind: "int"; value: number }
@@ -20,7 +23,7 @@ export function dice(count: number, sides: number, keep?: DiceTerm["keep"]): Val
 export function average(v: Value): number {
   if (v.kind === "int") return v.value;
   if (v.kind === "dice") return v.terms.reduce((s, t) => s + t.count * (t.sides + 1) / 2, v.constant);
-  throw new Error(`no average for a ${v.kind}`);
+  throw new ValueError(`no average for a ${v.kind}`);
 }
 
 const keepStr = (k?: DiceTerm["keep"]) => (k ? `${k.mode}${k.n}` : "");
@@ -54,14 +57,14 @@ export function addValues(a: Value, b: Value): Value {
   if (a.kind === "dice" && b.kind === "int") return normalize(a.terms, a.constant + b.value);
   if (a.kind === "int" && b.kind === "dice") return normalize(b.terms, b.constant + a.value);
   if (a.kind === "dice" && b.kind === "dice") return normalize([...a.terms, ...b.terms], a.constant + b.constant);
-  throw new Error(`cannot add ${a.kind} and ${b.kind}`);
+  throw new ValueError(`cannot add ${a.kind} and ${b.kind}`);
 }
 
 export function scaleValue(v: Value, k: number): Value {
   if (v.kind === "int") return int(v.value * k);
   if (v.kind === "dice") {
-    if (k < 0) throw new Error("cannot multiply dice by a negative number");
+    if (k < 0) throw new ValueError("cannot multiply dice by a negative number");
     return normalize(v.terms.map((t) => ({ ...t, count: t.count * k })), v.constant * k);
   }
-  throw new Error(`cannot multiply a ${v.kind}`);
+  throw new ValueError(`cannot multiply a ${v.kind}`);
 }
