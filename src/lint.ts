@@ -168,6 +168,7 @@ export function lintDocument(doc: Document, registry: Registry): Diagnostic[] {
       for (const k of Object.keys(rr)) if (!REFRESH_KEYS.has(k)) err(`resources[${i}].refresh[${j}]: unknown key "${k}"`);
       if (typeof rr.on !== "string" || !registry.events.has(rr.on)) err(`resources[${i}].refresh[${j}]: unknown event "${String(rr.on)}" (declared: ${[...registry.events.keys()].join(", ")})`);
       if ("to" in rr && rr.to !== "max" && typeof rr.to !== "number") err(`resources[${i}].refresh[${j}].to must be "max" or a number`);
+      if (rr.to === "max" && !("max" in raw)) err(`resources[${i}].refresh[${j}]: "to: max" on a resource with no max (${String(raw.id)})`);
       if ("add" in rr && typeof rr.add !== "number") err(`resources[${i}].refresh[${j}].add must be a number`);
       if (!("to" in rr) && !("add" in rr)) err(`resources[${i}].refresh[${j}] needs "to" or "add"`);
     }

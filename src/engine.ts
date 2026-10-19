@@ -14,6 +14,7 @@ export interface Sheet {
   resources: Map<string, SheetResource>;
   attachments: Attachment[];
   classLevels: Map<string, number>;
+  registry: Registry;
   diagnostics: Diagnostic[];
   value(id: string): Value;
   render(text: string): string;
@@ -269,6 +270,7 @@ export function evaluateCharacter(character: Document, registry: Registry, docs:
     resources,
     attachments: assembly.attachments,
     classLevels: assembly.classLevels,
+    registry,
     diagnostics,
     value: (id) => {
       const c = canon(id);

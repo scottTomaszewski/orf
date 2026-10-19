@@ -279,3 +279,8 @@ test("character state may hold boolean variables (dying, in_wilderness) as well 
   expect(msgs).toMatch(/ki/);
   expect(msgs).not.toMatch(/dying/);
 });
+
+test("refresh to: max on a resource with no max is an error", () => {
+  const d = content({ resources: [{ id: "x", refresh: [{ on: "safe-rest", to: "max" }] }] });
+  expect(lintDocument(d, buildRegistry([...base, d]).registry).map((x) => x.message).join("\n")).toMatch(/refresh\[0\].*to: max.*no max/);
+});
