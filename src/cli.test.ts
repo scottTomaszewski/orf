@@ -22,3 +22,11 @@ test("bad fixture adds an unknown-identifier line and exits 1", () => {
   expect(r.code).toBe(1);
   expect(r.stdout).toMatch(/bad\.md:\d+: unknown identifier "wound\.max"/);
 });
+
+test("sheet command prints a character's variables with provenance and resources", () => {
+  const r = run("sheet", "scott.characters.pip", "systems/nimble", "examples/nimble");
+  expect(r.code).toBe(0);
+  expect(r.stdout).toMatch(/^armor = 4 /m);
+  expect(r.stdout).toMatch(/← base 4 from nimble\.items\.armor\.adventurers-garb/);
+  expect(r.stdout).toMatch(/^mana: 6\/13$/m);
+});
