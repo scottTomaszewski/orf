@@ -13,6 +13,8 @@ Party Creator License. Nimble TTRPG © Nimble Co.
 
 ## Try it
 
+Hosted at https://scotttomaszewski.github.io/orf/, or run it locally:
+
 `cd sheet && npm install && npm run dev`, open **Write**, and follow
 [`sheet/README.md`](sheet/README.md) ("The demo"): write an ancestry, save it, create a
 character with it, change a number, watch it ripple.

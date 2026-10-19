@@ -60,17 +60,37 @@ every tool that speaks ORF picks it up. Two ways to run it.
 Open the same file in Obsidian: the properties show as a table, the text as prose. ORF is
 Markdown.
 
-## Recording checklist (for the post)
+## Browser tests (Playwright)
 
-Creator's seat, under a minute, desktop or 390px:
+`npm run e2e` builds the sheet, serves it with `vite preview`, and runs `e2e/` in Playwright's
+Chromium at desktop (1280px) and phone (390px, touch):
 
-1. Write: type ancestry, name Ratfolk, one effect on `wounds.max`, the source filling itself.
-2. Save → Reader. Create a Ratfolk Mage (Balanced array). Play: Wounds max 7, tap, "Ratfolk +1".
-3. Content → edit → `add: 2` → Save → Wounds max 8.
-4. Optional second shot: the same file in Obsidian, and `npx tsx src/cli.ts` linting it.
+- `e2e/visual.spec.ts` — a full-page baseline PNG per view and size under
+  `e2e/__screenshots__/<project>/`. A failure is a rendering change: `npm run e2e:report` shows
+  the diff; if the change is intended, `npm run e2e:update` and commit the PNGs. Baselines carry
+  no platform suffix because the fonts are web fonts and the browser is Playwright's own build,
+  so Linux CI and a Linux desktop agree; regenerate on Linux (or let CI's diff tell you).
+- `e2e/ripple.spec.ts` — the format's promise in a real browser: write Ratfolk, save, create a
+  Ratfolk mage, Wounds max 7 with provenance, edit the file to `add: 2`, Wounds max 8.
+- `e2e/flows.ts` — the steps both of those and the demo share, written against a `Pace`
+  (`e2e/pace.ts`): `instant` for tests, `human` for the recording.
+
+First run on a new machine: `npx playwright install chromium`. CI runs the same suite
+(`.github/workflows/ci.yml`) and uploads the HTML report when it fails.
+
+## Recording the demo
+
+```
+npm run demo:record          # → demo/orf-demo.mp4, .gif, .webm (gitignored)
+DEMO_SPEED=0.6 npm run demo:record   # faster pauses and typing
+```
+
+`e2e/demo.spec.ts` runs the ripple flow at human pace with a drawn cursor and captions, in a
+1280×800 Chromium with video on; `scripts/finish-demo.mjs` converts the newest recording with
+ffmpeg. The recording is reproducible: same steps, same content, same captions every time. Change
+the captions or the beats in the spec, not in an editor. About a minute long.
 
 ## Hosting
 
 `.github/workflows/pages.yml` builds `sheet/` and deploys it to GitHub Pages on every push to
-`main` (`VITE_BASE=/orf/`). Enable Pages once with the workflow as the source:
-`gh api -X POST repos/scottTomaszewski/orf/pages -f build_type=workflow`.
+`main` (`VITE_BASE=/orf/`). Live at https://scotttomaszewski.github.io/orf/.

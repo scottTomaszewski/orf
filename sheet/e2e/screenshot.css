@@ -1,0 +1,3 @@
+/* Applied only while a full-page baseline is captured: full-page capture stitches viewports, so sticky and fixed chrome would repeat mid-page. */
+.app__header { position: static !important; }
+.app__tabs { position: static !important; }
