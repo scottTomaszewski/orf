@@ -28,7 +28,7 @@ test("a level-2 Mage levels to 3: subclass and school pickers, HP roll with adva
   fireEvent.click(screen.getByRole("button", { name: /roll with advantage/i }));
   await waitFor(() => expect(screen.getByText(/rolled 1 and 6/i)).toBeTruthy());
   expect((screen.getByLabelText("HP gained") as HTMLInputElement).value).toBe("6");
-  fireEvent.click(screen.getByLabelText("Arcana"));
+  fireEvent.click(screen.getByLabelText(/^Arcana/));
   const apply = screen.getByRole("button", { name: /^apply$/i });
   await waitFor(() => expect((apply as HTMLButtonElement).disabled).toBe(false));
   fireEvent.click(apply);
