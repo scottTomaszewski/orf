@@ -23,7 +23,7 @@ export interface Assembly {
 type FM = Record<string, unknown>;
 const isObj = (v: unknown): v is FM => typeof v === "object" && v !== null && !Array.isArray(v);
 const list = (v: unknown): unknown[] => (Array.isArray(v) ? v : []);
-const TEMPLATE_TYPES = ["variables", "resources", "events", "predicates", "functions", "table", "content-types"];
+const TEMPLATE_TYPES = ["variables", "resources", "events", "predicates", "functions", "table", "content-types", "creation"];
 
 export function assembleCharacter(character: Document, registry: Registry, docs: Map<string, Document>): Assembly {
   const fm = character.frontmatter;

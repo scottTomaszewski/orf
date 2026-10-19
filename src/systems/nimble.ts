@@ -80,6 +80,13 @@ export function damage(ctx: Ctx, amount: number, crit = false): Outcome {
   return r.done();
 }
 
+/** Gain Wounds outside the damage procedure (a spell's cost, a GM ruling, a sheet correction). Fires gain-wound; reports death. */
+export function gainWounds(ctx: Ctx, n: number): Outcome {
+  const r = new Run(ctx.sheet, ctx.state);
+  if (n > 0) r.addWounds(n, "gained");
+  return r.done();
+}
+
 export function heal(ctx: Ctx, amount: number): Outcome {
   const r = new Run(ctx.sheet, ctx.state);
   const before = r.get("hp");

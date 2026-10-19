@@ -1,4 +1,4 @@
-import { loadDocumentsLenient } from "./document.js";
+import { loadDocumentsLenient } from "./document-fs.js";
 import { evaluateCharacter } from "./engine.js";
 import { formatValue } from "./expr/value.js";
 import { lintAll } from "./lint.js";
