@@ -6,6 +6,7 @@ import { PRODUCT_NAME } from "./notice.js";
 import { navigate, route } from "./router.js";
 import { AboutView } from "./views/about.js";
 import { CreateView } from "./views/create.js";
+import { PlayView } from "./views/play.js";
 
 const TABS: { view: string; label: string; glyph: string; hash: string }[] = [
   { view: "play", label: "Play", glyph: "◆", hash: "#/play" },
@@ -64,6 +65,7 @@ function View() {
   switch (r.view) {
     case "about": return <AboutView />;
     case "create": return <CreateView />;
+    case "play": return <PlayView />;
     default: return <p class="muted">{placeholder.value ? `${r.view}: coming in a later task` : ""}</p>;
   }
 }

@@ -82,7 +82,7 @@ function CreateForm({ docs, storage }: { docs: Map<string, Document>; storage: S
   return (
     <div class="stack">
       <h1 class="steel-h1">Create a character</h1>
-      <Panel title="Name">
+      <Panel title="Identity">
         <label class="row"><span class="steel-label" id="name-label">Name</span><input class="steel-input" aria-labelledby="name-label" aria-label="Name" value={name.value} onInput={(e) => (name.value = (e.target as HTMLInputElement).value)} /></label>
       </Panel>
       <Picker title="Class" name="class" options={opts.classes} value={classId.value} onPick={(v) => (classId.value = v)} />
