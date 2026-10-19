@@ -60,6 +60,17 @@ every tool that speaks ORF picks it up. Two ways to run it.
 Open the same file in Obsidian: the properties show as a table, the text as prose. ORF is
 Markdown.
 
+## The look
+
+High-Fantasy Steel, the Steel Compendium design language (workspace `DESIGN.md`), ported as
+tokens in `src/styles/steel.css`. Depth carries hierarchy: one raised **plate** per view (a
+character's head, a document, the file being written) with a crest and a deep cast shadow;
+**panels** inside with a dark title band and a soft sheen; **chips** at 2px for single facts.
+Numbers are tabular mono with an emboss; labels are Petrona small caps; display is Cinzel.
+Saturated color is semantic only (HP red, Wound gold, Mana blue, the teal accent for the one
+primary action per view). Wounds and actions are seals: an engraved empty ring, a struck disc
+when spent. No colored left-border spines (DESIGN.md rule 7).
+
 ## Browser tests (Playwright)
 
 `npm run e2e` builds the sheet, serves it with `vite preview`, and runs `e2e/` in Playwright's
@@ -72,6 +83,8 @@ Chromium at desktop (1280px) and phone (390px, touch):
   so Linux CI and a Linux desktop agree; regenerate on Linux (or let CI's diff tell you).
 - `e2e/ripple.spec.ts` — the format's promise in a real browser: write Ratfolk, save, create a
   Ratfolk mage, Wounds max 7 with provenance, edit the file to `add: 2`, Wounds max 8.
+- `e2e/layout.spec.ts` — no view is wider than the viewport. Horizontal overflow on a phone
+  makes mobile Chromium zoom the layout viewport out and pushes the fixed tab bar off-screen.
 - `e2e/flows.ts` — the steps both of those and the demo share, written against a `Pace`
   (`e2e/pace.ts`): `instant` for tests, `human` for the recording.
 

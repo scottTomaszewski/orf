@@ -1,83 +1,174 @@
-/* High-Fantasy Steel tokens, ported from Steel Compendium (workspace DESIGN.md, palette.css, steel-redesign.css).
-   Charcoal ground, restrained steel chrome, one teal accent; saturated color only as semantics (thin borders, glyphs). */
+/* High-Fantasy Steel tokens, ported from Steel Compendium (workspace DESIGN.md, palette.css, steel-redesign.css,
+   draw-steel-elements styles-source.css). Charcoal ground, restrained steel chrome, one teal accent; saturated
+   color only as semantics (thin borders, glyphs, fills on tracks). Depth carries hierarchy: plate > panel > chip. */
 :root, [data-theme="slate"] {
   color-scheme: dark;
   --bg: #1a1e21; --bg-raised: #22272b; --bg-sunken: #15181b;
   --fg: rgba(255, 250, 244, .88); --fg-2: rgba(255, 250, 244, .62); --fg-3: rgba(255, 250, 244, .38); --line: rgba(255, 250, 244, .12);
-  --accent: #4db8c7; --accent-soft: rgba(77, 184, 199, .12); --steel: #5a6368; --steel-light: #8e959a;
+  --heading: rgba(220, 226, 230, .95);
+  --accent: #4db8c7; --accent-soft: rgba(77, 184, 199, .12); --accent-ink: #0f1d20; --steel: #5a6368; --steel-light: #8e959a;
   --fx-metal: #a9b0b5; --fx-metal-bright: #d9dee1;
   --fx-metal-grad: linear-gradient(180deg, #e3e7e9 0%, #a9b0b5 48%, #686f74 100%);
   --fx-metal-line: rgba(176, 183, 187, .5); --fx-metal-faint: rgba(176, 183, 187, .16);
   --fx-card-bg: linear-gradient(160deg, #232a2e, #181c1f);
+  --fx-sheen: linear-gradient(180deg, rgba(255, 255, 255, .07), rgba(0, 0, 0, .14));
+  --fx-sheen-soft: linear-gradient(180deg, rgba(255, 255, 255, .035), rgba(255, 255, 255, 0));
+  --fx-band: linear-gradient(180deg, rgba(0, 0, 0, .42), rgba(0, 0, 0, .26));
   --fx-bevel: inset 0 1px 0 rgba(255, 255, 255, .07);
   --fx-emboss: 0 1px 0 rgba(0, 0, 0, .55), 0 -1px 0 rgba(255, 255, 255, .04);
   --fx-well: inset 0 2px 4px rgba(0, 0, 0, .55), inset 0 -1px 0 rgba(255, 255, 255, .05);
+  --fx-plate-shadow: 0 8px 22px rgba(0, 0, 0, .34);
+  --fx-panel-shadow: 0 3px 10px rgba(0, 0, 0, .22);
+  --fx-chip-bg: rgba(220, 226, 230, .06);
+  --fx-chip-bevel: inset 0 1px 0 rgba(255, 255, 255, .08), 0 1px 3px rgba(0, 0, 0, .3);
+  --fx-crest-face: radial-gradient(circle at 42% 30%, #2b3137, #14181b);
   --font-display: "Cinzel", "Source Serif 4", serif; --display-weight: 900; --display-scale: .9;
   --font-sub: "Petrona", "Source Serif 4", serif; --sub-weight: 700;
   --font-body: "Source Serif 4", "Zilla Slab", Georgia, serif;
   /* Mono and glyph faces are web fonts too, so every machine (and the visual baselines in e2e/) renders the same. */
   --font-mono: "Source Code Pro", ui-monospace, "SF Mono", Menlo, Consolas, monospace;
   --font-glyph: "Noto Sans Symbols 2", "Source Serif 4", serif;
-  /* semantic hues: borders and glyphs only, never fills */
+  /* semantic hues: borders, glyphs and track fills, never panel fills */
   --sem-hp: #c75050; --sem-mana: #4d7fc7; --sem-wound: #b8923a; --sem-ok: #5aa86f; --sem-warn: #d0a040;
-  --radius: 6px; --tap: 40px;
+  --radius: 6px; --radius-panel: 5px; --radius-chip: 2px; --tap: 40px;
 }
 [data-theme="light"] {
   color-scheme: light;
   --bg: #f6f8f8; --bg-raised: #ffffff; --bg-sunken: #e9eded;
   --fg: #1a1d20; --fg-2: rgba(26, 29, 32, .66); --fg-3: rgba(26, 29, 32, .42); --line: rgba(26, 29, 32, .12);
-  --accent: #2a7b88; --accent-soft: rgba(42, 123, 136, .10); --steel: #5f676c; --steel-light: #8e959a;
+  --heading: #1a1d20;
+  --accent: #2a7b88; --accent-soft: rgba(42, 123, 136, .10); --accent-ink: #ffffff; --steel: #5f676c; --steel-light: #8e959a;
   --fx-metal: #5f676c; --fx-metal-bright: #2c3338;
   --fx-metal-grad: linear-gradient(180deg, #9aa1a6 0%, #6a7176 48%, #474d51 100%);
   --fx-metal-line: rgba(95, 103, 108, .45); --fx-metal-faint: rgba(95, 103, 108, .14);
   --fx-card-bg: linear-gradient(160deg, #ffffff, #eef1f1);
+  --fx-sheen: linear-gradient(180deg, rgba(255, 255, 255, .9), rgba(0, 0, 0, .04));
+  --fx-sheen-soft: linear-gradient(180deg, rgba(255, 255, 255, .6), rgba(255, 255, 255, 0));
+  --fx-band: linear-gradient(180deg, rgba(0, 0, 0, .10), rgba(0, 0, 0, .05));
   --fx-bevel: inset 0 1px 0 rgba(255, 255, 255, .8); --fx-emboss: none;
   --fx-well: inset 0 2px 4px rgba(0, 0, 0, .18);
+  --fx-plate-shadow: 0 4px 12px rgba(0, 0, 0, .08);
+  --fx-panel-shadow: 0 2px 6px rgba(0, 0, 0, .06);
+  --fx-chip-bg: rgba(26, 29, 32, .05);
+  --fx-chip-bevel: inset 0 1px 0 rgba(255, 255, 255, .9), 0 1px 2px rgba(0, 0, 0, .12);
+  --fx-crest-face: radial-gradient(circle at 42% 30%, #f6f8f8, #dfe4e5);
 }
 
 html { background: var(--bg); color: var(--fg); font-family: var(--font-body); font-size: 16px; line-height: 1.55; -webkit-text-size-adjust: 100%; }
 body { margin: 0; background: var(--bg); color: var(--fg); }
 a { color: var(--accent); }
-hr.steel { border: 0; height: 1px; background: var(--fx-metal-line); margin: 1rem 0; position: relative; overflow: visible; }
-hr.steel::after { content: "◆"; font-family: var(--font-glyph); position: absolute; left: 50%; top: 50%; transform: translate(-50%, -50%); background: var(--bg); color: var(--fx-metal); padding: 0 .5rem; font-size: .7rem; line-height: 1; }
+::selection { background: var(--accent-soft); }
 
-.steel-h1, .steel-h2 { font-family: var(--font-display); font-weight: var(--display-weight); letter-spacing: 0; text-transform: uppercase; line-height: 1.05; margin: 0; color: var(--fg); text-shadow: var(--fx-emboss); }
+/* The ◆ rule: polished steel fading in from both sides, two seed dots, a haloed diamond (steel-redesign.css hr). */
+hr.steel { border: 0; height: 1px; margin: 1rem 0; position: relative; overflow: visible;
+  background: linear-gradient(to right, transparent, var(--fx-metal-line)) no-repeat left center, linear-gradient(to left, transparent, var(--fx-metal-line)) no-repeat right center;
+  background-size: calc(50% - 30px) 1px, calc(50% - 30px) 1px; }
+hr.steel::before { content: ""; position: absolute; top: 50%; left: 50%; width: 48px; height: 4px; transform: translate(-50%, -50%);
+  background: radial-gradient(circle, var(--fx-metal) 1.4px, transparent 1.9px) no-repeat left center, radial-gradient(circle, var(--fx-metal) 1.4px, transparent 1.9px) no-repeat right center;
+  background-size: 4px 4px, 4px 4px; }
+hr.steel::after { content: ""; position: absolute; top: 50%; left: 50%; width: 9px; height: 9px; margin: -4.5px 0 0 -4.5px; transform: rotate(45deg);
+  background: var(--fx-metal-grad); box-shadow: 0 0 0 3px var(--bg), 0 0 0 4px var(--fx-metal-faint); }
+
+/* Type roles */
+.steel-h1, .steel-h2 { font-family: var(--font-display); font-weight: var(--display-weight); letter-spacing: 0; text-transform: uppercase; line-height: 1.05; margin: 0; color: var(--heading); text-shadow: var(--fx-emboss); }
 .steel-h1 { font-size: calc(1.5rem * var(--display-scale)); }
 .steel-h2 { font-size: calc(1.15rem * var(--display-scale)); }
 @media (min-width: 800px) { .steel-h1 { font-size: calc(1.9rem * var(--display-scale)); } }
 .steel-label { font-family: var(--font-sub); font-weight: var(--sub-weight); font-variant: small-caps; letter-spacing: .06em; font-size: .78rem; color: var(--fg-2); text-transform: lowercase; }
+.steel-eyebrow { font-family: var(--font-sub); font-weight: var(--sub-weight); font-variant: small-caps; letter-spacing: .11em; font-size: .72rem; color: var(--fx-metal); text-transform: lowercase; display: inline-flex; align-items: center; gap: .35em; }
+.steel-eyebrow::before { content: "◆"; font-family: var(--font-glyph); font-size: .62em; color: var(--fx-metal); }
 .steel-mono { font-family: var(--font-mono); font-variant-numeric: tabular-nums; }
+.steel-num { font-family: var(--font-mono); font-variant-numeric: tabular-nums; font-weight: 600; color: var(--heading); text-shadow: var(--fx-emboss); }
 
-.steel-panel { background: var(--fx-card-bg); border: 1px solid var(--fx-metal-line); border-radius: var(--radius); box-shadow: var(--fx-bevel); padding: .75rem .9rem; }
-.steel-panel > .steel-panel__title { display: flex; align-items: baseline; justify-content: space-between; gap: .5rem; margin-bottom: .55rem; padding-bottom: .3rem; border-bottom: 1px solid var(--fx-metal-faint); }
-.steel-panel > .steel-panel__title > .steel-label { font-size: .82rem; }
-@media (min-width: 800px) { .steel-panel { padding: .9rem 1.1rem; } }
+/* Crest: the brushed-steel shield with a dark inner face (steel-redesign.css .sc-crest). Carries one glyph or initial. */
+.sc-crest { position: relative; display: inline-grid; place-items: center; width: 38px; height: 43px; flex: 0 0 auto;
+  --shield: polygon(6% 0, 94% 0, 94% 58%, 50% 100%, 6% 58%); clip-path: var(--shield); background: var(--fx-metal-grad); }
+.sc-crest::before { content: ""; position: absolute; inset: 1.5px; clip-path: var(--shield); background: var(--fx-crest-face); }
+.sc-crest > * { position: relative; z-index: 1; display: grid; place-items: center; transform: translateY(-4.3px); color: var(--fx-metal-bright);
+  font-family: var(--font-display); font-weight: 900; font-size: 1.05rem; line-height: 1; }
+.sc-crest > .glyph { font-family: var(--font-glyph); font-size: .8rem; }
+.sc-crest.lg { width: 50px; height: 56px; }
+.sc-crest.lg > * { transform: translateY(-5.6px); font-size: 1.4rem; }
+.sc-crest.sm { width: 26px; height: 29px; }
+.sc-crest.sm > * { transform: translateY(-3px); font-size: .7rem; }
+
+/* Plate: the one raised surface per view (a character's head, a document, the file being written). */
+.steel-plate { background: var(--fx-card-bg); border: 1px solid var(--fx-metal-line); border-radius: var(--radius); box-shadow: var(--fx-bevel), var(--fx-plate-shadow); padding: 1rem 1.1rem; }
+@media (min-width: 800px) { .steel-plate { padding: 1.25rem 1.5rem; } }
+
+/* Panel: quieter. A dark band carries the title, the body gets a soft sheen; hairline frame, light cast shadow. */
+.steel-panel { background: var(--fx-sheen-soft), var(--fx-card-bg); border: 1px solid var(--fx-metal-line); border-radius: var(--radius-panel); box-shadow: var(--fx-bevel), var(--fx-panel-shadow); padding: .75rem .9rem; }
+.steel-panel > .steel-panel__title { display: flex; align-items: center; justify-content: space-between; gap: .5rem; margin: -.75rem -.9rem .65rem; padding: .42rem .9rem; background: var(--fx-band); border-bottom: 1px solid var(--fx-metal-line); border-radius: calc(var(--radius-panel) - 1px) calc(var(--radius-panel) - 1px) 0 0; min-height: 1.6rem; }
+.steel-panel > .steel-panel__title > .steel-label { font-size: .72rem; letter-spacing: .11em; color: var(--fx-metal-bright); }
+@media (min-width: 800px) { .steel-panel { padding: .9rem 1.1rem; } .steel-panel > .steel-panel__title { margin: -.9rem -1.1rem .75rem; padding: .45rem 1.1rem; } }
 .steel-panel--hp { border-color: color-mix(in srgb, var(--sem-hp) 55%, var(--fx-metal-line)); }
 .steel-panel--mana { border-color: color-mix(in srgb, var(--sem-mana) 55%, var(--fx-metal-line)); }
 .steel-panel--wound { border-color: color-mix(in srgb, var(--sem-wound) 55%, var(--fx-metal-line)); }
 
+/* Chip: the smallest forged surface; carries one fact. */
+.steel-chip { display: inline-flex; align-items: center; gap: .3em; font-family: var(--font-sub); font-weight: var(--sub-weight); font-variant: small-caps; text-transform: lowercase; letter-spacing: .06em; font-size: .74rem; line-height: 1.2; padding: .22em .55em; color: var(--fg-2); background: var(--fx-sheen), var(--fx-chip-bg); border: 1px solid var(--fx-metal-faint); border-radius: var(--radius-chip); box-shadow: var(--fx-chip-bevel); white-space: nowrap; }
+.steel-chip b, .steel-chip .steel-mono { color: var(--heading); font-weight: 600; font-variant: normal; letter-spacing: 0; text-transform: none; }
+.steel-chip--accent { color: var(--accent); border-color: color-mix(in srgb, var(--accent) 45%, var(--fx-metal-faint)); }
+
+/* Buttons: forged plates with a sheen; the primary is an accent-filled plate (one per view). */
 .steel-btn { font-family: var(--font-sub); font-weight: var(--sub-weight); font-variant: small-caps; letter-spacing: .04em; font-size: .9rem; min-height: var(--tap); padding: 0 .9rem;
-  color: var(--fg); background: var(--bg-raised); border: 1px solid var(--fx-metal-line); border-radius: var(--radius); box-shadow: var(--fx-bevel); cursor: pointer; transition: transform .15s, border-color .15s; }
-.steel-btn:hover { border-color: var(--fx-metal); transform: translateY(-1px); }
-.steel-btn:active { transform: none; }
+  color: var(--fg); background: var(--fx-sheen), var(--bg-raised); border: 1px solid var(--fx-metal-line); border-radius: var(--radius-panel); box-shadow: var(--fx-bevel), 0 1px 2px rgba(0, 0, 0, .25); cursor: pointer; transition: transform .15s, border-color .15s, color .15s; text-transform: lowercase; }
+.steel-btn:hover { border-color: var(--fx-metal); color: var(--heading); transform: translateY(-1px); }
+.steel-btn:active { transform: none; box-shadow: var(--fx-well); }
 .steel-btn:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
-.steel-btn--primary { border-color: var(--accent); color: var(--accent); }
-.steel-btn--primary:hover { background: var(--accent-soft); }
-.steel-btn:disabled { opacity: .45; cursor: not-allowed; transform: none; }
+.steel-btn--primary { background: linear-gradient(180deg, rgba(255, 255, 255, .18), rgba(0, 0, 0, .12)), var(--accent); color: var(--accent-ink); border-color: color-mix(in srgb, var(--accent) 70%, #000); text-shadow: 0 1px 0 rgba(255, 255, 255, .18); }
+.steel-btn--primary:hover { color: var(--accent-ink); border-color: var(--accent); filter: brightness(1.06); }
+.steel-btn:disabled { opacity: .45; cursor: not-allowed; transform: none; filter: none; }
 
 /* Stepper: bevelled − / + framing a sunken well; always visible (DESIGN.md rule 9) */
-.steel-stepper { display: inline-grid; grid-template-columns: var(--tap) minmax(3ch, auto) var(--tap); align-items: stretch; border: 1px solid var(--fx-metal-line); border-radius: var(--radius); overflow: hidden; background: var(--bg-raised); }
+.steel-stepper { display: inline-grid; grid-template-columns: var(--tap) minmax(3ch, auto) var(--tap); align-items: stretch; border: 1px solid var(--fx-metal-line); border-radius: var(--radius-panel); overflow: hidden; background: var(--bg-raised); box-shadow: 0 1px 2px rgba(0, 0, 0, .25); }
 .steel-stepper button { min-height: var(--tap); border: 0; background: var(--fx-metal-grad); color: #1a1e21; font-weight: 700; font-size: 1.1rem; cursor: pointer; box-shadow: var(--fx-bevel); }
-.steel-stepper button:disabled { opacity: .35; cursor: not-allowed; }
-.steel-stepper .well { display: flex; align-items: center; justify-content: center; padding: 0 .6rem; background: var(--bg-sunken); box-shadow: var(--fx-well); font-family: var(--font-mono); font-variant-numeric: tabular-nums; font-size: 1.05rem; }
-.steel-stepper .well .max { color: var(--fg-3); font-size: .85rem; margin-left: .15rem; }
+.steel-stepper button:hover { filter: brightness(1.08); }
+.steel-stepper button:disabled { opacity: .35; cursor: not-allowed; filter: none; }
+.steel-stepper .well { display: flex; align-items: center; justify-content: center; padding: 0 .6rem; background: var(--bg-sunken); box-shadow: var(--fx-well); font-family: var(--font-mono); font-variant-numeric: tabular-nums; font-weight: 600; font-size: 1.05rem; color: var(--heading); }
+.steel-stepper .well .max { color: var(--fg-3); font-size: .85rem; margin-left: .15rem; font-weight: 400; }
 
-.steel-input, .steel-select { min-height: var(--tap); padding: 0 .6rem; color: var(--fg); background: var(--bg-sunken); border: 1px solid var(--fx-metal-line); border-radius: var(--radius); box-shadow: var(--fx-well); font: inherit; }
+.steel-input, .steel-select { min-height: var(--tap); padding: 0 .6rem; color: var(--fg); background: var(--bg-sunken); border: 1px solid var(--fx-metal-line); border-radius: var(--radius-panel); box-shadow: var(--fx-well); font: inherit; }
+.steel-input::placeholder { color: var(--fg-3); }
 .steel-input:focus-visible, .steel-select:focus-visible { outline: 2px solid var(--accent); outline-offset: 1px; }
-.steel-badge { display: inline-block; font-family: var(--font-sub); font-variant: small-caps; font-size: .72rem; letter-spacing: .05em; padding: .05rem .45rem; border: 1px solid var(--fx-metal-line); border-radius: 999px; color: var(--fg-2); }
+.steel-badge { display: inline-block; font-family: var(--font-sub); font-variant: small-caps; font-size: .72rem; letter-spacing: .05em; padding: .05rem .45rem; border: 1px solid var(--fx-metal-line); border-radius: 999px; color: var(--fg-2); text-transform: lowercase; }
 .steel-badge--hp { border-color: var(--sem-hp); color: var(--sem-hp); }
 .steel-badge--wound { border-color: var(--sem-wound); color: var(--sem-wound); }
 .steel-badge--warn { border-color: var(--sem-warn); color: var(--sem-warn); }
 .steel-value { background: none; border: 0; padding: 0; color: inherit; font: inherit; cursor: pointer; border-bottom: 1px dotted var(--fx-metal-line); }
-.steel-value:hover { border-bottom-color: var(--accent); }
+.steel-value:hover { border-bottom-color: var(--accent); color: var(--heading); }
+.steel-value b { color: var(--heading); font-weight: 600; }
+
+/* Seal: one mark per state (DESIGN.md rule 9). An engraved empty ring; a struck steel disc bearing the ◆ when on. */
+.seal { display: inline-grid; place-items: center; width: 1.15rem; height: 1.15rem; border-radius: 50%; border: 1px solid var(--fx-metal-line); box-shadow: inset 0 1px 2px rgba(0, 0, 0, .45); color: var(--fg-3); font-family: var(--font-glyph); font-size: .55rem; line-height: 1; }
+.seal.on { background: var(--fx-metal-grad); border-color: var(--fx-metal-bright); box-shadow: var(--fx-chip-bevel); color: #1a1e21; }
+.seal--wound.on { background: linear-gradient(180deg, rgba(255, 255, 255, .28) 0%, rgba(255, 255, 255, 0) 48%, rgba(0, 0, 0, .28) 100%), var(--sem-wound); border-color: var(--sem-wound); }
+.seal--accent.on { background: linear-gradient(180deg, rgba(255, 255, 255, .28) 0%, rgba(255, 255, 255, 0) 48%, rgba(0, 0, 0, .28) 100%), var(--accent); border-color: var(--accent); }
+
+/* Track: a sunken trough with a forged fill; the outline states the limit, the fill states what is left. */
+.track { position: relative; height: .55rem; border-radius: 3px; background: var(--bg-sunken); box-shadow: var(--fx-well); border: 1px solid var(--fx-metal-faint); overflow: hidden; }
+.track > i { position: absolute; inset: 0 auto 0 0; display: block; background: var(--fx-metal-grad); border-right: 1px solid var(--fx-metal-bright); transition: width .2s; }
+.track--hp > i { background: linear-gradient(180deg, rgba(255, 255, 255, .28) 0%, rgba(255, 255, 255, 0) 48%, rgba(0, 0, 0, .28) 100%), var(--sem-hp); border-right-color: color-mix(in srgb, var(--sem-hp) 60%, #fff); }
+.track--mana > i { background: linear-gradient(180deg, rgba(255, 255, 255, .28) 0%, rgba(255, 255, 255, 0) 48%, rgba(0, 0, 0, .28) 100%), var(--sem-mana); border-right-color: color-mix(in srgb, var(--sem-mana) 60%, #fff); }
+
+/* Cell: a value over its label, centered, for matched columns (the class head's strips). */
+.cells { display: grid; grid-template-columns: repeat(auto-fit, minmax(3.6rem, 1fr)); gap: .4rem; }
+.cell { display: grid; justify-items: center; gap: .05rem; padding: .45rem .3rem .35rem; background: var(--fx-sheen-soft), var(--fx-chip-bg); border: 1px solid var(--fx-metal-faint); border-radius: var(--radius-chip); box-shadow: var(--fx-chip-bevel); text-align: center; min-width: 0; }
+.cell .steel-value { border-bottom: 0; display: grid; justify-items: center; gap: .05rem; }
+.cell .steel-value b { font-size: 1.35rem; line-height: 1.1; font-weight: 600; text-shadow: var(--fx-emboss); }
+.cell .steel-value:hover b { color: var(--accent); }
+.cell .cell__label { font-family: var(--font-sub); font-weight: var(--sub-weight); font-variant: small-caps; text-transform: lowercase; letter-spacing: .08em; font-size: .68rem; color: var(--fg-2); }
+.cells--small .cell .steel-value b { font-size: 1rem; }
+
+/* Band: a verdict strip (the montage outcome band); eyebrow over a word, the word in the band's color. */
+.band { display: flex; align-items: center; gap: .6rem; padding: .5rem .8rem; background: linear-gradient(104deg, rgba(0, 0, 0, .26), rgba(0, 0, 0, .12)); border: 1px solid var(--fx-metal-faint); border-radius: var(--radius-panel); box-shadow: var(--fx-bevel); --band: var(--fx-metal); }
+.band--ok { --band: var(--sem-ok); } .band--warn { --band: var(--sem-warn); } .band--hp { --band: var(--sem-hp); } .band--wound { --band: var(--sem-wound); } .band--accent { --band: var(--accent); }
+.band > .glyph { font-family: var(--font-glyph); color: var(--band); font-size: .8rem; }
+.band .band__word { font-family: var(--font-sub); font-weight: var(--sub-weight); font-size: 1rem; color: var(--band); text-shadow: var(--fx-emboss); line-height: 1.15; }
+.band .band__tail { margin-left: auto; font-family: var(--font-sub); font-variant: small-caps; text-transform: lowercase; letter-spacing: .07em; font-size: .72rem; color: var(--fg-2); text-align: right; }
+
+/* Ledger: hairline rows, keys in small caps, values right. */
+.ledger { display: grid; gap: 0; }
+.ledger > * { display: flex; justify-content: space-between; align-items: baseline; gap: .6rem; padding: .3rem 0; border-top: 1px solid var(--fx-metal-faint); }
+.ledger > :first-child { border-top: 0; }
 code, kbd, pre { font-family: var(--font-mono); font-size: .92em; }

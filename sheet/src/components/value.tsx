@@ -4,14 +4,17 @@ import { formatValue } from "../../../src/expr/value.js";
 import { extractReferences } from "../../../src/expr-refs.js";
 
 /** A number you can tap to see where it came from. */
-export function Value({ sheet, id, label, docs }: { sheet: Sheet; id: string; label?: string; docs?: Map<string, { frontmatter: Record<string, unknown> }> }) {
+export function Value({ sheet, id, label, docs, layout }: { sheet: Sheet; id: string; label?: string; docs?: Map<string, { frontmatter: Record<string, unknown> }>; layout?: "inline" | "cell" }) {
   const open = useSignal(false);
   const v = sheet.variables.get(id) ?? ({ id, name: id, value: sheet.value(id), provenance: { contributions: [], shadowed: [], dropped: [], usedDefault: true } } as SheetVariable);
   const text = formatValue(v.value);
   const nameOf = (origin: string) => { const d = docs?.get(origin); return d ? String(d.frontmatter.name) : origin; };
+  const cell = layout === "cell";
   return (
-    <span class="value">
-      <button type="button" class="steel-value" aria-label={`${label ?? v.name} ${text}`} onClick={() => (open.value = !open.value)}>{label !== undefined ? `${label} ` : ""}<b class="steel-mono">{text}</b></button>
+    <span class={cell ? "value cell" : "value"}>
+      <button type="button" class="steel-value" aria-label={`${label ?? v.name} ${text}`} onClick={() => (open.value = !open.value)}>
+        {cell ? <><b class="steel-mono">{text}</b><span class="cell__label">{label ?? v.name}</span></> : <>{label !== undefined ? `${label} ` : ""}<b class="steel-mono">{text}</b></>}
+      </button>
       {open.value && (
         <div role="dialog" aria-label={`where ${v.name} comes from`} class="pop steel-panel">
           <div class="steel-panel__title"><span class="steel-label">{v.name}</span><button type="button" class="steel-btn small" onClick={() => (open.value = false)} aria-label="close">×</button></div>

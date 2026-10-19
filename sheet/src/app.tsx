@@ -47,7 +47,7 @@ export function App({ loader, homebrew, storage, rng = Math.random }: { loader: 
     <AppContext.Provider value={services}>
       <div class="app">
         <header class="app__header">
-          <span class="app__brand"><span class="crest" aria-hidden="true">◆</span><span class="steel-h1">{SHORT_NAME}</span><span class="sub">for Nimble</span></span>
+          <span class="app__brand"><span class="sc-crest sm" aria-hidden="true"><span class="glyph">◆</span></span><span class="steel-h1">{SHORT_NAME}</span><span class="sub">for Nimble</span></span>
           <button type="button" class="steel-btn app__theme" onClick={toggleTheme} aria-label="toggle theme">{theme.value === "slate" ? "☾" : "☀"}</button>
         </header>
         <nav class="app__tabs" role="tablist" aria-label="views">

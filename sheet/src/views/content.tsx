@@ -70,7 +70,7 @@ export function ContentView() {
         )}
       </Panel>
       <CrestRule />
-      <section class={`steel-panel${problems.length ? " problems" : ""}`} aria-label="Problems"><span class="steel-label">problems</span>
+      <section class={`steel-panel${problems.length ? " problems" : ""}`} aria-label="Problems"><div class="steel-panel__title"><span class="steel-label">problems</span></div>
         {problems.length === 0 ? <p class="small muted">None. Every document parsed and linted clean.</p> : (
           <ul class="small">{problems.map((d, i) => <li key={i} class={d.severity === "warning" ? "muted" : ""}><span class="steel-mono">{d.path}{d.line ? `:${d.line}` : ""}</span> {d.message}</li>)}</ul>
         )}

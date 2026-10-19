@@ -4,8 +4,7 @@ import type { Document } from "../../../src/document.js";
 import { evaluateCharacter } from "../../../src/engine.js";
 import { AppContext } from "../app-context.js";
 import { localCharacterStore } from "../character-store.js";
-import { CURRENT_KEY } from "./play.js";
-import { Panel } from "../components/panel.js";
+import { CURRENT_KEY, initial } from "./play.js";
 import { Prose } from "../prose.js";
 import { navigate, route } from "../router.js";
 
@@ -51,13 +50,18 @@ function DocView({ doc, resolve, resolvedFor }: { doc: Document; resolve?: (t: s
   const sources = /## Sources\n([\s\S]*)$/.exec(doc.body)?.[1]?.trim();
   return (
     <article class="reader__doc">
-      <Panel title={String(doc.frontmatter.type)} right={<span class="steel-mono small muted">{String(doc.frontmatter.id)}</span>}>
-        <h2 class="steel-h2">{String(doc.frontmatter.name)}</h2>
+      <section class="steel-plate" aria-label={String(doc.frontmatter.type)}>
+        <div class="doc__head">
+          <span class="sc-crest" aria-hidden="true"><span>{initial(String(doc.frontmatter.name))}</span></span>
+          <span class="steel-eyebrow">{String(doc.frontmatter.type)}</span>
+          <h2 class="steel-h2">{String(doc.frontmatter.name)}</h2>
+          <span class="steel-mono doc__id">{String(doc.frontmatter.id)}</span>
+        </div>
         {props.length > 0 && <table class="props small"><tbody>{props.map(([k, v]) => <tr key={k}><th>{k.replace(/_/g, " ")}</th><td>{resolve && typeof v === "string" ? resolve(v) : String(v)}</td></tr>)}</tbody></table>}
         <Prose text={doc.body} resolve={resolve} />
         {resolvedFor && <p class="small muted">Values resolved for {resolvedFor}.</p>}
         {sources && <p class="small muted">Sources: {sources}</p>}
-      </Panel>
+      </section>
     </article>
   );
 }
