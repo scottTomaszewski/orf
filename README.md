@@ -11,6 +11,12 @@ frontmatter keys and to `{{ }}` spans in text. Writing content: [`docs/guide/wri
 Nimble content in this repository is an independent product published under the Nimble 3rd
 Party Creator License. Nimble TTRPG © Nimble Co.
 
+## Try it
+
+`cd sheet && npm install && npm run dev`, open **Write**, and follow
+[`sheet/README.md`](sheet/README.md) ("The demo"): write an ancestry, save it, create a
+character with it, change a number, watch it ripple.
+
 ## Layout
 
 - `docs/superpowers/` design spec, plans, research. `docs/spec/` the format drafts.

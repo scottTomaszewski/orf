@@ -36,29 +36,41 @@ The engine is imported from `../src` unchanged; nothing in `sheet/` computes a r
 - **Content**: the bundle, your homebrew folder, and every problem the linter or engine found.
 - **About**: the license notice and package version.
 
-## Homebrew folder (the demo)
+## The demo: write content, watch it ripple
 
-1. Make a folder with `ratfolk.md`:
-   ```markdown
-   ---
-   id: nimble.ancestries.ratfolk
-   type: ancestry
-   system: nimble
-   name: Ratfolk
-   effects:
-     - {target: wounds.max, add: 1, note: "Hard to kill."}
-   ---
-   Ratfolk are hard to kill.
-   ```
-2. Content → **Choose folder** (Chromium) or **Add files**. The ancestry appears in Create.
-3. Create a Ratfolk character. Play shows Wounds max 7; tap it and the popover names Ratfolk
-   and the note.
-4. Edit the file to `add: 2`, Content → **Reload**. Wounds max 8.
-5. Break the YAML on purpose: the Content view's Problems panel names the file and line; the
-   rest of the content still loads.
+The sheet exists to make the format's promise visible: a creator writes one Markdown file and
+every tool that speaks ORF picks it up. Two ways to run it.
+
+**In the sheet (Write view).**
+
+1. **Write** → type `ancestry`, name `Ratfolk`. The id fills itself (`nimble.ancestries.ratfolk`).
+2. **Add effect**: target `wounds.max` (the list offers every number the system declares),
+   `add`, `1`, note "Ratfolk are hard to kill." The source on the right is the file; Problems
+   says none.
+3. **Save**. The Reader opens on Ratfolk. **Create** now offers Ratfolk; make one. **Play**
+   shows Wounds max 7; tap it and the popover names Ratfolk and the note.
+4. **Content** → edit `homebrew/ancestry/ratfolk.md` → change `1` to `2` in the source →
+   Save. Wounds max 8.
+5. Type `wound.max` instead: Problems names the unknown target and Save waits. Break the
+   YAML on purpose: the file opens in source mode with the line number; nothing else breaks.
+
+**In a text editor (the same file).** Write `ratfolk.md` anywhere (the creator guide has it:
+[`../docs/guide/writing-content.md`](../docs/guide/writing-content.md)), then Content →
+**Choose folder** (Chromium) or **Add files**. Edit the file, **Reload**, the sheet updates.
+Open the same file in Obsidian: the properties show as a table, the text as prose. ORF is
+Markdown.
 
 ## Recording checklist (for the post)
 
-Phone-width window (360px). Create a gnome Mage. Play: take 20 damage, watch Dying and the
-Wound appear, Safe Rest. Content: add `ratfolk.md`, create a Ratfolk, show the Wounds popover,
-edit the file, Reload, show 8. Under a minute.
+Creator's seat, under a minute, desktop or 390px:
+
+1. Write: type ancestry, name Ratfolk, one effect on `wounds.max`, the source filling itself.
+2. Save → Reader. Create a Ratfolk Mage (Balanced array). Play: Wounds max 7, tap, "Ratfolk +1".
+3. Content → edit → `add: 2` → Save → Wounds max 8.
+4. Optional second shot: the same file in Obsidian, and `npx tsx src/cli.ts` linting it.
+
+## Hosting
+
+`.github/workflows/pages.yml` builds `sheet/` and deploys it to GitHub Pages on every push to
+`main` (`VITE_BASE=/orf/`). Enable Pages once with the workflow as the source:
+`gh api -X POST repos/scottTomaszewski/orf/pages -f build_type=workflow`.

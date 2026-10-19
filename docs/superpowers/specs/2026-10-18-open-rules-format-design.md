@@ -38,6 +38,13 @@ The interest test is the sheet, posted to the Nimble Discord and subreddit and s
 Flourish, who is actively running Nimble. Judge interest by whether tool authors or Nimble Co.
 want to integrate, not by upvotes.
 
+**Interest test, revised 2026-10-19 (Scott).** The question is whether **content creators
+adopt the format**, not whether players want a sheet (they do; that is known). The sheet is the
+vehicle that makes the format's promise visible. The demo clip is recorded from the creator's
+seat: write a document (in the sheet's Write view or any text editor), see it live with
+provenance, change a number, see it ripple; the same file renders in Obsidian because ORF is
+Markdown (§5.4).
+
 **Business shape (decision, Scott, bounded by licenses).** Nimble's creator license lets a
 tool embed the rules only if the tool is **completely free** (donations allowed), so the Nimble
 sheet is the free proving ground. The Draw Steel Creator License permits selling, so a paid or
@@ -584,6 +591,11 @@ Each step gated by the one before.
    content plus Fire/Ice/Lightning/Radiant spells to tier 2. Visual check on a phone and the
    table test are next; levels 6–20 and the remaining ancestries, backgrounds, and items are
    the next data plan.
+5a. **Creator surfaces** (done 2026-10-19, plan `../plans/2026-10-19-phase4-creator.md`): the
+   name (ORF), the creator guide (`docs/guide/writing-content.md`, examples linted by test),
+   authoring helpers in the engine (`src/authoring.ts`), the sheet's **Write** view (form from
+   the system's content types, two-way source, live lint, save to homebrew), the Create
+   stat-placement fix, a desktop visual pass, and a GitHub Pages workflow.
 6. **Table test**: Scott's game for a few sessions; fix what hurts.
 7. **Post**: Nimble Discord, subreddit, note to Sly Flourish, with a short clip of the
    homebrew ripple. Interest decides the next phase (remaining classes, authoring form,
