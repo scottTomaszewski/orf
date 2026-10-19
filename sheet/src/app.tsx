@@ -12,12 +12,14 @@ import { PlayView } from "./views/play.js";
 import { LevelUpView } from "./views/level-up.js";
 import { ReaderView } from "./views/reader.js";
 import { ContentView } from "./views/content.js";
+import { WriteView } from "./views/write.js";
 
 const TABS: { view: string; label: string; glyph: string; hash: string }[] = [
   { view: "play", label: "Play", glyph: "◆", hash: "#/play" },
   { view: "create", label: "Create", glyph: "✦", hash: "#/create" },
   { view: "level-up", label: "Level Up", glyph: "▲", hash: "#/level-up" },
   { view: "reader", label: "Reader", glyph: "❖", hash: "#/reader" },
+  { view: "write", label: "Write", glyph: "✎", hash: "#/write" },
   { view: "content", label: "Content", glyph: "☰", hash: "#/content" },
   { view: "about", label: "About", glyph: "ⓘ", hash: "#/about" },
 ];
@@ -64,7 +66,7 @@ export function App({ loader, homebrew, storage, rng = Math.random }: { loader: 
   );
 }
 
-const routeKey = (r: Route): string => `${r.view}:${r.view === "play" || r.view === "level-up" || r.view === "reader" ? r.id ?? "" : r.view === "share" ? r.payload.slice(0, 16) : ""}`;
+const routeKey = (r: Route): string => `${r.view}:${r.view === "play" || r.view === "level-up" || r.view === "reader" ? r.id ?? "" : r.view === "write" ? r.path ?? "" : r.view === "share" ? r.payload.slice(0, 16) : ""}`;
 
 /** One bad value must never blank the app: show what broke and where to go. */
 class ErrorBoundary extends Component<{ children: ComponentChildren }, { error?: Error }> {
@@ -103,6 +105,7 @@ function View() {
     case "play": return <PlayView />;
     case "level-up": return <LevelUpView />;
     case "reader": return <ReaderView />;
+    case "write": return <WriteView />;
     case "content": return <ContentView />;
     default: return <p class="muted">Not found. <a href="#/play">Back to characters</a></p>;
   }

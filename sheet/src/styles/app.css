@@ -59,3 +59,13 @@
 .reader__list { max-height: 70vh; overflow: auto; }
 .steel-value.on { color: var(--accent); }
 .props th { text-align: left; font-family: var(--font-sub); font-variant: small-caps; color: var(--fg-2); padding-right: .8rem; font-weight: var(--sub-weight); }
+
+/* Write view */
+.write { display: grid; gap: .75rem; }
+@media (min-width: 800px) { .write { grid-template-columns: minmax(0, 3fr) minmax(0, 2fr); align-items: start; } }
+.fields { display: grid; grid-template-columns: repeat(auto-fill, minmax(12rem, 1fr)); gap: .5rem .75rem; }
+.field { display: grid; gap: .2rem; min-width: 0; }
+.field--wide { grid-column: 1 / -1; }
+.effect { display: grid; grid-template-columns: repeat(auto-fill, minmax(9rem, 1fr)); gap: .5rem .75rem; align-items: end; border: 1px solid var(--line); border-radius: var(--radius); padding: .5rem .7rem; margin: 0 0 .5rem; }
+.effect > .steel-btn { justify-self: start; }
+.source { width: 100%; box-sizing: border-box; padding: .5rem; font-size: .85rem; line-height: 1.4; resize: vertical; }
