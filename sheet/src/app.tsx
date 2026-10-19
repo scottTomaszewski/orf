@@ -48,7 +48,7 @@ export function App({ loader, homebrew, storage, rng = Math.random }: { loader: 
       <div class="app">
         <header class="app__header">
           <span class="app__brand"><span class="crest" aria-hidden="true">◆</span><span class="steel-h1">{SHORT_NAME}</span><span class="sub">for Nimble</span></span>
-          <button type="button" class="steel-btn" onClick={toggleTheme} aria-label="toggle theme">{theme.value === "slate" ? "☾" : "☀"}</button>
+          <button type="button" class="steel-btn app__theme" onClick={toggleTheme} aria-label="toggle theme">{theme.value === "slate" ? "☾" : "☀"}</button>
         </header>
         <nav class="app__tabs" role="tablist" aria-label="views">
           {TABS.map((t) => (

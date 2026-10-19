@@ -15,7 +15,9 @@
   --font-display: "Cinzel", "Source Serif 4", serif; --display-weight: 900; --display-scale: .9;
   --font-sub: "Petrona", "Source Serif 4", serif; --sub-weight: 700;
   --font-body: "Source Serif 4", "Zilla Slab", Georgia, serif;
-  --font-mono: ui-monospace, "SF Mono", Menlo, Consolas, monospace;
+  /* Mono and glyph faces are web fonts too, so every machine (and the visual baselines in e2e/) renders the same. */
+  --font-mono: "Source Code Pro", ui-monospace, "SF Mono", Menlo, Consolas, monospace;
+  --font-glyph: "Noto Sans Symbols 2", "Source Serif 4", serif;
   /* semantic hues: borders and glyphs only, never fills */
   --sem-hp: #c75050; --sem-mana: #4d7fc7; --sem-wound: #b8923a; --sem-ok: #5aa86f; --sem-warn: #d0a040;
   --radius: 6px; --tap: 40px;
@@ -37,7 +39,7 @@ html { background: var(--bg); color: var(--fg); font-family: var(--font-body); f
 body { margin: 0; background: var(--bg); color: var(--fg); }
 a { color: var(--accent); }
 hr.steel { border: 0; height: 1px; background: var(--fx-metal-line); margin: 1rem 0; position: relative; overflow: visible; }
-hr.steel::after { content: "◆"; position: absolute; left: 50%; top: 50%; transform: translate(-50%, -50%); background: var(--bg); color: var(--fx-metal); padding: 0 .5rem; font-size: .7rem; line-height: 1; }
+hr.steel::after { content: "◆"; font-family: var(--font-glyph); position: absolute; left: 50%; top: 50%; transform: translate(-50%, -50%); background: var(--bg); color: var(--fx-metal); padding: 0 .5rem; font-size: .7rem; line-height: 1; }
 
 .steel-h1, .steel-h2 { font-family: var(--font-display); font-weight: var(--display-weight); letter-spacing: 0; text-transform: uppercase; line-height: 1.05; margin: 0; color: var(--fg); text-shadow: var(--fx-emboss); }
 .steel-h1 { font-size: calc(1.5rem * var(--display-scale)); }
@@ -78,3 +80,4 @@ hr.steel::after { content: "◆"; position: absolute; left: 50%; top: 50%; trans
 .steel-badge--warn { border-color: var(--sem-warn); color: var(--sem-warn); }
 .steel-value { background: none; border: 0; padding: 0; color: inherit; font: inherit; cursor: pointer; border-bottom: 1px dotted var(--fx-metal-line); }
 .steel-value:hover { border-bottom-color: var(--accent); }
+code, kbd, pre { font-family: var(--font-mono); font-size: .92em; }
