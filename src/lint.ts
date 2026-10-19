@@ -1,12 +1,13 @@
 import type { Document } from "./document.js";
 import { DocumentError } from "./document.js";
 import { extractInlineExpressions, extractReferences } from "./expr-refs.js";
-import { DOC_ID_RE, OPS, type Diagnostic, type Registry } from "./registry.js";
+import { DOC_ID_RE, OPS, RETIRED_OPS, isLookup, type Diagnostic, type Registry } from "./registry.js";
 
-const TRANSFER = ["always", "equipped", "carried"];
 const STATS = ["str", "dex", "int", "wil"];
 const RESERVED = ["id", "type", "system", "name", "effects", "grants", "choices", "variables", "resources", "requires", "tags", "version"];
-const EFFECT_KEYS = new Set([...OPS, "target", "when", "source", "transfer", "duration"]);
+const EFFECT_KEYS = new Set([...OPS, "target", "when", "source", "duration", "note"]);
+/** Bare words meaning "this item": valid in expressions on item documents only. */
+const ITEM_WORDS = ["equipped", "carried"];
 const CHOICE_KEYS = new Set(["slot", "count", "from", "unique", "effect", "when"]);
 const REFRESH_KEYS = new Set(["on", "to", "add"]);
 const ITEM_TYPES = ["item", "armor", "weapon"];
@@ -35,7 +36,7 @@ export function lintDocument(doc: Document, registry: Registry): Diagnostic[] {
   // Reserved list-valued properties must be lists
   for (const k of ["effects", "grants", "tags", "variables", "resources", "members"]) if (k in fm && !Array.isArray(fm[k])) err(`${k} must be a list`);
   if ("choices" in fm && fm.type !== "character" && !Array.isArray(fm.choices)) err(`choices must be a list`);
-  if ("handlers" in fm && fm.type !== "events") err(`handlers are only allowed on a "type: events" document (this is type: ${String(fm.type)})`);
+  if ("handlers" in fm) err(`handlers were removed from the format: rest, damage, and wound procedures live in the engine's system module, not in content`);
 
   const resolveVar = (id: string): string | undefined => (registry.variables.has(id) ? id : registry.aliases.get(id));
 
@@ -45,6 +46,7 @@ export function lintDocument(doc: Document, registry: Registry): Diagnostic[] {
     if (depth !== 0) { err(`unbalanced parentheses in "${context}"`, line); return; }
     const refs = extractReferences(expr);
     const consumedArgs = new Set<string>();
+    const isItem = ITEM_TYPES.includes(String(fm.type));
     for (const call of refs.calls) {
       const pred = registry.predicates.get(call.name);
       if (pred) {
@@ -74,6 +76,10 @@ export function lintDocument(doc: Document, registry: Registry): Diagnostic[] {
       if (id === "key" || id === "secondary") continue;
       if (opts.idents?.has(id)) continue;
       if (opts.allowChoice && id === "choice") continue;
+      if (ITEM_WORDS.includes(id)) {
+        if (!isItem) err(`"${id}" means "this item" and is only valid on an item document (this is type: ${String(fm.type)}); use equipped(kind) elsewhere (in "${context}")`, line);
+        continue;
+      }
       if (id.startsWith("this.")) {
         if (!(id.slice(5) in fm)) err(`unknown identifier "${id}": this document has no property "${id.slice(5)}" (in "${context}")`, line);
         continue;
@@ -84,10 +90,32 @@ export function lintDocument(doc: Document, registry: Registry): Diagnostic[] {
     }
   };
 
+  /** An op value or variable formula: a number, boolean, expression string, or a lookup {by, rows}. */
+  const checkValue = (v: unknown, label: string, opts: ExprOpts = {}) => {
+    if (typeof v === "string") { checkExpression(v, `${label}: ${v}`, undefined, opts); return; }
+    if (typeof v === "number" || typeof v === "boolean") return;
+    if (isLookup(v)) {
+      if (typeof v.by !== "string") err(`${label}: a lookup needs "by" (the expression the rows are keyed on)`);
+      else checkExpression(v.by, `${label}.by: ${v.by}`, undefined, opts);
+      if (!isObj(v.rows)) { err(`${label}: a lookup needs "rows" (a mapping of integer threshold to value)`); return; }
+      for (const [k, rv] of Object.entries(v.rows)) {
+        if (!/^-?\d+$/.test(k)) err(`${label}.rows: key "${k}" must be an integer threshold`);
+        if (typeof rv === "string") checkExpression(rv, `${label}.rows[${k}]: ${rv}`, undefined, opts);
+        else if (typeof rv !== "number" && typeof rv !== "boolean") err(`${label}.rows[${k}] must be a number, boolean, or expression string`);
+      }
+      return;
+    }
+    err(`${label} must be a number, boolean, expression string, or lookup {by, rows}`);
+  };
+
   const checkEffect = (raw: unknown, label: string, opts: ExprOpts = {}) => {
     if (!isObj(raw)) { err(`${label} must be a mapping`); return; }
     const e = raw;
-    for (const k of Object.keys(e)) if (!EFFECT_KEYS.has(k)) err(`${label}: unknown key "${k}" (allowed: ${[...EFFECT_KEYS].join(", ")})`);
+    for (const k of Object.keys(e)) {
+      if (EFFECT_KEYS.has(k)) continue;
+      if (RETIRED_OPS[k]) err(`${label}: "${k}" is no longer an op; use "${RETIRED_OPS[k]}" (it clamps the folded value)`);
+      else err(`${label}: unknown key "${k}" (allowed: ${[...EFFECT_KEYS].join(", ")})`);
+    }
     const ops = OPS.filter((op) => op in e);
     if (ops.length !== 1) err(`${label} must have exactly one operation key (${OPS.join(", ")}); found ${ops.length ? ops.join(", ") : "none"}`);
     if (typeof e.target !== "string") err(`${label} missing "target"`);
@@ -99,14 +127,9 @@ export function lintDocument(doc: Document, registry: Registry): Diagnostic[] {
         if (def.ops && !def.ops.includes(ops[0])) err(`${label}: op "${ops[0]}" not allowed on ${canon} (allowed: ${def.ops.join(", ")})`);
       }
     }
-    for (const op of ops) {
-      const v = e[op];
-      if (typeof v === "string") checkExpression(v, `${op}: ${v}`, undefined, opts);
-      else if (typeof v !== "number" && typeof v !== "boolean") err(`${label}.${op} must be a number, boolean, or expression string`);
-    }
-    for (const k of ["when", "source", "duration"]) if (k in e && typeof e[k] !== "string") err(`${label}.${k} must be a string`);
+    for (const op of ops) checkValue(e[op], `${label}.${op}`, opts);
+    for (const k of ["when", "source", "duration", "note"]) if (k in e && typeof e[k] !== "string") err(`${label}.${k} must be a string`);
     if (typeof e.when === "string") checkExpression(e.when, `when: ${e.when}`, undefined, opts);
-    if ("transfer" in e && !TRANSFER.includes(String(e.transfer))) err(`${label}.transfer must be one of ${TRANSFER.join(", ")}`);
   };
 
   // Rules 2-3: effects
@@ -130,7 +153,7 @@ export function lintDocument(doc: Document, registry: Registry): Diagnostic[] {
       else throw e;
     }
   }
-  for (const raw of asArray(fm.variables)) if (isObj(raw) && typeof raw.formula === "string") checkExpression(raw.formula, `variable ${String(raw.id)} formula: ${raw.formula}`);
+  for (const raw of asArray(fm.variables)) if (isObj(raw) && "formula" in raw) checkValue(raw.formula, `variable ${String(raw.id)} formula`);
 
   // Rule 5: resources
   for (const [i, raw] of asArray(fm.resources).entries()) {
@@ -145,38 +168,6 @@ export function lintDocument(doc: Document, registry: Registry): Diagnostic[] {
       if ("to" in rr && rr.to !== "max" && typeof rr.to !== "number") err(`resources[${i}].refresh[${j}].to must be "max" or a number`);
       if ("add" in rr && typeof rr.add !== "number") err(`resources[${i}].refresh[${j}].add must be a number`);
       if (!("to" in rr) && !("add" in rr)) err(`resources[${i}].refresh[${j}] needs "to" or "add"`);
-    }
-  }
-
-  // Rule 9: event handlers (template only)
-  if (fm.type === "events" && isObj(fm.handlers)) {
-    const localEvents = new Set(asArray(fm.events).map((e) => (isObj(e) ? String(e.id) : "")));
-    const argsOf = (ev: string): string[] => {
-      const local = asArray(fm.events).find((e) => isObj(e) && e.id === ev);
-      if (isObj(local) && Array.isArray(local.args)) return local.args.map(String);
-      return registry.events.get(ev)?.args ?? [];
-    };
-    const BUILTIN_ARGS: Record<string, string[]> = { damage: ["amount", "crit"], heal: ["amount"], spend: ["resource", "amount"], restore: ["resource", "amount"], "catch-breath": ["hit_dice"], "make-camp": ["hit_dice"], "encounter-start": ["initiative_roll"], "level-up": ["level"] };
-    const handlerFns = new Set(["roll"]);
-    const checkSteps = (steps: unknown[], ctx: string, idents: Set<string>) => {
-      for (const [j, st] of steps.entries()) {
-        if (!isObj(st)) { err(`${ctx}[${j}] must be a mapping`); continue; }
-        const c = `${ctx}[${j}]`;
-        for (const k of ["spend", "restore"]) if (typeof st[k] === "string" && !registry.resources.has(st[k] as string)) err(`${c}.${k}: "${st[k]}" is not a declared resource`);
-        for (const k of ["set", "clear"]) if (typeof st[k] === "string" && !resolveVar(st[k] as string)) err(`${c}.${k}: unknown state boolean "${st[k]}"`);
-        if (typeof st.fire === "string" && !registry.events.has(st.fire) && !localEvents.has(st.fire)) err(`${c}.fire: unknown event "${st.fire}"`);
-        for (const k of ["amount", "when"]) if (typeof st[k] === "string") checkExpression(st[k] as string, `${c}.${k}: ${st[k]}`, undefined, { idents, functions: handlerFns });
-        if ("repeat" in st) {
-          if (typeof st.repeat === "string" && !registry.resources.has(st.repeat)) checkExpression(st.repeat, `${c}.repeat: ${st.repeat}`, undefined, { idents, functions: handlerFns });
-          if (Array.isArray(st.steps)) checkSteps(st.steps, `${c}.steps`, idents);
-        }
-      }
-    };
-    for (const [ev, steps] of Object.entries(fm.handlers)) {
-      if (!registry.events.has(ev) && !localEvents.has(ev)) { err(`handlers.${ev}: unknown event`); continue; }
-      const idents = new Set([...(BUILTIN_ARGS[ev] ?? []), ...argsOf(ev), "amount", "spent", "crit"]);
-      if (!Array.isArray(steps)) { err(`handlers.${ev} must be a list of steps`); continue; }
-      checkSteps(steps, `handlers.${ev}`, idents);
     }
   }
 

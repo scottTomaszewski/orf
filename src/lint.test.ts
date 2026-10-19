@@ -20,16 +20,18 @@ const base = [
       { id: "armor.base", name: "your Armor", type: "integer", ops: ["base"] },
       { id: "hp.max", name: "your maximum Hit Points", type: "integer", ops: ["add"] },
       { id: "dying", name: "Dying", type: "boolean", default: false },
+      { id: "initiative.floor", name: "the minimum you can roll for Initiative", type: "integer", default: 0, ops: ["at_least"] },
     ],
   }),
   doc("res.md", { id: "nimble.system.resources", type: "resources", system: "nimble", name: "Resources",
     resources: [{ id: "hp", max: "hp.max", refresh: [{ on: "safe-rest", to: "max" }] }, { id: "wounds", max: "wounds.max", refresh: [] }] }),
-  doc("ev.md", { id: "nimble.system.events", type: "events", system: "nimble", name: "Events", events: [{ id: "gain-wound", args: ["amount"] }] }),
+  doc("ev.md", { id: "nimble.system.events", type: "events", system: "nimble", name: "Events", events: [{ id: "gain-wound", description: "fired by the engine when a Wound is gained" }] }),
   doc("pred.md", { id: "nimble.system.predicates", type: "predicates", system: "nimble", name: "Predicates",
     predicates: [{ id: "equipped", name: "equipped", args: ["armor", "shield"] }, { id: "level", name: "level", args: ["mage"] }, { id: "has", name: "has", args: [] }] }),
   doc("t.md", { id: "nimble.tables.starting-gold", type: "table", system: "nimble", name: "gold", columns: ["level", "gold"], rows: [[1, 50]] }),
   doc("gnome.md", { id: "nimble.ancestries.gnome", type: "ancestry", system: "nimble", name: "Gnome" }),
   doc("mage.md", { id: "nimble.classes.mage", type: "class", system: "nimble", name: "Mage" }),
+  doc("mail.md", { id: "nimble.items.armor.rusty-mail", type: "armor", system: "nimble", name: "Rusty Mail" }),
   doc("mage4.md", { id: "nimble.classes.mage.level-4", type: "class-level", system: "nimble", name: "Mage 4", class: "nimble.classes.mage", level: 4,
     choices: [{ slot: "key-stat", count: 1, from: { options: ["int", "wil"] } }] }),
 ];
@@ -136,28 +138,6 @@ test("requires as stat map or id list", () => {
   expect(lintDocument(content({ requires: ["nimble.ancestries.elf"] }), reg)[0].message).toMatch(/elf/);
 });
 
-test("event handlers: unknown event key, undeclared identifier in a step, and roll() allowed", () => {
-  const ev = doc("ev2.md", {
-    id: "nimble.system.events2", type: "events", system: "nimble", name: "Events",
-    events: [{ id: "full-hp", args: [] }],
-    handlers: {
-      "long-rest": [{ restore: "hp", amount: "hp.max" }],
-      damage: [
-        { spend: "hp", amount: "amount - spent" },
-        { when: "hp.current == 0 and not dying", fire: "gain-wound", amount: 1 },
-        { restore: "hp", amount: "roll(6) + nope" },
-        { spend: "ki", amount: 1 },
-      ],
-    },
-  });
-  const msgs = lintDocument(ev, reg).map((x) => x.message);
-  expect(msgs.some((m) => /handlers\.long-rest.*unknown event/.test(m))).toBe(true);
-  expect(msgs.some((m) => /nope/.test(m))).toBe(true);
-  expect(msgs.some((m) => /ki/.test(m))).toBe(true);
-  expect(msgs.filter((m) => /unknown (identifier|function) "(roll|amount|spent|crit)"/.test(m))).toEqual([]);
-  expect(msgs).toHaveLength(3);
-});
-
 test("character: a pick listed in the slot's options is valid", () => {
   const cl = doc("cl3.md", { id: "nimble.classes.mage.level-3", type: "class-level", system: "nimble", name: "Mage 3", class: "nimble.classes.mage", level: 3,
     choices: [{ slot: "school", count: 1, from: { options: ["fire", "ice"] } }] });
@@ -176,10 +156,6 @@ test("effects given as a mapping, and unknown effect keys, are errors", () => {
 test("a swallowed {{ }} (mapping with null value) and unbalanced parentheses are errors", () => {
   expect(lintDocument(content({ damage: { "{ 1d4 + dex }": null } }), reg)[0].message).toMatch(/damage.*looks like an unquoted \{\{/);
   expect(lintDocument(content({ effects: [{ target: "wounds.max", add: "if(dex > 1" }] }), reg).map((d) => d.message).join("\n")).toMatch(/unbalanced/);
-});
-
-test("handlers on a non-events document is an error", () => {
-  expect(lintDocument(content({ handlers: { damage: [] } }), reg)[0].message).toMatch(/handlers.*type: events/);
 });
 
 test("grants on class and subclass docs, grants_by_level, and choice effect/when are checked", () => {
@@ -228,4 +204,65 @@ test("has() takes a quoted document id and checks it", () => {
   expect(lintDocument(content({ effects: [{ target: "wounds.max", add: 1, when: 'has("nimble.ancestries.gnome")' }] }), reg)).toEqual([]);
   expect(lintDocument(content({ effects: [{ target: "wounds.max", add: 1, when: 'has("nimble.ancestries.elf")' }] }), reg)[0].message).toMatch(/elf/);
   expect(lintDocument(content({ effects: [{ target: "wounds.max", add: 1, when: "has(nimble.ancestries.gnome)" }] }), reg)[0].message).toMatch(/has\(\) needs a quoted/);
+});
+
+// ---- format revision (2026-10-18): describe, don't script ----
+test("clamp ops are at_least/at_most; min/max as effect keys are rejected with the new names", () => {
+  expect(lintDocument(content({ effects: [{ target: "initiative.floor", at_least: 10 }] }), reg)).toEqual([]);
+  const msgs = lintDocument(content({ effects: [{ target: "initiative.floor", min: 10 }] }), reg).map((d) => d.message).join("\n");
+  expect(msgs).toMatch(/at_least/);
+  expect(msgs).toMatch(/"min"/);
+});
+
+test("transfer is gone: it is an unknown effect key", () => {
+  expect(lintDocument(content({ effects: [{ target: "wounds.max", add: 1, transfer: "equipped" }] }), reg)[0].message).toMatch(/unknown key "transfer"/);
+});
+
+test("bare equipped/carried are valid in when: only on item documents", () => {
+  const item = doc("m.md", { id: "nimble.items.armor.rusty-mail", type: "armor", system: "nimble", name: "Rusty Mail",
+    effects: [{ target: "armor.base", base: "6 + min(dex, 2)", when: "equipped" }, { target: "wounds.max", add: 1, when: "carried and not equipped(shield)" }] });
+  expect(lintDocument(item, reg)).toEqual([]);
+  const msgs = lintDocument(content({ effects: [{ target: "wounds.max", add: 1, when: "equipped" }] }), reg).map((d) => d.message).join("\n");
+  expect(msgs).toMatch(/equipped.*item/);
+});
+
+test("handlers are removed from the format on every document type", () => {
+  const ev = doc("ev2.md", { id: "nimble.system.events2", type: "events", system: "nimble", name: "Events", events: [{ id: "full-hp" }], handlers: { damage: [] } });
+  expect(lintDocument(ev, reg)[0].message).toMatch(/handlers.*removed/);
+  expect(lintDocument(content({ handlers: {} }), reg)[0].message).toMatch(/handlers.*removed/);
+});
+
+test("refresh may not name the removed verbs (damage, heal, spend, restore)", () => {
+  const regR = buildRegistry([...base, content({ resources: [{ id: "x", refresh: [] }] })]).registry;
+  expect(lintDocument(content({ resources: [{ id: "x", refresh: [{ on: "damage", to: "max" }] }] }), regR)[0].message).toMatch(/unknown event "damage"/);
+});
+
+test("a lookup {by, rows} is a valid value for any op and for a variable formula", () => {
+  const ok = content({
+    effects: [{ target: "wounds.max", add: { by: "level(mage)", rows: { 1: 0, 5: 1, 9: "2" } } }],
+    variables: [{ id: "x.dice", name: "x", type: "dice", formula: { by: "level(mage)", rows: { 1: "1d6", 3: "1d8", 7: "2d8" } } }],
+  });
+  expect(lintDocument(ok, buildRegistry([...base, ok]).registry)).toEqual([]);
+  const bad = content({ effects: [
+    { target: "wounds.max", add: { by: "levl(mage)", rows: { 1: 0 } } },
+    { target: "wounds.max", add: { by: "level(mage)", rows: { low: 0 } } },
+    { target: "wounds.max", add: { by: "level(mage)", rows: { 1: "nope" } } },
+    { target: "wounds.max", add: { rows: { 1: 0 } } },
+  ] });
+  const msgs = lintDocument(bad, reg).map((d) => d.message);
+  expect(msgs.some((m) => /levl/.test(m))).toBe(true);
+  expect(msgs.some((m) => /rows.*"low".*integer/.test(m))).toBe(true);
+  expect(msgs.some((m) => /nope/.test(m))).toBe(true);
+  expect(msgs.some((m) => /effects\[3\].add.*by/.test(m))).toBe(true);
+});
+
+test("effects accept a note; variables accept a description", () => {
+  const d = content({
+    effects: [{ target: "wounds.max", add: 1, note: "Dwarves are sturdy." }],
+    variables: [{ id: "x.y", name: "x", type: "integer", default: 0, description: "A longer explanation shown as a tooltip." }],
+  });
+  const { registry, diagnostics } = buildRegistry([...base, d]);
+  expect(diagnostics).toEqual([]);
+  expect(registry.variables.get("x.y")?.description).toBe("A longer explanation shown as a tooltip.");
+  expect(lintDocument(d, registry)).toEqual([]);
 });
