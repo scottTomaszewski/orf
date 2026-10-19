@@ -135,3 +135,25 @@ test("requires as stat map or id list", () => {
   expect(lintDocument(content({ requires: { str: 2 } }), reg)).toEqual([]);
   expect(lintDocument(content({ requires: ["nimble.ancestries.elf"] }), reg)[0].message).toMatch(/elf/);
 });
+
+test("event handlers: unknown event key, undeclared identifier in a step, and roll() allowed", () => {
+  const ev = doc("ev2.md", {
+    id: "nimble.system.events2", type: "events", system: "nimble", name: "Events",
+    events: [{ id: "full-hp", args: [] }],
+    handlers: {
+      "long-rest": [{ restore: "hp", amount: "hp.max" }],
+      damage: [
+        { spend: "hp", amount: "amount - spent" },
+        { when: "hp.current == 0 and not dying", fire: "gain-wound", amount: 1 },
+        { restore: "hp", amount: "roll(6) + nope" },
+        { spend: "ki", amount: 1 },
+      ],
+    },
+  });
+  const msgs = lintDocument(ev, reg).map((x) => x.message);
+  expect(msgs.some((m) => /handlers\.long-rest.*unknown event/.test(m))).toBe(true);
+  expect(msgs.some((m) => /nope/.test(m))).toBe(true);
+  expect(msgs.some((m) => /ki/.test(m))).toBe(true);
+  expect(msgs.filter((m) => /unknown (identifier|function) "(roll|amount|spent|crit)"/.test(m))).toEqual([]);
+  expect(msgs).toHaveLength(3);
+});

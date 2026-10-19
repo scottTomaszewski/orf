@@ -32,7 +32,7 @@ export function lintDocument(doc: Document, registry: Registry): Diagnostic[] {
     return canon;
   };
 
-  const checkExpression = (expr: string, context: string, line?: number) => {
+  const checkExpression = (expr: string, context: string, line?: number, extra: { idents?: Set<string>; functions?: Set<string> } = {}) => {
     const refs = extractReferences(expr);
     const predicateArgs = new Set<string>();
     for (const call of refs.calls) {
@@ -50,11 +50,11 @@ export function lintDocument(doc: Document, registry: Registry): Diagnostic[] {
         else if (!registry.tables.has(t)) err(`unknown table "${t}" in "${context}"`, line);
         continue;
       }
-      if (!registry.functions.has(call.name)) err(`unknown function "${call.name}" in "${context}"`, line);
+      if (!registry.functions.has(call.name) && !extra.functions?.has(call.name)) err(`unknown function "${call.name}" in "${context}"`, line);
     }
     for (const id of refs.identifiers) {
       if (predicateArgs.has(id)) continue;
-      if (SPECIAL_IDENTS.has(id) || id.startsWith("this.")) continue;
+      if (SPECIAL_IDENTS.has(id) || id.startsWith("this.") || extra.idents?.has(id)) continue;
       if (resolveVar(id)) continue;
       if (id.endsWith(".current") && registry.resources.has(id.slice(0, -".current".length))) continue;
       err(`unknown identifier "${id}" in "${context}"`, line);
@@ -116,6 +116,38 @@ export function lintDocument(doc: Document, registry: Registry): Diagnostic[] {
       if ("to" in rr && rr.to !== "max" && typeof rr.to !== "number") err(`resources[${i}].refresh[${j}].to must be "max" or a number`);
       if ("add" in rr && typeof rr.add !== "number") err(`resources[${i}].refresh[${j}].add must be a number`);
       if (!("to" in rr) && !("add" in rr)) err(`resources[${i}].refresh[${j}] needs "to" or "add"`);
+    }
+  }
+
+  // Rule 9: event handlers (template only)
+  if (fm.type === "events" && isObj(fm.handlers)) {
+    const localEvents = new Set(asArray(fm.events).map((e) => (isObj(e) ? String(e.id) : "")));
+    const argsOf = (ev: string): string[] => {
+      const local = asArray(fm.events).find((e) => isObj(e) && e.id === ev);
+      if (isObj(local) && Array.isArray(local.args)) return local.args.map(String);
+      return registry.events.get(ev)?.args ?? [];
+    };
+    const BUILTIN_ARGS: Record<string, string[]> = { damage: ["amount", "crit"], heal: ["amount"], spend: ["resource", "amount"], restore: ["resource", "amount"], "catch-breath": ["hit_dice"], "make-camp": ["hit_dice"], "encounter-start": ["initiative_roll"], "level-up": ["level"] };
+    const handlerFns = new Set(["roll"]);
+    const checkSteps = (steps: unknown[], ctx: string, idents: Set<string>) => {
+      for (const [j, st] of steps.entries()) {
+        if (!isObj(st)) { err(`${ctx}[${j}] must be a mapping`); continue; }
+        const c = `${ctx}[${j}]`;
+        for (const k of ["spend", "restore"]) if (typeof st[k] === "string" && !registry.resources.has(st[k] as string)) err(`${c}.${k}: "${st[k]}" is not a declared resource`);
+        for (const k of ["set", "clear"]) if (typeof st[k] === "string" && !resolveVar(st[k] as string)) err(`${c}.${k}: unknown state boolean "${st[k]}"`);
+        if (typeof st.fire === "string" && !registry.events.has(st.fire) && !localEvents.has(st.fire)) err(`${c}.fire: unknown event "${st.fire}"`);
+        for (const k of ["amount", "when"]) if (typeof st[k] === "string") checkExpression(st[k] as string, `${c}.${k}: ${st[k]}`, undefined, { idents, functions: handlerFns });
+        if ("repeat" in st) {
+          if (typeof st.repeat === "string" && !registry.resources.has(st.repeat)) checkExpression(st.repeat, `${c}.repeat: ${st.repeat}`, undefined, { idents, functions: handlerFns });
+          if (Array.isArray(st.steps)) checkSteps(st.steps, `${c}.steps`, idents);
+        }
+      }
+    };
+    for (const [ev, steps] of Object.entries(fm.handlers)) {
+      if (!registry.events.has(ev) && !localEvents.has(ev)) { err(`handlers.${ev}: unknown event`); continue; }
+      const idents = new Set([...(BUILTIN_ARGS[ev] ?? []), ...argsOf(ev), "amount", "spent", "crit"]);
+      if (!Array.isArray(steps)) { err(`handlers.${ev} must be a list of steps`); continue; }
+      checkSteps(steps, `handlers.${ev}`, idents);
     }
   }
 
