@@ -1,7 +1,8 @@
 # Open Rules Format: design
 
 Date: 2026-10-18. Status: approved in principle 2026-10-18 (5e-first draft); **revised the same
-day to Nimble-first** after Scott's product decision; revision pending Scott's read. Tracker:
+day to Nimble-first** after Scott's product decision; revision confirmed by Scott 2026-10-18
+(2.0.3, four classes, no accounts, High-Fantasy Steel UI, native execution). Tracker:
 Linear SC-451 (project "Open Rules Format"). "ORF" / "Open Rules Format" is a **placeholder
 name**; nothing depends on it.
 
@@ -60,8 +61,8 @@ what to keep and drop).
 - The same content renders as readable rules text and as resolved numbers from one source.
 - The engine expresses real Nimble rules cleanly, including the ugly ones (recon §6), and the
   nastiest 5e shapes (competing base formulas, same-source stacking) as insurance.
-- Content and system templates are versioned; Nimble's first and second printings are the
-  first real test.
+- Content and system templates are versioned; Nimble 2.0.3 now and the
+  second printing (the "3.0" playtest files) later are the first real test.
 - The format works as plain files outside our tools.
 
 **Non-goals (this phase)**
@@ -75,8 +76,7 @@ what to keep and drop).
 - Translations, accessibility work, offline sync, accounts beyond what saving a character
   across devices needs. Requirements of the eventual product; not designed out; not built now.
 - All eleven classes. The MVP ships the system core plus the classes Scott's table plays
-  (default **Mage and Berserker**, the two whose second-printing PDFs were read for this
-  design). The template structure must make adding a class a data task.
+  (**decision, Scott: Mage, The Cheat, Oathsworn, Zephyr**, the classes his kids play). The template structure must make adding a class a data task.
 
 **Anti-goals** (failure even if it technically works)
 
@@ -95,15 +95,14 @@ A free web app, usable on a phone, carrying the Nimble license notice prominentl
 1. **Create**: pick class, ancestry, background, stat array and placement, 4 skill points,
    starting kit. Every option comes from content documents; the sheet shows the rules text of
    each option as the player picks.
-2. **Play**: the sheet shows current/max HP, Wounds, Hit Dice, mana or class pool, Defense
+2. **Play**: the sheet shows current/max HP, Wounds, Hit Dice, mana or class pool, Armor
    with its formula visible, skills, saves with advantage/disadvantage flags, inventory slots,
    known spells by school and tier. Buttons: take damage (handles temp HP, 0 HP → Wound +
    Dying), spend a Hit Die (Catch Breath vs Make Camp formula), spend mana, **Field Rest**,
    **Safe Rest** (restores all HP/HD/mana, heals 1 Wound, expires temp HP). Hovering any
-   number shows where it came from ("Defense 5 = 3 Cheap Hides + DEX 2").
+   number shows where it came from ("Armor 5 = 3 Cheap Hides + DEX 2").
 3. **Level up**: the sheet lists what the new level grants, prompts for each choice (subclass
-   at 3, Spellshaper picks, Key or Secondary stat bump, skill point and optional move, HP roll
-   or average), and attaches the chosen content.
+   at 3, Spellshaper picks, Key or Secondary stat bump, skill point and optional move, HP roll), and attaches the chosen content.
 4. **Homebrew ripples**: a hand-written Markdown ancestry file dropped into the content folder
    appears as an option at creation and its effects (say, +1 max Wounds) show on the sheet
    with provenance. Edit the number, reload, the sheet updates. This is the format's proof and
@@ -198,9 +197,9 @@ classes: [{id: nimble.classes.mage, level: 4}]
 skills: {arcana: 3, lore: 2, examination: 1, perception: 2}
 levels:                    # per-level history; HP is a sum of these
   - {level: 1, hp: 10}
-  - {level: 2, hp: 4, source: average}
+  - {level: 2, hp: 4, source: roll}
   - {level: 3, hp: 6, source: roll}
-  - {level: 4, hp: 4, source: average}
+  - {level: 4, hp: 5, source: roll}
 choices:
   nimble.classes.mage.level-3.subclass: [nimble.subclasses.mage.control]
   nimble.classes.mage.level-4.spellshaper: [nimble.features.mage.spellshaper.far-reach, nimble.features.mage.spellshaper.…]
@@ -246,16 +245,16 @@ effects:
 
 # Armor item: Chain Shirt
 effects:
-  - target: defense.base
+  - target: armor.base
     base: 9 + min(dex, 2)
     transfer: equipped
     source: armor
 requires: {str: 2}
 
-# Class feature: Berserker Mighty Endurance
+# Ancestry: Dwarf
 effects:
   - target: wounds.max
-    add: 4
+    add: 1
 ```
 
 | field | meaning |
@@ -276,7 +275,7 @@ if any set: value = largest set
 round per the variable's rounding
 ```
 
-Nimble Defense: unarmored contributes `base: dex`; each armor contributes its own `base`
+Nimble Armor: unarmored contributes `base: dex`; each armor contributes its own `base`
 while equipped; shield contributes `add`. Highest base wins, so no special case for "armor
 vs unarmored". Empty contribution set = the variable's default, never a crash.
 
@@ -338,7 +337,7 @@ rounding; and every resource, event, predicate, and function. Content may declar
 variables and resources in its frontmatter; they join the registry for that character.
 
 **Identifiers (my call):** canonical lowercase dotted (`dex`, `wounds.max`, `mana.max`,
-`defense.base`); registry may declare upper-case aliases (`DEX`, `KEY`); prose never shows
+`armor.base`); registry may declare upper-case aliases (`DEX`, `KEY`); prose never shows
 identifiers. **`key`** resolves to the higher of the class's two Key stats and `secondary`
 likewise, both declared by the class document.
 
@@ -380,22 +379,22 @@ Written as content documents in the proposed syntax **before** grammar or engine
 spike. If a Nimble homebrewer would not read them and nod, redesign. Nimble items, from recon
 §6, plus two 5e shapes as insurance:
 
-1. Defense: unarmored `dex`, Cloth `n + dex`, Mail `n + min(dex, 2)`, Plate flat; STR
+1. Armor: unarmored `dex`, Cloth `n + dex`, Mail `n + min(dex, 2)`, Plate flat; STR
    requirements; shields add; the highest applicable base wins.
 2. Catch Breath vs Make Camp Hit Die healing (roll vs max, + STR with sign), with Oozeling
    (always max) and Wild One (+KEY in the wild) overrides.
 3. Mage mana max `(max(int,0)*3)+level`, unlocked at level 2.
 4. Elemental Surge: temporary mana at Initiative, encounter lifetime, scaling WIL →
    WIL+1d4 → WIL+2d4 by level.
-5. Fury Dice: pool capped by KEY, die size by level, added to STR attacks, spendable for
-   STR+DEX mitigation, zeroed on `rage-end`.
+5. A class pool: Oathsworn's healing pool (5 × level, Safe Rest refresh) and one dice or
+   charge pool from The Cheat or Zephyr, chosen from the class read.
 6. Devoted Protector: `wounds.max add: 3 when: ally_nearby`.
 7. Initiative → starting actions by digit count (an event handler in the template).
 8. Mana cost modifiers: upcast ceiling; Methodical Spellweaver −2 (min 1) for +1 action.
 9. Event refreshes: Dragonborn "recharges whenever you gain a Wound"; Gnome "resets at full HP".
-10. Level-up HP as per-level history (roll with advantage or class average).
+10. Level-up HP as per-level history (roll with advantage; 2.0.3 has no average option).
 11. Non-proficient armor: Defend costs 2 actions; non-proficient weapon cannot crit.
-12. Dying state machine with Enduring Rage and Unstoppable Force overrides.
+12. Dying state machine, with whatever overrides the four classes carry (else template only).
 13. Spells known = schools × unlocked tier; Mage tier N at level 2N.
 14. 5e insurance: Monk Unarmored Defense vs Mage Armor vs armor (competing bases).
 15. 5e insurance: Bless cast twice does not stack (`same-source: highest`).
@@ -406,19 +405,18 @@ A package of documents (`type: variables | resources | events | predicates | fun
 table | content-type | slots | package`). The `nimble` package declares: the four stats and
 `key`/`secondary`; skills (10) with points and cap; saves with advantage flags; `hp.max`
 (fold `add`, fed by the level history), `wounds.max` (default 6), `hit_dice.max` (default
-`level`), `hit_die.size` (fold base=max; class contributes), `defense.base`/`defense`;
+`level`), `hit_die.size` (fold base=max; class contributes), `armor.base`/`armor`;
 `initiative`; `speed` 6; `inventory.slots` `10 + str`; `languages` `1 + int`; resources
 `hp wounds hit_dice temp_hp actions`; events of §6.4; predicates; the Field Rest / Safe
 Rest handlers; content types with suggested properties; **choice slots** (§11).
 
 **Packaging and versioning (my call):** a manifest document (`type: package`, `id: nimble`)
 lists members; integer revisions with a human `label`. Content declares `system: nimble`
-(latest) or `system: nimble@2`. **Printing (decision, Scott: 3.0 files are playtest, not
-final):** the template encodes the **second-printing** rules where they differ (Defense, skill
-cap 10, HP average option) because that is what will be current when the sheet ships, and
-carries `label: "Second printing (playtest Oct 2026)"`; first-printing values are kept as a
-documented diff so a `nimble@1` revision can be cut if needed. **Scott to confirm** which
-printing his table plays; the sheet shows the label.
+(latest) or `system: nimble@2`. **Printing (decision, Scott):** the template encodes **2.0.3 (first printing)**: Armor (not
+Defense), skill cap 12, roll-only level-up HP. The "3.0" files are the second-printing playtest
+and are likely to change, so they are not encoded; their known differences are recorded as
+`printing_diff` notes on the affected documents so a `nimble@2` revision can be cut when the
+reprint is final. The sheet shows the package label (`"2.0.3"`).
 
 Required notices (both verbatim, prominent in the app and in the package manifest):
 "This app is free to use for anyone who already owns the content, is trying the system out, or
@@ -450,8 +448,13 @@ state library, hosting are the builder's.
 - **Engine**: document parser, registry, fold, expression evaluator (compile/roll), events
   and resource state machine, provenance, diagnostics.
 - **Sheet**: create, play, level-up views (§3); provenance hover; Reader view of any attached
-  document; content folder/upload for homebrew; license notice.
-- **Nimble package**: core + Mage + Berserker + the ancestries and backgrounds (data entry;
+  document; content folder/upload for homebrew; license notice. **UI style (decision, Scott):
+  the High-Fantasy Steel design language from Steel Compendium** (workspace `DESIGN.md`:
+  charcoal surfaces, steel chrome, one teal accent, saturated color only for semantics,
+  Cinzel/Petrona display with a serif body). Port the tokens and type roles as a standalone
+  stylesheet; the Draw Steel marks and the commercial body face do not travel. Portability of
+  the tokens is itself a deliverable: the Draw Steel sheet reuses them later.
+- **Nimble package**: core + Mage, The Cheat, Oathsworn, Zephyr + the ancestries and backgrounds (data entry;
   the official Foundry system's compendium JSON is a cross-check, not a source to copy).
 
 ## 11. Choices (pulled forward in this revision; my call on shape)
@@ -491,7 +494,7 @@ Each step gated by the one before.
    **Gate: Scott judges readability.**
 2. **Grammar spec and conformance corpus** (expressions, predicates, events).
 3. **Engine**: parser, registry, fold, evaluator, resources and events, choices, provenance.
-4. **Nimble package**: core, Mage, Berserker, ancestries, backgrounds, armor and weapons.
+4. **Nimble package**: core, Mage, The Cheat, Oathsworn, Zephyr, ancestries, backgrounds, armor and weapons.
 5. **Sheet**: create → play → level-up, phone-first, license notice, homebrew folder.
 6. **Table test**: Scott's game for a few sessions; fix what hurts.
 7. **Post**: Nimble Discord, subreddit, note to Sly Flourish, with a short clip of the
@@ -503,8 +506,7 @@ Each step gated by the one before.
 For Scott:
 
 - The project's name.
-- Which printing the table plays (template default: second printing with label).
-- Which classes the kids play (template default: Mage and Berserker).
+- Confirm "thief" means The Cheat.
 - Licence for the specification text (code MIT; Nimble content under the Nimble notice).
 
 Builder's calls, flagged: exact PEG for `when`; `wil d8` sugar; the hosted character store;

@@ -18,7 +18,7 @@
 - Effect ops, exactly one per effect: `base add mul min max set` (spec 6.1). `transfer` ∈ `always equipped carried`.
 - Unknown variable, target, resource, event, slot, or duplicate id: error with path and line. Never silent zero (spec 6.5).
 - Inline expressions `{{ expr }}` / `{{ expr | display }}`; logic words `and or not` (spec 5.2, 7.2).
-- Nimble content lives under `systems/nimble/` and `examples/nimble/` with the license notice in `systems/nimble/LICENSE-NOTICE.md`; code is MIT (spec 10). The template encodes second-printing values with first-printing differences noted in a `printing_diff` property (spec 8).
+- Nimble content lives under `systems/nimble/` and `examples/nimble/` with the license notice in `systems/nimble/LICENSE-NOTICE.md`; code is MIT (spec 10). The template encodes 2.0.3 (first printing) values; known second-printing ("3.0" playtest) differences are noted in a `printing_diff` property (spec 8).
 - Repo `scottTomaszewski/orf`; Go prototype tagged `prototype-2023` and removed from `main`. Commit messages carry no AI attribution.
 
 ## Review Focus
@@ -132,7 +132,7 @@ test("collects variables, aliases, resources, events, predicates, tables, slots,
   expect(registry.events.has("gain-wound")).toBe(true);
   expect(registry.events.has("safe-rest")).toBe(true);           // built-in
   expect(registry.predicates.get("equipped")?.args).toContain("armor");
-  expect(registry.tables.get("nimble.tables.hit-die-average")?.columns[0]).toBe("die");
+  expect(registry.tables.get("nimble.tables.starting-gold")?.columns[0]).toBe("level");
   expect(registry.slots.has("nimble.classes.mage.level-4.spellshaper")).toBe(true);
   expect(registry.packages.get("nimble")?.members).toContain("nimble.system.core");
 });
@@ -198,7 +198,7 @@ test("alias, key, and this. resolve; near miss is named", () => {
   expect(d[0].message).toMatch(/wound\.max/);
 });
 test("op not allowed on target", () => {
-  expect(lintDocument(withEffects([{ target: "defense.base", add: 1 }]), regWhereDefenseBaseIsBaseOnly)[0].message).toMatch(/add.*defense\.base/);
+  expect(lintDocument(withEffects([{ target: "armor.base", add: 1 }]), regWhereArmorBaseIsBaseOnly)[0].message).toMatch(/add.*defense\.base/);
 });
 test("refresh on undeclared event", () => {
   expect(lintDocument(withResources([{ id: "x", refresh: [{ on: "long-rest", to: "max" }] }]), reg)[0].message).toMatch(/long-rest/);
@@ -211,7 +211,7 @@ test("character state key must be a declared resource", () => {
 });
 ```
 - [ ] **Step 2: Run, expect failure.**
-- [ ] **Step 3: Implement.** Fixtures: `src/__fixtures__/clean/` (a one-document package, a variables doc with `dex`, `key`, `wounds.max`, `defense.base` with `ops: [base]`, state booleans, a predicates doc with `equipped` args, a resources doc) and `src/__fixtures__/bad/bad.md` (unknown identifier) for Task 5.
+- [ ] **Step 3: Implement.** Fixtures: `src/__fixtures__/clean/` (a one-document package, a variables doc with `dex`, `key`, `wounds.max`, `armor.base` with `ops: [base]`, state booleans, a predicates doc with `equipped` args, a resources doc) and `src/__fixtures__/bad/bad.md` (unknown identifier) for Task 5.
 - [ ] **Step 4: Run, expect pass.**
 - [ ] **Step 5: Commit** `feat: lint rules for effects, references, resources, characters, choice slots`
 
@@ -261,44 +261,44 @@ No code. This is what the gate judges. Pin exactly:
 
 ### Task 7: Minimal Nimble system template
 
-**Files:** Create `systems/nimble/LICENSE-NOTICE.md`, `systems/nimble/package.md`, `systems/nimble/core.md`, `systems/nimble/skills.md`, `systems/nimble/combat.md`, `systems/nimble/resources.md`, `systems/nimble/events.md`, `systems/nimble/predicates.md`, `systems/nimble/content-types.md`, `systems/nimble/tables/hit-die-average.md`
+**Files:** Create `systems/nimble/LICENSE-NOTICE.md`, `systems/nimble/package.md`, `systems/nimble/core.md`, `systems/nimble/skills.md`, `systems/nimble/combat.md`, `systems/nimble/resources.md`, `systems/nimble/events.md`, `systems/nimble/predicates.md`, `systems/nimble/content-types.md`, `systems/nimble/tables/starting-gold.md`
 
-Second-printing values; first-printing differences recorded in a `printing_diff` property on the affected document. Every rule cites a recon §/page in an `## Sources` body section.
+2.0.3 (first printing) values; known second-printing differences recorded in a `printing_diff` property on the affected document. Every rule cites a recon §/page in an `## Sources` body section.
 
 - [ ] **Step 1: Write the documents.**
   - `LICENSE-NOTICE.md`: both required Nimble notices verbatim (spec 8).
-  - `package.md`: `id: nimble`, `type: package`, `label: "Second printing (playtest Oct 2026)"`, `members: [...]`.
+  - `package.md`: `id: nimble`, `type: package`, `label: "2.0.3 (first printing)"`, `members: [...]`.
   - `core.md` (`type: variables`): `str dex int wil` (integer, default 0, aliases `STR DEX INT WIL`, names "your Strength" etc.); `key` and `secondary` (declared as variables with `fold: {base: max}`, ops `[base]`; class documents contribute `base: int` etc.); `level` (integer input); `hp.max` (ops `[add]`, name "your maximum Hit Points"; the character's `levels[].hp` entries contribute `add`); `wounds.max` (default 6, ops `[add, set]`, name "your maximum Wounds"); `hit_dice.max` (formula `level`, ops `[add]`); `hit_die.size` (type integer, ops `[base]`, fold base=max; class contributes `base: 6` etc.); `hit_die.heal.bonus` (ops `[add]`, default 0); `speed` (default 6, ops `[add]`); `inventory.slots` (formula `10 + str`); `languages` (formula `1 + int`); `initiative.bonus` (formula `dex`, ops `[add]`); state booleans `dying bloodied raging concentrating in_wilderness ally_nearby` (type boolean, default false).
-  - `skills.md`: 10 skills `skill.<name>` with formula `<stat> + skill.<name>.points`, `skill.<name>.points` integer input default 0; `skill.cap` default 10 with `printing_diff: {first: 12}`.
-  - `combat.md`: `defense.base` (ops `[base]`, default formula contribution `dex` from the template itself, name "your Defense"), `defense.shield` (ops `[add]`), `defense` (formula `defense.base + defense.shield`, alias `DEFENSE`), saves `save.<stat>` (formula `<stat>`), `save.<stat>.advantage` (integer, ops `[add]`, +1 advantaged / −1 disadvantaged; class and ancestry contribute), `actions.max` (default 3), `dc.hero` (formula `10 + key`).
+  - `skills.md`: 10 skills `skill.<name>` with formula `<stat> + skill.<name>.points`, `skill.<name>.points` integer input default 0; `skill.cap` default 12 with `printing_diff: {second: 10}`.
+  - `combat.md`: `armor.base` (ops `[base]`, default formula contribution `dex` from the template itself, name "your Defense"), `armor.shield` (ops `[add]`), `armor` (formula `armor.base + armor.shield`, alias `ARMOR`), saves `save.<stat>` (formula `<stat>`), `save.<stat>.advantage` (integer, ops `[add]`, +1 advantaged / −1 disadvantaged; class and ancestry contribute), `actions.max` (default 3), `dc.hero` (formula `10 + key`).
   - `resources.md` (`type: resources`): `hp` (max `hp.max`, floor 0, refresh safe-rest to max), `temp_hp` (refresh safe-rest to 0), `wounds` (max `wounds.max`, refresh safe-rest add −1), `hit_dice` (max `hit_dice.max`, refresh safe-rest to max), `actions` (max `actions.max`, refresh turn-end to max).
   - `events.md` (`type: events`): declares `gain-wound full-hp rage-end` and handlers for `damage heal spend restore catch-breath make-camp safe-rest encounter-start encounter-end turn-end level-up` per the Task 6 handler language, including Initiative → starting actions (`actions.current = if(initiative_roll >= 20, 3, if(initiative_roll >= 10, 2, 1))` on `encounter-start`).
   - `predicates.md`: `equipped(kind)` args `armor shield weapon light_armor cloth leather mail plate`; `has(id)`; `level(class)` args the 11 classes; `proficient(thing)` args `armor weapon` plus armor categories.
   - `content-types.md`: `ancestry`, `background` (`requires`), `class` (`key_stats`, `hit_die`, `starting_hp`, `saves`), `class-level`, `subclass`, `feature`, `spell` (`school tier cost actions range`), `item`, `armor` (`category defense dex_cap strength_requirement`), `weapon`, `boon`, `character`.
-  - `tables/hit-die-average.md`: columns `die, average`; rows `4,3 / 6,4 / 8,5 / 10,7 / 12,8`.
+  - `tables/starting-gold.md`: columns `level, gold`; rows `n, 50*n` for levels 1-20 (exists mainly so the `table()` lookup form has a real target in Phase 1).
 - [ ] **Step 2: Lint** `npx tsx src/cli.ts systems`. Expected `OK`.
-- [ ] **Step 3: Commit** `feat(nimble): minimal system template, second printing`
+- [ ] **Step 3: Commit** `feat(nimble): minimal system template, 2.0.3`
 
 ---
 
-### Task 8: Torture-test documents, Mage and Berserker skeletons, sample character
+### Task 8: Torture-test documents, four class skeletons, sample character
 
-**Files:** Create `examples/nimble/torture-test/01-…15-*.md` (one per spec 7.3 item), `examples/nimble/classes/mage.md`, `examples/nimble/classes/mage/level-{1..5}.md`, `examples/nimble/classes/berserker.md`, `examples/nimble/classes/berserker/level-{1..5}.md`, `examples/nimble/items/armor/{adventurers-garb,cheap-hides,chain-shirt,half-plate,wooden-buckler}.md`, `examples/nimble/ancestries/{dwarf,gnome,oozeling,dragonborn,human}.md`, `examples/nimble/backgrounds/{devoted-protector,wild-one}.md`, `examples/nimble/features/…` as the torture items need, `examples/nimble/characters/pip.md`, and for items 14–15 `examples/insurance-5e/` with a 12-line `systems/srd5e-mini/` template (just `dex.mod wis.mod ac.base save.*` and an `armor` predicate).
+**Files:** Create `examples/nimble/torture-test/01-…15-*.md` (one per spec 7.3 item), `examples/nimble/classes/{mage,cheat,oathsworn,zephyr}.md`, `examples/nimble/classes/<class>/level-{1..5}.md` for each of the four (numbers from the class read in `docs/superpowers/research/2026-10-18-nimble-classes-203.md`), `examples/nimble/items/armor/{adventurers-garb,cheap-hides,chain-shirt,half-plate,wooden-buckler}.md`, `examples/nimble/ancestries/{dwarf,gnome,oozeling,dragonborn,human}.md`, `examples/nimble/backgrounds/{devoted-protector,wild-one}.md`, `examples/nimble/features/…` as the torture items need, `examples/nimble/characters/pip.md`, and for items 14–15 `examples/insurance-5e/` with a 12-line `systems/srd5e-mini/` template (just `dex.mod wis.mod ac.base save.*` and an `armor` predicate).
 
 Each torture document: frontmatter per spec; body = the rule's text paraphrased (cite recon §/page) then `## Encoding notes` in plain words. Pinned encodings for the non-obvious:
 
-- 01 Defense: template contributes `defense.base base: dex`; Adventurer's Garb `base: 2 + dex`; Cheap Hides `base: 3 + dex`; Chain Shirt `base: 9 + min(dex, 2)`, `requires: {str: 2}`; Half Plate `base: 14`, `requires: {str: 3}`; Wooden Buckler `defense.shield add: 2`. All `transfer: equipped`, `source: armor`.
+- 01 Armor: template contributes `armor.base base: dex`; Adventurer's Garb `base: 2 + dex`; Cheap Hides `base: 3 + dex`; Chain Shirt `base: 9 + min(dex, 2)`, `requires: {str: 2}`; Half Plate `base: 14`, `requires: {str: 3}`; Wooden Buckler `armor.shield add: 2`. All `transfer: equipped`, `source: armor`.
 - 02 Hit Die healing: lives in the template handler (`catch-breath` roll + str + bonus; `make-camp` max + str + bonus). Oozeling: `hit_die.heal.mode set: "max"` is **not** allowed (text set); pin instead a boolean variable `hit_die.heal.always_max` (template-declared, ops `[set]`) that the handler reads; Oozeling `set: true`. Wild One: `hit_die.heal.bonus add: key when: in_wilderness`.
 - 03 Mage mana: `mage.md` declares `resources: [{id: mana, max: mana.max, refresh: [{on: safe-rest, to: max}], when: level(mage) >= 2}]` and `variables: [{id: mana.max, formula: "(max(int, 0) * 3) + level"}]`.
 - 04 Elemental Surge: a second resource `mana.surge` with `max: if(level(mage) >= 17, wil + 2d4, if(level(mage) >= 10, wil + 1d4, wil))`, `refresh: [{on: encounter-start, to: max}, {on: encounter-end, to: 0}]`; encoding note: `spend: mana` draws from `mana.surge` first (handler rule in the Mage doc is **not** allowed this phase; note the gap honestly).
-- 05 Fury Dice: resource `fury_dice` with `max: key`, `refresh: [{on: rage-end, to: 0}]`; variable `fury_die.size` with formula `if(level(berserker) >= 17, 12, if(level(berserker) >= 13, 10, if(level(berserker) >= 9, 8, if(level(berserker) >= 6, 6, 4))))`; a feature granting `damage.str_attack.bonus add: dice(fury_dice.current, fury_die.size)`; encoding note on spend-for-mitigation.
+- 05 Class pools: Oathsworn healing pool as resource `oath.healing` `{max: oath.healing.max, refresh: [{on: safe-rest, to: max}]}` with variable `oath.healing.max` formula `5 * level(oathsworn)`; plus one dice or charge pool from The Cheat or Zephyr exactly as the class read documents it (die size by level via nested `if`, cap by a stat, zeroed on a template event if the rules say so).
 - 06 Devoted Protector: `wounds.max add: 3 when: ally_nearby`.
-- 07 Initiative: template handler only; the document is the Human ancestry `initiative.bonus add: 1` and encoding notes quoting the handler.
+- 07 Initiative: template handler only, plus Human `initiative.bonus add: 1` and The Cheat's floor (if the class read confirms "roll under 10, treat as 10": template-declared `initiative.floor` ops `[max]`, Cheat feature `max: 10`); encoding notes quote the handler.
 - 08 Mana cost: Methodical Spellweaver `spell.cost.modifier add: -2`, `spell.cost.min set: 1` **as declared variables on the Mage doc**; encoding note that cost application is a Phase 2 handler.
 - 09 Event refreshes: Dragonborn resource `breath` `{max: 1, refresh: [{on: safe-rest, to: max}, {on: gain-wound, to: max}]}`; Gnome `{on: full-hp, to: max}`.
-- 10 Level-up HP: `pip.md` `levels[]` with `source: roll|average`; encoding note that `hp.max` folds the entries.
+- 10 Level-up HP: `pip.md` `levels[]` with `source: roll`; encoding note that `hp.max` folds the entries and that 2.0.3 has no average option (second printing adds one: `printing_diff`).
 - 11 Proficiency: `defend.cost` (template variable default 1) `add: 1 when: equipped(armor) and not proficient(armor)`; `crit.allowed set: false when: equipped(weapon) and not proficient(weapon)`.
-- 12 Dying: handler rules in the template plus Berserker features `actions.dying_cap base: 2` (Enduring Rage) and `wound.damage_while_dying set: 1` (Unstoppable Force), both template-declared variables.
+- 12 Dying: handler rules in the template; if any of the four classes override Dying (per the class read) encode them as template-declared variables (`actions.dying_cap` ops `[base]`, `wound.damage_while_dying` ops `[set]`); otherwise the document is the handler alone with encoding notes.
 - 13 Spells known: Mage `spells.tier.max` formula `floor(level(mage) / 2)`; schools as `grants` of `nimble.spell-schools.fire` etc.; encoding note on "every spell in known schools up to tier".
 - 14 5e competing bases, 15 Bless stacking: as in the prior plan revision, under `examples/insurance-5e/`.
 - `pip.md`: spec 5.3 example, consistent with the Mage level documents written.
