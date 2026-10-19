@@ -2,7 +2,7 @@
   "name": "orf",
   "version": "0.0.0",
   "private": true,
-  "description": "Placeholder name. An open, system-agnostic TTRPG content format and reference engine.",
+  "description": "ORF (Open Rules Format): an open, system-agnostic TTRPG content format and reference engine. Every document is Markdown with YAML frontmatter.",
   "type": "module",
   "scripts": {
     "test": "vitest run",

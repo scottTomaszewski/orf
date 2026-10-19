@@ -9,6 +9,10 @@ values (`add: 2 + str`) and lookup rows, and conditions (`when:`), which are the
 Level ladders are not written in this grammar at all: use a lookup
 (`effects-and-resources.md` §2).
 
+ORF is a superset of Markdown (design §5.4): a `{{ expr | display }}` span in a plain Markdown tool
+is just text, so the display form exists to keep documents readable there. Prefer it whenever the
+raw expression would read badly.
+
 ## 1. Lexical
 
 | token | form | notes |

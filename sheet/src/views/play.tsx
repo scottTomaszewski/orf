@@ -96,7 +96,7 @@ function Sheet({ doc, loaded, storage }: { doc: Document; loaded: Loaded; storag
           <ul class="small">{problems.map((d, i) => <li key={i} class={d.severity === "warning" ? "muted" : ""}>{d.message}</li>)}</ul>
         </section>
       )}
-      <div class="grid-2">
+      <div class="board">
         <Panel title="Hit Points" kind="hp" right={<span class="row">{dying && <span class="steel-badge steel-badge--hp">Dying</span>}{isBloodied && <span class="steel-badge steel-badge--wound">Bloodied</span>}</span>}>
           <div class="row" style="justify-content:space-between">
             <Stepper label="HP" value={res("hp")?.current ?? 0} min={0} max={res("hp")?.max ?? 0} onChange={(v) => act({ kind: "set-hp", value: v })} />
@@ -151,7 +151,7 @@ function Sheet({ doc, loaded, storage }: { doc: Document; loaded: Loaded; storag
           <button type="button" class="steel-btn" onClick={() => act({ kind: "encounter-end" })}>Encounter end</button>
         </div>
       </Panel>
-      <div class="grid-2">
+      <div class="board">
         <Panel title="Stats">
           <div class="row" style="gap:1rem">{["str", "dex", "int", "wil"].map((st) => <Value key={st} sheet={s} id={st} label={st.toUpperCase()} docs={docsFm} />)}</div>
           <div class="row small" style="margin-top:.4rem"><Value sheet={s} id="key" label="KEY" docs={docsFm} /><Value sheet={s} id="dc.hero" label="DC" docs={docsFm} /><Value sheet={s} id="speed" label="Speed" docs={docsFm} /><Value sheet={s} id="initiative.bonus" label="Initiative" docs={docsFm} /></div>
@@ -163,7 +163,7 @@ function Sheet({ doc, loaded, storage }: { doc: Document; loaded: Loaded; storag
         <Panel title="Saves">
           <ul class="small plain">{saveRows(s).map((r) => <li key={r.stat}><Value sheet={s} id={`save.${r.stat}`} label={`save ${r.stat.toUpperCase()}`} docs={docsFm} />{r.advantage > 0 ? <span class="steel-badge"> advantage</span> : r.advantage < 0 ? <span class="steel-badge steel-badge--warn"> disadvantage</span> : null}</li>)}</ul>
         </Panel>
-        <Panel title="Skills">
+        <Panel title="Skills" class="span-2">
           <ul class="small plain cols">{skillRows(s).map((r) => <li key={r.id}>{r.name} <Value sheet={s} id={`skill.${r.id}`} docs={docsFm} /><span class="muted"> ({r.stat.toUpperCase()}{r.points ? ` +${r.points}` : ""})</span></li>)}</ul>
         </Panel>
       </div>

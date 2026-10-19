@@ -6,8 +6,9 @@ day to Nimble-first** after Scott's product decision; revision confirmed by Scot
 2026-10-18 after Scott's first gate review** ("describe, don't script": handlers and `transfer`
 removed, lookups added, clamp ops renamed, labels first-class; §4.1). Second gate packet:
 `examples/nimble/torture-test/README.md`. Tracker:
-Linear SC-451 (project "Open Rules Format"). "ORF" / "Open Rules Format" is a **placeholder
-name**; nothing depends on it.
+Linear SC-451 (project "Open Rules Format"). "ORF" / "Open Rules Format" began as a placeholder
+name; **settled as the name 2026-10-19 (Scott)**: descriptive, not flashy. The sheet is "ORF Sheet
+for Nimble".
 
 Companion research:
 - [`../research/2026-10-18-prior-art-survey.md`](../research/2026-10-18-prior-art-survey.md):
@@ -36,6 +37,13 @@ it). The format is the implementation detail that makes homebrew "just work" in 
 The interest test is the sheet, posted to the Nimble Discord and subreddit and sent to Sly
 Flourish, who is actively running Nimble. Judge interest by whether tool authors or Nimble Co.
 want to integrate, not by upvotes.
+
+**Interest test, revised 2026-10-19 (Scott).** The question is whether **content creators
+adopt the format**, not whether players want a sheet (they do; that is known). The sheet is the
+vehicle that makes the format's promise visible. The demo clip is recorded from the creator's
+seat: write a document (in the sheet's Write view or any text editor), see it live with
+provenance, change a number, see it ripple; the same file renders in Obsidian because ORF is
+Markdown (§5.4).
 
 **Business shape (decision, Scott, bounded by licenses).** Nimble's creator license lets a
 tool embed the rules only if the tool is **completely free** (donations allowed), so the Nimble
@@ -260,6 +268,13 @@ has reached, or via a choice), its `when` holds (on an item, `when: equipped` or
 The one authoring format with an ecosystem (Obsidian, Hugo, static-site tools); keeps Steel
 Compendium's lessons; works as plain files on day one. Cost: "computed value", "custom field",
 "effect", "resource" semantics are defined by this project, since Markdown has none.
+
+**Guarantee (decision, Scott, 2026-10-19): ORF is a strict superset of Markdown.** Every ORF
+document is a valid Markdown file with a YAML frontmatter block, and renders acceptably in any
+Markdown tool that ignores the format: the properties show as a table, `{{ expr | display }}`
+spans show their display text (or the expression when there is none). Nothing in the format may
+require a non-Markdown construct. Content should use the display form wherever the raw expression
+would read badly in a plain renderer.
 
 ## 6. The effects model
 
@@ -576,6 +591,11 @@ Each step gated by the one before.
    content plus Fire/Ice/Lightning/Radiant spells to tier 2. Visual check on a phone and the
    table test are next; levels 6–20 and the remaining ancestries, backgrounds, and items are
    the next data plan.
+5a. **Creator surfaces** (done 2026-10-19, plan `../plans/2026-10-19-phase4-creator.md`): the
+   name (ORF), the creator guide (`docs/guide/writing-content.md`, examples linted by test),
+   authoring helpers in the engine (`src/authoring.ts`), the sheet's **Write** view (form from
+   the system's content types, two-way source, live lint, save to homebrew), the Create
+   stat-placement fix, a desktop visual pass, and a GitHub Pages workflow.
 6. **Table test**: Scott's game for a few sessions; fix what hurts.
 7. **Post**: Nimble Discord, subreddit, note to Sly Flourish, with a short clip of the
    homebrew ripple. Interest decides the next phase (remaining classes, authoring form,
@@ -585,13 +605,14 @@ Each step gated by the one before.
 
 For Scott:
 
-- The project's name.
 - Confirm "thief" means The Cheat.
 - Licence for the specification text (code MIT; Nimble content under the Nimble notice).
 
 Settled 2026-10-18 by Scott's gate review: handlers out (engine module), `transfer` →
 `when: equipped`, lookups in, `min`/`max` → `at_least`/`at_most`, the renames
 (`oathsworn.lay_on_hands.pool`, `hit_die.heal.maximized`), descriptions and notes.
+Settled 2026-10-19 by Scott: the name (ORF, Open Rules Format); the Markdown-superset guarantee
+(§5.4); the interest test is creator adoption (§1).
 
 Builder's calls, flagged: exact PEG for `when`; `wil d8` sugar; the hosted character store;
 framework and hosting; how the sheet renders provenance on a phone.
