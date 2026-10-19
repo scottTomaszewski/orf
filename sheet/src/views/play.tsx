@@ -50,8 +50,10 @@ function CharacterList({ loaded, storage }: { loaded: Loaded; storage: Storage }
 import { parseCharacterText } from "../character-store.js";
 const parseImport = (t: string) => parseCharacterText(t);
 
+export const CURRENT_KEY = "nimble-sheet:current";
 function Sheet({ doc, loaded, storage }: { doc: Document; loaded: Loaded; storage: Storage }) {
   const { rng } = useContext(AppContext);
+  try { storage.setItem(CURRENT_KEY, String(doc.frontmatter.id)); } catch { /* ignore */ }
   const store = localCharacterStore(storage, loaded.docs);
   const character = useSignal<Document>(doc);
   const log = useSignal<string[]>([]);
@@ -67,7 +69,7 @@ function Sheet({ doc, loaded, storage }: { doc: Document; loaded: Loaded; storag
   const s = sheet.value;
   const n = (id: string) => { const v = s.value(id); return v.kind === "int" ? v.value : 0; };
   const res = (id: string) => s.resources.get(id);
-  const dmg = useSignal("1"), crit = useSignal(false), heal = useSignal("1"), hd = useSignal("1"), init = useSignal("");
+  const dmg = useSignal("1"), crit = useSignal(false), heal = useSignal("1"), hd = useSignal("1"), init = useSignal(""), hdRolls = useSignal("");
   const fm = character.value.frontmatter;
   const cls = Array.isArray(fm.classes) ? (fm.classes[0] as { id: string; level: number }) : undefined;
   const nameOf = (id: unknown) => (typeof id === "string" ? String(loaded.docs.get(id)?.frontmatter.name ?? id) : "");
@@ -77,7 +79,7 @@ function Sheet({ doc, loaded, storage }: { doc: Document; loaded: Loaded; storag
   const bloodied = s.value("bloodied"); const isBloodied = bloodied.kind === "bool" && bloodied.value;
   const spells = useMemo(() => spellsKnown(s, loaded.docs), [s]);
   const features = s.attachments.filter((a) => a.doc.frontmatter.type === "feature");
-  const equipment = (Array.isArray(fm.equipment) ? fm.equipment : []) as { id: string; equipped: boolean }[];
+  const equipment = (Array.isArray(fm.equipment) ? fm.equipment : []).filter((e): e is { id: string; equipped: boolean } => typeof e === "object" && e !== null && typeof (e as { id?: unknown }).id === "string");
   const exportMd = () => { const blob = new Blob([serializeCharacter(character.value)], { type: "text/markdown" }); const a = document.createElement("a"); a.href = URL.createObjectURL(blob); a.download = `${String(fm.id).split(".").pop()}.md`; a.click(); };
   return (
     <div class="stack">
@@ -97,39 +99,41 @@ function Sheet({ doc, loaded, storage }: { doc: Document; loaded: Loaded; storag
       <div class="grid-2">
         <Panel title="Hit Points" kind="hp" right={<span class="row">{dying && <span class="steel-badge steel-badge--hp">Dying</span>}{isBloodied && <span class="steel-badge steel-badge--wound">Bloodied</span>}</span>}>
           <div class="row" style="justify-content:space-between">
-            <Stepper label="HP" value={res("hp")?.current ?? 0} min={0} max={res("hp")?.max ?? 0} onChange={(v) => act({ kind: "adjust", resource: "hp", delta: v - (res("hp")?.current ?? 0) })} />
+            <Stepper label="HP" value={res("hp")?.current ?? 0} min={0} max={res("hp")?.max ?? 0} onChange={(v) => act({ kind: "set-hp", value: v })} />
             <Value sheet={s} id="hp.max" label="max" docs={docsFm} />
           </div>
           <div class="row small" style="margin-top:.4rem"><span class="steel-label">temp hp</span><Stepper label="temp HP" value={res("temp_hp")?.current ?? 0} min={0} onChange={(v) => act({ kind: "adjust", resource: "temp_hp", delta: v - (res("temp_hp")?.current ?? 0) })} /></div>
           <div class="row" style="margin-top:.5rem">
             <input class="steel-input" style="width:4.5rem" type="number" min="0" aria-label="damage amount" value={dmg.value} onInput={(e) => (dmg.value = (e.target as HTMLInputElement).value)} />
             <label class="small"><input type="checkbox" checked={crit.value} onChange={() => (crit.value = !crit.value)} /> crit</label>
-            <button type="button" class="steel-btn" onClick={() => act({ kind: "damage", amount: Number(dmg.value) || 0, crit: crit.value })}>Damage</button>
+            <button type="button" class="steel-btn" disabled={!(Number(dmg.value) > 0)} onClick={() => act({ kind: "damage", amount: Number(dmg.value) || 0, crit: crit.value })}>Damage</button>
             <input class="steel-input" style="width:4.5rem" type="number" min="0" aria-label="heal amount" value={heal.value} onInput={(e) => (heal.value = (e.target as HTMLInputElement).value)} />
-            <button type="button" class="steel-btn" onClick={() => act({ kind: "heal", amount: Number(heal.value) || 0 })}>Heal</button>
+            <button type="button" class="steel-btn" disabled={!(Number(heal.value) > 0)} onClick={() => act({ kind: "heal", amount: Number(heal.value) || 0 })}>Heal</button>
           </div>
         </Panel>
         <Panel title="Wounds" kind="wound" right={<Value sheet={s} id="wounds.max" label="max" docs={docsFm} />}>
           <div class="row" style="justify-content:space-between">
-            <span class="wounds" aria-hidden="true">{Array.from({ length: res("wounds")?.max ?? 6 }, (_, i) => <span key={i} class={i < (res("wounds")?.current ?? 0) ? "w on" : "w"}>◆</span>)}</span>
-            <span><span class="steel-mono">{res("wounds")?.current ?? 0} / {res("wounds")?.max ?? "?"}</span></span>
-            <Stepper label="Wounds" value={res("wounds")?.current ?? 0} min={0} max={res("wounds")?.max ?? 6} onChange={(v) => act({ kind: "adjust", resource: "wounds", delta: v - (res("wounds")?.current ?? 0) })} />
+            <span class="wounds" aria-hidden="true">{Array.from({ length: res("wounds")?.max ?? 6 }, (_, i) => <span key={i} class={i < (res("wounds")?.current ?? 0) ? "w on" : "w"}>{i < (res("wounds")?.current ?? 0) ? "◆" : "◇"}</span>)}</span>
+            <span><span class="steel-mono">{res("wounds")?.current ?? 0} / {res("wounds")?.max ?? "?"}</span>{(res("wounds")?.current ?? 0) >= (res("wounds")?.max ?? Infinity) && <span class="steel-badge steel-badge--hp"> Dead</span>}</span>
+            <Stepper label="Wounds" value={res("wounds")?.current ?? 0} min={0} max={res("wounds")?.max ?? 6} onChange={(v) => act({ kind: "set-wounds", value: v })} />
           </div>
         </Panel>
-        <Panel title="Hit Dice" right={<span class="small muted">d{n("hit_die.size")} each</span>}>
+        <Panel title="Hit Dice" right={<span class="small muted">d<Value sheet={s} id="hit_die.size" docs={docsFm} /> each</span>}>
           <div class="row" style="justify-content:space-between">
-            <Stepper label="Hit Dice" value={res("hit_dice")?.current ?? 0} min={0} max={res("hit_dice")?.max ?? 0} suffix={<><span>/ </span><span>{res("hit_dice")?.max ?? "?"}</span></>} onChange={(v) => act({ kind: "adjust", resource: "hit_dice", delta: v - (res("hit_dice")?.current ?? 0) })} />
+            <Stepper label="Hit Dice" value={res("hit_dice")?.current ?? 0} min={0} max={res("hit_dice")?.max ?? 0} onChange={(v) => act({ kind: "adjust", resource: "hit_dice", delta: v - (res("hit_dice")?.current ?? 0) })} />
+            <Value sheet={s} id="hit_dice.max" label="max" docs={docsFm} />
           </div>
           <div class="row" style="margin-top:.5rem">
             <span class="small steel-label">spend</span><input class="steel-input" style="width:3.5rem" type="number" min="1" aria-label="hit dice to spend" value={hd.value} onInput={(e) => (hd.value = (e.target as HTMLInputElement).value)} />
-            <button type="button" class="steel-btn" onClick={() => act({ kind: "catch-breath", dice: Number(hd.value) || 1 })}>Catch Breath</button>
+            <button type="button" class="steel-btn" onClick={() => act({ kind: "catch-breath", dice: Number(hd.value) || 1, rolls: parseRolls(hdRolls.value) })}>Catch Breath</button>
             <button type="button" class="steel-btn" onClick={() => act({ kind: "make-camp", dice: Number(hd.value) || 1 })}>Make Camp</button>
           </div>
+          <div class="row small" style="margin-top:.3rem"><span class="muted">or enter your rolls</span><input class="steel-input" style="width:7rem" aria-label="hit die rolls" placeholder="e.g. 4, 2" value={hdRolls.value} onInput={(e) => (hdRolls.value = (e.target as HTMLInputElement).value)} /></div>
           {lastRolls.value.length > 0 && <p class="small muted">Rolled {lastRolls.value.map((r) => `${r.text}: [${r.rolls.join(", ")}] → ${r.total}`).join("; ")}</p>}
         </Panel>
         {[...s.resources.values()].filter((r) => !CORE.has(r.id)).map((r) => (
-          <Panel key={r.id} title={r.id === "mana" ? "Mana" : resourceName(r.id, loaded)} kind={r.id === "mana" ? "mana" : undefined} right={r.maxDice ? <span class="small muted">max {r.maxDice} (roll)</span> : undefined}>
-            <Stepper label={r.id === "mana" ? "Mana" : resourceName(r.id, loaded)} value={r.current} min={r.floor} max={r.max ?? Infinity} suffix={r.max !== undefined ? <><span>/ </span><span>{r.max}</span></> : undefined} onChange={(v) => act({ kind: "adjust", resource: r.id, delta: v - r.current })} />
+          <Panel key={r.id} title={r.id === "mana" ? "Mana" : resourceName(r.id, loaded)} kind={r.id === "mana" ? "mana" : undefined} right={r.maxDice ? <span class="small muted">max {r.maxDice} (rolled on refresh)</span> : maxVariable(r.id, loaded) ? <Value sheet={s} id={maxVariable(r.id, loaded)!} label="max" docs={docsFm} /> : r.max !== undefined ? <span class="small muted">max {r.max}</span> : undefined}>
+            <Stepper label={r.id === "mana" ? "Mana" : resourceName(r.id, loaded)} value={r.current} min={r.floor} max={r.max ?? Infinity} onChange={(v) => act({ kind: "adjust", resource: r.id, delta: v - r.current })} />
           </Panel>
         ))}
       </div>
@@ -139,9 +143,10 @@ function Sheet({ doc, loaded, storage }: { doc: Document; loaded: Loaded; storag
           <span class="muted small">Field Rest = spend Hit Dice above.</span>
         </div>
         <div class="row" style="margin-top:.5rem">
-          <input class="steel-input" style="width:4.5rem" type="number" aria-label="initiative roll" placeholder="d20" value={init.value} onInput={(e) => (init.value = (e.target as HTMLInputElement).value)} />
-          <button type="button" class="steel-btn" onClick={() => act({ kind: "encounter-start", roll: Number(init.value) || 0 })}>Initiative</button>
-          <span class="actions" aria-label={`${res("actions")?.current ?? 0} actions`}>{Array.from({ length: res("actions")?.max ?? 3 }, (_, i) => <span key={i} class={i < (res("actions")?.current ?? 0) ? "w on" : "w"}>◆</span>)}</span>
+          <button type="button" class="steel-btn" onClick={() => act({ kind: "encounter-start" })}>Roll Initiative (d20{n("initiative.bonus") >= 0 ? "+" : ""}{n("initiative.bonus")})</button>
+          <input class="steel-input" style="width:4.5rem" type="number" aria-label="initiative roll" placeholder="or total" value={init.value} onInput={(e) => (init.value = (e.target as HTMLInputElement).value)} />
+          <button type="button" class="steel-btn" disabled={init.value.trim() === ""} onClick={() => act({ kind: "encounter-start", roll: Number(init.value) })}>Use</button>
+          <span class="actions" aria-label={`${res("actions")?.current ?? 0} actions`}>{Array.from({ length: res("actions")?.max ?? 3 }, (_, i) => <span key={i} class={i < (res("actions")?.current ?? 0) ? "w on" : "w"}>{i < (res("actions")?.current ?? 0) ? "◆" : "◇"}</span>)}</span>
           <button type="button" class="steel-btn" onClick={() => act({ kind: "turn-end" })}>Turn end</button>
           <button type="button" class="steel-btn" onClick={() => act({ kind: "encounter-end" })}>Encounter end</button>
         </div>
@@ -156,7 +161,7 @@ function Sheet({ doc, loaded, storage }: { doc: Document; loaded: Loaded; storag
           <div class="small muted">Damage reduced when you Defend.</div>
         </Panel>
         <Panel title="Saves">
-          <ul class="small plain">{saveRows(s).map((r) => <li key={r.stat}>{r.stat.toUpperCase()} <b class="steel-mono">{r.bonus >= 0 ? "+" : ""}{r.bonus}</b>{r.advantage > 0 ? <span class="steel-badge"> advantage</span> : r.advantage < 0 ? <span class="steel-badge steel-badge--warn"> disadvantage</span> : null}</li>)}</ul>
+          <ul class="small plain">{saveRows(s).map((r) => <li key={r.stat}><Value sheet={s} id={`save.${r.stat}`} label={`save ${r.stat.toUpperCase()}`} docs={docsFm} />{r.advantage > 0 ? <span class="steel-badge"> advantage</span> : r.advantage < 0 ? <span class="steel-badge steel-badge--warn"> disadvantage</span> : null}</li>)}</ul>
         </Panel>
         <Panel title="Skills">
           <ul class="small plain cols">{skillRows(s).map((r) => <li key={r.id}>{r.name} <Value sheet={s} id={`skill.${r.id}`} docs={docsFm} /><span class="muted"> ({r.stat.toUpperCase()}{r.points ? ` +${r.points}` : ""})</span></li>)}</ul>
@@ -192,6 +197,14 @@ function Sheet({ doc, loaded, storage }: { doc: Document; loaded: Loaded; storag
 function Expandable({ title, body, resolve }: { title: preact.ComponentChildren; body: string; resolve?: (t: string) => string }) {
   const open = useSignal(false);
   return <li><button type="button" class="steel-value" onClick={() => (open.value = !open.value)}>{title}</button>{open.value && <div class="small option-text"><Prose text={body} resolve={resolve} /></div>}</li>;
+}
+function parseRolls(text: string): number[][] | undefined {
+  const nums = text.split(/[\s,;]+/).map((x) => Number(x)).filter((x) => Number.isInteger(x) && x > 0);
+  return nums.length ? nums.map((x) => [x]) : undefined;
+}
+function maxVariable(id: string, loaded: Loaded): string | undefined {
+  const def = loaded.registry.resources.get(id);
+  return def && typeof def.max === "string" && loaded.registry.variables.has(def.max) ? def.max : undefined;
 }
 function resourceName(id: string, loaded: Loaded): string {
   const def = loaded.registry.resources.get(id);

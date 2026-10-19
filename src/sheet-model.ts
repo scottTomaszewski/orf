@@ -100,7 +100,7 @@ export function applyLevelUp(character: Document, prompt: LevelUpPrompt, answers
   fm.choices = choices;
   const skills: Record<string, number> = isObj(fm.skills) ? { ...(fm.skills as Record<string, number>) } : {};
   skills[answers.skill] = (skills[answers.skill] ?? 0) + 1;
-  if (answers.moveSkill && (skills[answers.moveSkill.from] ?? 0) > 0) {
+  if (answers.moveSkill && answers.moveSkill.from && answers.moveSkill.to && answers.moveSkill.from !== answers.moveSkill.to && (skills[answers.moveSkill.from] ?? 0) > 0) {
     skills[answers.moveSkill.from] -= 1;
     skills[answers.moveSkill.to] = (skills[answers.moveSkill.to] ?? 0) + 1;
   }
@@ -109,12 +109,15 @@ export function applyLevelUp(character: Document, prompt: LevelUpPrompt, answers
 }
 
 export interface KnownSpell { school: string; tier: number; spell: Document }
+/** Every spell of a known school up to the unlocked tier, plus the Utility Spells of schools whose `spell-utility` document is attached (Elemental Mastery picks). */
 export function spellsKnown(sheet: Sheet, docs: Map<string, Document>): KnownSpell[] {
   const schools = new Set(sheet.attachments.filter((a) => a.doc.frontmatter.type === "spell-school").map((a) => String(a.doc.frontmatter.id).split(".").pop()));
+  const utility = new Set(sheet.attachments.filter((a) => a.doc.frontmatter.type === "spell-utility").map((a) => String(a.doc.frontmatter.school ?? String(a.doc.frontmatter.id).split(".").pop())));
   const tierMax = sheet.value("spells.tier.max");
   const max = tierMax.kind === "int" ? tierMax.value : 0;
   return [...docs.values()]
-    .filter((d) => d.frontmatter.type === "spell" && schools.has(String(d.frontmatter.school)) && typeof d.frontmatter.tier === "number" && d.frontmatter.tier <= max)
+    .filter((d) => d.frontmatter.type === "spell" && typeof d.frontmatter.tier === "number")
+    .filter((d) => d.frontmatter.utility === true ? utility.has(String(d.frontmatter.school)) : schools.has(String(d.frontmatter.school)) && (d.frontmatter.tier as number) <= max)
     .map((d) => ({ school: String(d.frontmatter.school), tier: d.frontmatter.tier as number, spell: d }))
     .sort((a, b) => a.school.localeCompare(b.school) || a.tier - b.tier || String(a.spell.frontmatter.name).localeCompare(String(b.spell.frontmatter.name)));
 }

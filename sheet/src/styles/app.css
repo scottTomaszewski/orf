@@ -28,7 +28,8 @@
 .pick--on { border-color: var(--accent); color: var(--accent); }
 .option-text { margin-top: .6rem; border-top: 1px solid var(--line); padding-top: .4rem; }
 .value { position: relative; display: inline-block; }
-.pop { position: absolute; z-index: 20; top: calc(100% + .3rem); left: 0; min-width: 16rem; max-width: 90vw; font-weight: 400; text-align: left; }
+.pop { position: fixed; z-index: 20; left: 1rem; right: 1rem; top: auto; bottom: calc(64px + env(safe-area-inset-bottom) + .5rem); font-weight: 400; text-align: left; max-height: 50vh; overflow: auto; }
+@media (min-width: 800px) { .pop { position: absolute; top: calc(100% + .3rem); bottom: auto; left: 0; right: auto; min-width: 16rem; max-width: 28rem; } }
 .prov { padding-left: 1rem; margin: .2rem 0; }
 .struck { text-decoration: line-through; color: var(--fg-3); }
 .plain { list-style: none; padding: 0; margin: 0; }

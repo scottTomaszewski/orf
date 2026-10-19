@@ -19,7 +19,7 @@ Ratfolk are hard to kill (+1 max Wounds).
 
 test("loadContent builds the registry from the bundle", () => {
   const l = loadContent(bundle, []);
-  expect(l.docs.size).toBe(141);
+  expect(l.docs.size).toBe(157);
   expect(l.registry.variables.size).toBe(74);
   expect(l.diagnostics).toEqual([]);
 });

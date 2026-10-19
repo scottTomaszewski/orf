@@ -16,6 +16,7 @@ content_types:
   - {id: weapon, properties: [damage, kind, hands, properties]}
   - {id: boon, properties: [rarity]}
   - {id: spell-school, properties: []}
+  - {id: spell-utility, properties: [school]}
   - {id: creation, properties: [stat_arrays, skill_points_at_creation, skill_points_per_level, starting_gold, hp_per_level]}
   - {id: character, properties: [stats, ancestry, background, classes, skills, levels, choices, equipment, state]}
 ---

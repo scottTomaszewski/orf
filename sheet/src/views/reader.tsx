@@ -4,6 +4,7 @@ import type { Document } from "../../../src/document.js";
 import { evaluateCharacter } from "../../../src/engine.js";
 import { AppContext } from "../app-context.js";
 import { localCharacterStore } from "../character-store.js";
+import { CURRENT_KEY } from "./play.js";
 import { Panel } from "../components/panel.js";
 import { Prose } from "../prose.js";
 import { navigate, route } from "../router.js";
@@ -16,14 +17,17 @@ export function ReaderView() {
   const r = route.value;
   const q = useSignal("");
   const selected = r.view === "reader" ? r.id : undefined;
-  if (!loaded) return <p class="muted">Loading content…</p>;
-  const docs = useMemo(() => [...loaded.docs.values()].filter((d) => d.frontmatter.type !== "character" && d.frontmatter.type !== "note"), [loaded]);
+  const docs = useMemo(() => (loaded ? [...loaded.docs.values()].filter((d) => d.frontmatter.type !== "character" && d.frontmatter.type !== "note") : []), [loaded]);
   const filtered = useComputed(() => { const s = q.value.trim().toLowerCase(); return s ? docs.filter((d) => String(d.frontmatter.name).toLowerCase().includes(s) || String(d.frontmatter.id).includes(s)) : docs; });
   const types = useComputed(() => [...new Set(filtered.value.map((d) => String(d.frontmatter.type)))].sort());
+  // the character open in Play (not the most recently saved one)
+  let currentId: string | null = null;
+  try { currentId = storage.getItem(CURRENT_KEY); } catch { /* ignore */ }
+  const current = useMemo(() => (loaded && currentId ? localCharacterStore(storage, loaded.docs).get(currentId) : undefined), [loaded, currentId]);
+  const sheet = useMemo(() => (current && loaded ? evaluateCharacter(current, loaded.registry, loaded.docs) : undefined), [current, loaded]);
+  if (!loaded) return <p class="muted">Loading content…</p>;
   const doc = selected ? loaded.docs.get(selected) : undefined;
-  const chars = localCharacterStore(storage, loaded.docs).list();
-  const current = chars[0] ? localCharacterStore(storage, loaded.docs).get(chars[0].id) : undefined;
-  const sheet = useMemo(() => (current ? evaluateCharacter(current, loaded.registry, loaded.docs) : undefined), [current, loaded]);
+  const attached = doc && sheet ? sheet.attachments.some((a) => a.doc.frontmatter.id === doc.frontmatter.id) : false;
   return (
     <div class="stack">
       <h1 class="steel-h1">Reader</h1>
@@ -36,7 +40,7 @@ export function ReaderView() {
             </div>
           ))}
         </div>
-        {doc && <DocView doc={doc} resolve={sheet ? (t) => sheet.render(t) : undefined} resolvedFor={current ? String(current.frontmatter.name) : undefined} />}
+        {doc && <DocView doc={doc} resolve={sheet && attached ? (t) => sheet.render(t) : undefined} resolvedFor={sheet && attached && current ? String(current.frontmatter.name) : undefined} />}
       </div>
     </div>
   );

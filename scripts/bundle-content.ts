@@ -1,7 +1,7 @@
 /** Build sheet/public/content/nimble.json from the Nimble content trees. Run: npm run bundle-content */
 import { mkdirSync, readFileSync, writeFileSync, existsSync } from "node:fs";
 import { dirname, join } from "node:path";
-import { listDocumentFiles } from "../src/document.js";
+import { listDocumentFiles } from "../src/document-fs.js";
 
 const dirs = ["systems/nimble", "examples/nimble"];
 const out = process.argv[2] ?? "sheet/public/content/nimble.json";

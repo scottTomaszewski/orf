@@ -16,10 +16,12 @@ export function serializeCharacter(doc: Document): string {
   return `---\n${YAML.stringify(fm).replace(/\n$/, "")}\n---\n${body}${body ? "\n" : ""}`;
 }
 
-export function parseCharacterText(text: string, path = "character.md"): Document {
+export function parseCharacterText(text: string, path = "character.md", system?: string): Document {
   const doc = parseDocument(text, path);
   if (doc.frontmatter.type !== "character") throw new Error(`not a character document (type: ${String(doc.frontmatter.type ?? "none")})`);
   if (typeof doc.frontmatter.id !== "string") throw new Error("not a character document (no id)");
+  const sys = typeof doc.frontmatter.system === "string" ? doc.frontmatter.system.split("@")[0] : "";
+  if (system && sys !== system) throw new Error(`this character is for system "${sys}", not ${system}`);
   return doc;
 }
 
@@ -53,11 +55,11 @@ const b64 = {
 export function toShareLink(doc: Document, base = typeof location !== "undefined" ? location.href.split("#")[0] : ""): string {
   return `${base}#/share/${b64.enc(serializeCharacter(doc))}`;
 }
-export function fromShareLink(hash: string): Document {
+export function fromShareLink(hash: string, system?: string): Document {
   const m = /#\/share\/(.+)$/.exec(hash);
   if (!m) throw new Error("share link: missing payload");
   let text: string;
   try { text = b64.dec(m[1]); } catch { throw new Error("share link: the payload is not valid (corrupted or truncated)"); }
-  try { return parseCharacterText(text, "shared.md"); }
+  try { return parseCharacterText(text, "shared.md", system); }
   catch (e) { throw new Error(`share link: ${e instanceof Error ? e.message : String(e)}`); }
 }

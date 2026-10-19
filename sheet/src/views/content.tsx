@@ -37,10 +37,17 @@ export function ContentView() {
   const canPickFolder = typeof (window as unknown as { showDirectoryPicker?: unknown }).showDirectoryPicker === "function";
   const importFiles = async (list: ContentFile[]) => { busy.value = true; try { await homebrew.put(list); await reload(); await refreshList(); } finally { busy.value = false; } };
   const pickFolder = async () => {
-    folderHandle = await (window as unknown as { showDirectoryPicker(): Promise<FileSystemDirectoryHandle> }).showDirectoryPicker();
+    try { folderHandle = await (window as unknown as { showDirectoryPicker(): Promise<FileSystemDirectoryHandle> }).showDirectoryPicker(); }
+    catch { return; }   // cancelled
     await importFiles(await readDirectory(folderHandle));
   };
-  const reloadFolder = async () => { if (folderHandle) await importFiles(await readDirectory(folderHandle)); else await reload(); await refreshList(); };
+  const note = useSignal<string | undefined>(undefined);
+  const reloadFolder = async () => {
+    if (folderHandle) { await importFiles(await readDirectory(folderHandle)); note.value = undefined; }
+    else { await reload(); note.value = "Reload re-reads the copies stored in this browser. To pick up edits to your files, Choose folder again (Chromium) or add the files again."; }
+    await refreshList();
+  };
+  const onFiles = (e: Event) => { const input = e.target as HTMLInputElement; const fl = input.files; if (fl) void readDroppedFiles(fl).then(importFiles).then(() => { input.value = ""; }); };
   const remove = async (path: string) => { await homebrew.remove(path); await reload(); await refreshList(); };
   const problems = loaded?.diagnostics ?? [];
   return (
@@ -51,10 +58,12 @@ export function ContentView() {
       </Panel>
       <Panel title="Homebrew" right={<span class="row">
         {canPickFolder && <button type="button" class="steel-btn" disabled={busy.value} onClick={() => void pickFolder()}>Choose folder</button>}
-        <label class="steel-btn">Add files<input type="file" multiple accept=".md" style="display:none" onChange={(e) => { const fl = (e.target as HTMLInputElement).files; if (fl) void readDroppedFiles(fl).then(importFiles); }} /></label>
+        <label class="steel-btn">Add files<input type="file" multiple accept=".md" style="display:none" onChange={onFiles} /></label>
+        <label class="steel-btn">Add folder<input type="file" multiple {...({ webkitdirectory: "" } as Record<string, string>)} style="display:none" onChange={onFiles} /></label>
         <button type="button" class="steel-btn" disabled={busy.value} onClick={() => void reloadFolder()}>Reload</button>
       </span>}>
         <p class="small muted">Drop your own `.md` documents here (an ancestry, a background, an item). They overlay the bundle and show up everywhere with provenance. Edit the file and Reload to see the change ripple.</p>
+        {note.value && <p class="small" role="status">{note.value}</p>}
         {files.value.length === 0 ? <p class="small muted">No homebrew files.</p> : (
           <ul class="plain">{files.value.map((f) => <li key={f.path} class="row" style="justify-content:space-between"><span class="steel-mono small">{f.path}</span><button type="button" class="steel-btn small" aria-label={`remove ${f.path}`} onClick={() => void remove(f.path)}>remove</button></li>)}</ul>
         )}

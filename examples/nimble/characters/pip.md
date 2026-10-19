@@ -15,7 +15,7 @@ levels:
   - {level: 4, hp: 5, source: roll}
 choices:
   nimble.classes.mage.level-3.subclass: [nimble.subclasses.mage.control]
-  nimble.classes.mage.level-3.elemental-mastery: [fire]
+  nimble.classes.mage.level-3.elemental-mastery: [nimble.spell-utility.fire]
   nimble.classes.mage.level-4.spellshaper: [nimble.features.mage.echo-casting, nimble.features.mage.stretch-time]
   nimble.classes.mage.level-4.key-stat: [int]
 equipment:

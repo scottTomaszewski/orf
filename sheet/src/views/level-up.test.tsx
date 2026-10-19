@@ -23,8 +23,8 @@ test("a level-2 Mage levels to 3: subclass and school pickers, HP roll with adva
   expect(within(sub).getAllByRole("radio").map((r) => (r as HTMLInputElement).labels?.[0]?.textContent?.trim())).toEqual(["Invoker of Chaos", "Invoker of Control"]);
   fireEvent.click(within(sub).getByLabelText("Invoker of Control"));
   const school = screen.getByRole("radiogroup", { name: /elemental-mastery/i });
-  expect(within(school).getAllByRole("radio").map((r) => (r as HTMLInputElement).value)).toEqual(["fire", "ice", "lightning"]);
-  fireEvent.click(within(school).getByLabelText("fire"));
+  expect(within(school).getAllByRole("radio").map((r) => (r as HTMLInputElement).value)).toEqual(["nimble.spell-utility.fire", "nimble.spell-utility.ice", "nimble.spell-utility.lightning"]);
+  fireEvent.click(within(school).getByLabelText(/^Fire Utility Spells/));
   fireEvent.click(screen.getByRole("button", { name: /roll with advantage/i }));
   await waitFor(() => expect(screen.getByText(/rolled 1 and 6/i)).toBeTruthy());
   expect((screen.getByLabelText("HP gained") as HTMLInputElement).value).toBe("6");
@@ -35,7 +35,7 @@ test("a level-2 Mage levels to 3: subclass and school pickers, HP roll with adva
   const doc = localCharacterStore(localStorage).get("local.characters.m")!;
   expect((doc.frontmatter.classes as { level: number }[])[0].level).toBe(3);
   expect((doc.frontmatter.levels as unknown[]).length).toBe(3);
-  expect(doc.frontmatter.choices).toMatchObject({ "nimble.classes.mage.level-3.subclass": ["nimble.subclasses.mage.control"], "nimble.classes.mage.level-3.elemental-mastery": ["fire"] });
+  expect(doc.frontmatter.choices).toMatchObject({ "nimble.classes.mage.level-3.subclass": ["nimble.subclasses.mage.control"], "nimble.classes.mage.level-3.elemental-mastery": ["nimble.spell-utility.fire"] });
   expect((doc.frontmatter.skills as Record<string, number>).arcana).toBe(5);
   const s = evaluateCharacter(doc, content.registry, content.docs);
   expect(s.attachments.some((a) => String(a.doc.frontmatter.id) === "nimble.subclasses.mage.control")).toBe(true);

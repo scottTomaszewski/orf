@@ -17,9 +17,8 @@ test("the Content view lists homebrew files and problems; a homebrew ancestry ri
   render(<App loader={loader} homebrew={homebrew} storage={localStorage} />);
   const files = await screen.findByRole("region", { name: /homebrew/i });
   expect(await within(files).findByText("homebrew/ratfolk.md")).toBeTruthy();
-  const problems = screen.getByRole("region", { name: /problems/i });
-  expect(problems.textContent).toMatch(/homebrew\/broken\.md/);
-  expect(problems.textContent).not.toMatch(/ratfolk/);
+  await waitFor(() => expect(screen.getByRole("region", { name: /problems/i }).textContent).toMatch(/homebrew\/broken\.md/));
+  expect(screen.getByRole("region", { name: /problems/i }).textContent).not.toMatch(/ratfolk/);
   // ripple: a character with the homebrew ancestry
   const pip = content.docs.get("scott.characters.pip")!;
   localCharacterStore(localStorage).save({ ...pip, frontmatter: { ...pip.frontmatter, ancestry: "nimble.ancestries.ratfolk" } });

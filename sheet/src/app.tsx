@@ -1,9 +1,11 @@
-import { signal, useSignal } from "@preact/signals";
-import { useEffect, useMemo } from "preact/hooks";
+import { useSignal } from "@preact/signals";
+import { Component, type ComponentChildren } from "preact";
+import { useContext, useEffect, useMemo } from "preact/hooks";
+import { fromShareLink, localCharacterStore } from "./character-store.js";
 import { loadContent, type HomebrewStore, type Loaded } from "../../src/content-store.js";
 import { AppContext, type AppServices } from "./app-context.js";
 import { PRODUCT_NAME } from "./notice.js";
-import { navigate, route } from "./router.js";
+import { navigate, parseHash, route, type Route } from "./router.js";
 import { AboutView } from "./views/about.js";
 import { CreateView } from "./views/create.js";
 import { PlayView } from "./views/play.js";
@@ -34,7 +36,7 @@ export function App({ loader, homebrew, storage, rng = Math.random }: { loader: 
     content, contentError, homebrew, storage, rng,
     reload: async () => { try { content.value = await loader(homebrew); contentError.value = undefined; } catch (e) { contentError.value = e instanceof Error ? e.message : String(e); } },
   }), [loader, homebrew, storage]);
-  useEffect(() => { void services.reload(); }, [services]);
+  useEffect(() => { route.value = parseHash(location.hash); void services.reload(); }, [services]);
   const r = route.value;
   const theme = useSignal(document.documentElement.getAttribute("data-theme") ?? "slate");
   const toggleTheme = () => { theme.value = theme.value === "slate" ? "light" : "slate"; document.documentElement.setAttribute("data-theme", theme.value); try { storage.setItem("nimble-sheet:theme", theme.value); } catch { /* ignore */ } };
@@ -55,23 +57,53 @@ export function App({ loader, homebrew, storage, rng = Math.random }: { loader: 
         </nav>
         <main class="app__main">
           {contentError.value && <div class="steel-panel problems"><span class="steel-label">content</span><p>{contentError.value}</p></div>}
-          <View />
+          <ErrorBoundary key={routeKey(r)}><View /></ErrorBoundary>
         </main>
       </div>
     </AppContext.Provider>
   );
 }
 
-const placeholder = signal(true);
+const routeKey = (r: Route): string => `${r.view}:${r.view === "play" || r.view === "level-up" || r.view === "reader" ? r.id ?? "" : r.view === "share" ? r.payload.slice(0, 16) : ""}`;
+
+/** One bad value must never blank the app: show what broke and where to go. */
+class ErrorBoundary extends Component<{ children: ComponentChildren }, { error?: Error }> {
+  state = { error: undefined as Error | undefined };
+  componentDidCatch(error: Error) { this.setState({ error }); }
+  render() {
+    if (this.state.error) return (
+      <section class="steel-panel problems" role="alert" aria-label="Problems"><span class="steel-label">something went wrong</span>
+        <p>{this.state.error.message}</p>
+        <p class="small muted">This view could not render. The character or content document it was showing has a value the sheet did not expect. <a href="#/play">Back to characters</a> · <a href="#/content">Content problems</a></p>
+      </section>);
+    return this.props.children;
+  }
+}
+
+function ShareImport({ payload }: { payload: string }) {
+  const { storage, content } = useContext(AppContext);
+  const error = useSignal<string | undefined>(undefined);
+  useEffect(() => {
+    try {
+      const doc = fromShareLink(`#/share/${payload}`, "nimble");
+      localCharacterStore(storage, content.value?.docs).save(doc);
+      navigate(`#/play/${encodeURIComponent(String(doc.frontmatter.id))}`);
+    } catch (e) { error.value = e instanceof Error ? e.message : String(e); }
+  }, [payload]);
+  if (error.value) return <section class="steel-panel problems" role="alert"><span class="steel-label">share link</span><p>{error.value}</p><p class="small muted"><a href="#/play">Back to characters</a></p></section>;
+  return <p class="muted">Importing shared character…</p>;
+}
+
 function View() {
   const r = route.value;
   switch (r.view) {
+    case "share": return <ShareImport payload={r.payload} />;
     case "about": return <AboutView />;
     case "create": return <CreateView />;
     case "play": return <PlayView />;
     case "level-up": return <LevelUpView />;
     case "reader": return <ReaderView />;
     case "content": return <ContentView />;
-    default: return <p class="muted">{placeholder.value ? `${r.view}: coming in a later task` : ""}</p>;
+    default: return <p class="muted">Not found. <a href="#/play">Back to characters</a></p>;
   }
 }

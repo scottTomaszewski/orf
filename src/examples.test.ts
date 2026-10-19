@@ -30,7 +30,8 @@ test("every torture-test note covers only documents that exist", () => {
 
 test("spells: every school a level-5 Mage or Oathsworn knows has its cantrips and tier 1-2 spells", () => {
   const docs = loadDocuments(["systems/nimble", "examples/nimble"]);
-  const spells = docs.filter((d) => d.frontmatter.type === "spell");
+  const spells = docs.filter((d) => d.frontmatter.type === "spell" && d.frontmatter.utility !== true);
+  expect(docs.filter((d) => d.frontmatter.type === "spell" && d.frontmatter.utility === true)).toHaveLength(12);
   const by = (school: string, tier: number) => spells.filter((d) => d.frontmatter.school === school && d.frontmatter.tier === tier);
   expect(by("fire", 0).map((d) => d.frontmatter.name).sort()).toEqual(["Flame Dart", "Heart's Fire"]);
   expect(by("fire", 1).map((d) => d.frontmatter.name)).toEqual(["Ignite"]);

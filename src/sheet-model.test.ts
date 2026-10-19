@@ -58,7 +58,7 @@ test("levelUpPrompts for a level-2 Mage offers subclass (Chaos, Control) and ele
   expect(p.level).toBe(3);
   const sub = p.slots.find((s) => s.slot.id.endsWith(".subclass"))!;
   expect((sub.options as { name: string }[]).map((o) => o.name).sort()).toEqual(["Invoker of Chaos", "Invoker of Control"]);
-  expect(p.slots.find((s) => s.slot.id.endsWith(".elemental-mastery"))!.options).toEqual(["fire", "ice", "lightning"]);
+  expect((p.slots.find((s) => s.slot.id.endsWith(".elemental-mastery"))!.options as { name: string }[]).map((o) => o.name)).toEqual(["Fire Utility Spells", "Ice Utility Spells", "Lightning Utility Spells"]);
   expect(levelUpPrompts({ ...pip, frontmatter: { ...pip.frontmatter, classes: [{ id: "nimble.classes.mage", level: 20 }] } }, registry, byId)).toBeUndefined();
 });
 
