@@ -82,9 +82,11 @@ export function fold(def: VariableDef, contributions: Contribution[], opts: { st
     return { value: defaultValue(def), provenance: { contributions: [], shadowed: [], dropped, usedDefault: true }, diagnostics };
   }
 
+  // The default is the base when nothing contributes a base (speed 6 with a gnome's add -1 = 5).
   const bases = by("base");
-  let value: Value = bases.length > 0 ? bases.reduce((a, b) => (rank(b.value) > rank(a.value) ? b : a)).value : int(0);
-  const used: Contribution[] = bases.length > 0 ? [bases.reduce((a, b) => (rank(b.value) > rank(a.value) ? b : a))] : [];
+  const best = bases.length > 0 ? bases.reduce((a, b) => (rank(b.value) > rank(a.value) ? b : a)) : undefined;
+  let value: Value = best ? best.value : defaultValue(def);
+  const used: Contribution[] = best ? [best] : [];
   for (const c of by("add")) { value = addValues(value, c.value); used.push(c); }
   for (const c of by("mul")) {
     if (c.value.kind !== "int") { diagnostics.push({ path: def.declaredIn, message: `mul on ${def.id} from ${c.origin} must be an integer` }); continue; }

@@ -24,6 +24,7 @@ type FM = Record<string, unknown>;
 const isObj = (v: unknown): v is FM => typeof v === "object" && v !== null && !Array.isArray(v);
 const list = (v: unknown): unknown[] => (Array.isArray(v) ? v : []);
 const STATS = ["str", "dex", "int", "wil"];
+const TEMPLATE_TYPES = ["variables", "resources", "events", "predicates", "functions", "table", "content-types"];
 
 export function assembleCharacter(character: Document, registry: Registry, docs: Map<string, Document>): Assembly {
   const fm = character.frontmatter;
@@ -44,6 +45,12 @@ export function assembleCharacter(character: Document, registry: Registry, docs:
     for (const g of list(doc.frontmatter.grants)) attach(g, `grant:${id}`);
     return doc;
   };
+
+  // System template documents apply to every character of that system (the unarmored Armor base lives there).
+  const pkg = typeof fm.system === "string" ? fm.system.split("@")[0] : undefined;
+  for (const d of docs.values()) {
+    if (TEMPLATE_TYPES.includes(String(d.frontmatter.type)) && typeof d.frontmatter.system === "string" && d.frontmatter.system.split("@")[0] === pkg) attach(d.frontmatter.id, "system");
+  }
 
   if ("ancestry" in fm) attach(fm.ancestry, "ancestry");
   if ("background" in fm) attach(fm.background, "background");

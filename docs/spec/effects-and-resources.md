@@ -82,8 +82,9 @@ if any set: value = largest set
 round per the variable's rounding (default: floor)
 ```
 
-- A variable with a `formula` uses it as the first `base` candidate; its `default` applies
-  only when nothing contributes and there is no formula.
+- A variable with a `formula` uses it as a `base` candidate. Its `default` is the base when
+  nothing contributes a base: `speed` (default 6) with a gnome's `add: -1` is 5. Provenance
+  marks a value as defaulted only when nothing contributed at all.
 - Dice values fold by adding dice and constants (`1d8 + str`); `base` competition between
   dice compares averages. `mul` on dice multiplies the constant part and the dice count.
 - Booleans accept `set` only.

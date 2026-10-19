@@ -237,7 +237,11 @@ export function lintDocument(doc: Document, registry: Registry): Diagnostic[] {
       refOfType(e.id, `equipment[${i}]`, ITEM_TYPES, "an item");
     }
     if (!isObj(fm.state)) err(`character missing "state"`);
-    else for (const k of Object.keys(fm.state)) if (k !== "conditions" && !registry.resources.has(k)) err(`state.${k}: not a declared resource (declared: ${[...registry.resources.keys()].join(", ")})`);
+    else for (const k of Object.keys(fm.state)) {
+      if (k === "conditions" || registry.resources.has(k)) continue;
+      if (registry.variables.get(k)?.type === "boolean") continue;
+      err(`state.${k}: not a declared resource or boolean variable (resources: ${[...registry.resources.keys()].join(", ")})`);
+    }
   }
 
   // Rule 7: class-level

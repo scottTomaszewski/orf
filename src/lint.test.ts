@@ -272,3 +272,10 @@ test("expressions that do not parse are syntax errors with a column", () => {
   expect(msgs).toMatch(/syntax error.*column 4/);
   expect(msgs).not.toMatch(/unknown identifier/);
 });
+
+test("character state may hold boolean variables (dying, in_wilderness) as well as resources", () => {
+  const ch = doc("pip.md", { id: "scott.characters.pip", type: "character", system: "nimble", name: "Pip", stats: { str: 0, dex: 0, int: 0, wil: 0 }, state: { hp: 3, dying: true, ki: 1 } });
+  const msgs = lintDocument(ch, reg).map((x) => x.message).join("\n");
+  expect(msgs).toMatch(/ki/);
+  expect(msgs).not.toMatch(/dying/);
+});
