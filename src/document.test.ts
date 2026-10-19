@@ -27,3 +27,17 @@ test("empty frontmatter block is an empty object", () => {
   expect(d.frontmatter).toEqual({});
   expect(d.bodyStartLine).toBe(3);
 });
+
+test("loadDocumentsLenient collects per-file errors instead of throwing", async () => {
+  const { mkdtempSync, writeFileSync } = await import("node:fs");
+  const { tmpdir } = await import("node:os");
+  const { join } = await import("node:path");
+  const { loadDocumentsLenient } = await import("./document.js");
+  const dir = mkdtempSync(join(tmpdir(), "orf-"));
+  writeFileSync(join(dir, "a.md"), "---\nid: a.b\n---\nok\n");
+  writeFileSync(join(dir, "b.md"), "no frontmatter\n");
+  const { docs, errors } = loadDocumentsLenient([dir]);
+  expect(docs).toHaveLength(1);
+  expect(errors).toHaveLength(1);
+  expect(errors[0].path).toMatch(/b\.md$/);
+});

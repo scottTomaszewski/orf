@@ -19,6 +19,11 @@ resources:
     max: hit_dice.max
     floor: 0
     refresh: [{on: safe-rest, to: max}]
+  - id: mana
+    max: mana.max
+    floor: 0
+    when: mana.max > 0
+    refresh: [{on: safe-rest, to: max}]
   - id: actions
     max: actions.max
     floor: 0

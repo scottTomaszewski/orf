@@ -1,17 +1,12 @@
-import { DocumentError, loadDocuments, type Document } from "./document.js";
+import { loadDocumentsLenient } from "./document.js";
 import { lintAll } from "./lint.js";
 import { buildRegistry, type Diagnostic } from "./registry.js";
 
 export function main(argv: string[]): number {
   const dirs = argv.length ? argv : ["systems", "examples"];
   const diagnostics: Diagnostic[] = [];
-  let docs: Document[] = [];
-  try {
-    docs = loadDocuments(dirs);
-  } catch (e) {
-    if (e instanceof DocumentError) diagnostics.push({ path: e.path, message: e.message.replace(/^.*?: /, ""), line: e.line });
-    else throw e;
-  }
+  const { docs, errors } = loadDocumentsLenient(dirs);
+  for (const e of errors) diagnostics.push({ path: e.path, message: e.message.replace(/^.*?: /, ""), line: e.line });
   const { registry, diagnostics: regDiags } = buildRegistry(docs);
   diagnostics.push(...regDiags, ...lintAll(docs, registry));
   diagnostics.sort((a, b) => a.path.localeCompare(b.path) || (a.line ?? 0) - (b.line ?? 0));

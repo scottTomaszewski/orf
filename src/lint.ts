@@ -173,9 +173,10 @@ export function lintDocument(doc: Document, registry: Registry): Diagnostic[] {
     for (const k of ["features", "spells"]) for (const id of asArray(fm[k])) if (!registry.documentIds.has(String(id))) err(`${k}: unknown document id "${String(id)}"`);
     if (isObj(fm.choices)) {
       for (const [slot, picks] of Object.entries(fm.choices)) {
-        if (!registry.slots.has(slot)) err(`choices: unknown slot "${slot}"`);
+        const slotDef = registry.slots.get(slot);
+        if (!slotDef) err(`choices: unknown slot "${slot}"`);
         if (!Array.isArray(picks)) { err(`choices["${slot}"] must be a list`); continue; }
-        for (const p of picks) if (!registry.documentIds.has(String(p)) && !STATS.includes(String(p))) err(`choices["${slot}"]: unknown pick "${String(p)}"`);
+        for (const p of picks) if (!registry.documentIds.has(String(p)) && !STATS.includes(String(p)) && !slotDef?.options?.includes(String(p))) err(`choices["${slot}"]: unknown pick "${String(p)}"`);
       }
     }
     for (const [i, e] of asArray(fm.equipment).entries()) {

@@ -157,3 +157,12 @@ test("event handlers: unknown event key, undeclared identifier in a step, and ro
   expect(msgs.filter((m) => /unknown (identifier|function) "(roll|amount|spent|crit)"/.test(m))).toEqual([]);
   expect(msgs).toHaveLength(3);
 });
+
+test("character: a pick listed in the slot's options is valid", () => {
+  const cl = doc("cl3.md", { id: "nimble.classes.mage.level-3", type: "class-level", system: "nimble", name: "Mage 3", class: "nimble.classes.mage", level: 3,
+    choices: [{ slot: "school", count: 1, from: { options: ["fire", "ice"] } }] });
+  const reg2 = buildRegistry([...base, cl]).registry;
+  const ch = doc("pip.md", { id: "scott.characters.pip", type: "character", system: "nimble", name: "Pip", stats: { str: 0, dex: 0, int: 0, wil: 0 },
+    choices: { "nimble.classes.mage.level-3.school": ["fire"], "nimble.classes.mage.level-4.key-stat": ["wil"] }, state: {} });
+  expect(lintDocument(ch, reg2)).toEqual([]);
+});

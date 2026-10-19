@@ -86,3 +86,17 @@ test("variables and resources declared on any content document are included", ()
   expect(registry.variables.get("mana.max")?.declaredIn).toBe("mage.md");
   expect(registry.resources.get("mana")?.declaredIn).toBe("mage.md");
 });
+
+test("duplicate document id across two files names both", () => {
+  const a = doc("a.md", { id: "x.y.z", type: "feature", system: "nimble", name: "A" });
+  const b = doc("b.md", { id: "x.y.z", type: "feature", system: "nimble", name: "B" });
+  const { diagnostics } = buildRegistry([a, b]);
+  expect(diagnostics[0].message).toMatch(/document id "x\.y\.z".*a\.md.*b\.md/);
+});
+
+test("slots carry their options list", () => {
+  const cl = doc("cl.md", { id: "nimble.classes.mage.level-3", type: "class-level", system: "nimble", name: "Mage 3", class: "nimble.classes.mage", level: 3,
+    choices: [{ slot: "school", count: 1, from: { options: ["fire", "ice"] } }] });
+  const { registry } = buildRegistry([cl]);
+  expect(registry.slots.get("nimble.classes.mage.level-3.school")?.options).toEqual(["fire", "ice"]);
+});

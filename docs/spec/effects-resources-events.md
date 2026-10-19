@@ -46,8 +46,8 @@ If a variable has no `base` contributions, its `default` is the base. If it has 
 the default stands. Empty sets never crash and never become zero unless the default is zero.
 
 Nimble Armor: the template contributes `armor.base base: dex`; each worn armor contributes its
-own `base` with `transfer: equipped`; shields contribute `armor.shield add: n`;
-`armor = armor.base + armor.shield`. The Zephyr's Iron Defense contributes
+own `base` with `transfer: equipped`; shields contribute `armor.bonus add: n`;
+`armor = armor.base + armor.bonus`. The Zephyr's Iron Defense contributes
 `armor.base base: dex + str when: not equipped(armor)`; at 13 it contributes
 `armor.base mul: 2 when: not equipped(armor)`.
 

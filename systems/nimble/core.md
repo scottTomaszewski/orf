@@ -18,6 +18,8 @@ variables:
   - {id: hit_die.heal.bonus, name: bonus healing per Hit Die, type: integer, default: 0, ops: [add]}
   - {id: hit_die.heal.always_max, name: Hit Dice always heal their maximum, type: boolean, default: false, ops: [set]}
   - {id: speed, name: your Speed, type: integer, default: 6, ops: [add]}
+  - {id: mana.max, name: your maximum mana, type: integer, default: 0, ops: [base, add]}
+  - {id: spells.tier.max, name: the highest spell tier you can cast, type: integer, default: 0, ops: [base]}
   - {id: inventory.slots, name: your inventory slots, type: integer, formula: 10 + str}
   - {id: languages, name: the number of languages you know, type: integer, formula: 1 + int}
   - {id: initiative.bonus, name: your Initiative bonus, type: integer, formula: dex, ops: [add]}
@@ -34,6 +36,9 @@ are contributed by the class document (`key base: int`, `key base: wil`; the fol
 higher). `hp.max` is the sum of the character's per-level `levels[].hp` entries plus any
 `add` contributions (Tough-style features). Wounds default to 6 (CR2 p.9). Hit Dice equal
 level (CR2 p.21). Speed 6, inventory 10 + STR, languages Common + INT (CR2 p.20).
+
+Mana is one pool shared by every caster class; each class contributes its own `mana.max`
+formula as a `base` once unlocked (CR2 p.13, p.45), so a multiclass caster gets the higher.
 
 ## Sources
 Core Rules 2.0.3 p.6 (stats), p.9 (HP, Wounds, Dying), p.20-21 (creation, Hit Dice, inventory).

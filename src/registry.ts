@@ -30,7 +30,7 @@ export interface ResourceDef { id: string; max?: string; floor?: number; refresh
 export interface EventDef { id: string; args: string[]; declaredIn: string }
 export interface PredicateDef { id: string; name: string; args: string[]; declaredIn: string }
 export interface TableDef { id: string; columns: string[]; rows: unknown[][]; declaredIn: string }
-export interface SlotDef { id: string; declaredIn: string }
+export interface SlotDef { id: string; declaredIn: string; options?: string[] }
 export interface PackageDef { id: string; label?: string; members: string[] }
 
 export interface Registry {
@@ -44,6 +44,7 @@ export interface Registry {
   slots: Map<string, SlotDef>;
   packages: Map<string, PackageDef>;
   documentIds: Set<string>;
+  documentPaths: Map<string, string>;
 }
 
 const asArray = (v: unknown): Record<string, unknown>[] =>
@@ -54,7 +55,7 @@ export function buildRegistry(docs: Document[]): { registry: Registry; diagnosti
   const registry: Registry = {
     variables: new Map(), aliases: new Map(), resources: new Map(), events: new Map(),
     predicates: new Map(), functions: new Set(BUILTIN_FUNCTIONS), tables: new Map(),
-    slots: new Map(), packages: new Map(), documentIds: new Set(),
+    slots: new Map(), packages: new Map(), documentIds: new Set(), documentPaths: new Map(),
   };
   for (const ev of BUILTIN_EVENTS) registry.events.set(ev, { id: ev, args: [], declaredIn: "<builtin>" });
 
@@ -69,7 +70,12 @@ export function buildRegistry(docs: Document[]): { registry: Registry; diagnosti
     const fm = doc.frontmatter;
     const path = doc.path;
     const docId = typeof fm.id === "string" ? fm.id : undefined;
-    if (docId) registry.documentIds.add(docId);
+    if (docId) {
+      const prev = registry.documentPaths.get(docId);
+      if (prev) diagnostics.push({ path, message: `duplicate document id "${docId}": declared in ${prev} and ${path}` });
+      registry.documentIds.add(docId);
+      registry.documentPaths.set(docId, path);
+    }
 
     for (const v of asArray(fm.variables)) {
       const id = String(v.id ?? "");
@@ -141,7 +147,8 @@ export function buildRegistry(docs: Document[]): { registry: Registry; diagnosti
           if (typeof c.slot !== "string") continue;
           const id = `${docId}.${c.slot}`;
           if (dup(registry.slots, "slot", id, path)) continue;
-          registry.slots.set(id, { id, declaredIn: path });
+          const from = typeof c.from === "object" && c.from !== null ? (c.from as Record<string, unknown>) : {};
+          registry.slots.set(id, { id, declaredIn: path, options: Array.isArray(from.options) ? from.options.map(String) : undefined });
         }
         break;
     }

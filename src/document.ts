@@ -61,7 +61,7 @@ export function parseDocument(text: string, path: string): Document {
   };
 }
 
-export function loadDocuments(dirs: string[]): Document[] {
+export function listDocumentFiles(dirs: string[]): string[] {
   const files: string[] = [];
   const walk = (dir: string) => {
     for (const name of readdirSync(dir)) {
@@ -72,5 +72,20 @@ export function loadDocuments(dirs: string[]): Document[] {
   };
   for (const d of dirs) walk(d);
   files.sort();
-  return files.map((p) => parseDocument(readFileSync(p, "utf8"), p));
+  return files;
+}
+
+export function loadDocuments(dirs: string[]): Document[] {
+  return listDocumentFiles(dirs).map((p) => parseDocument(readFileSync(p, "utf8"), p));
+}
+
+/** Like loadDocuments, but collects per-file DocumentErrors instead of throwing on the first. */
+export function loadDocumentsLenient(dirs: string[]): { docs: Document[]; errors: DocumentError[] } {
+  const docs: Document[] = [];
+  const errors: DocumentError[] = [];
+  for (const p of listDocumentFiles(dirs)) {
+    try { docs.push(parseDocument(readFileSync(p, "utf8"), p)); }
+    catch (e) { if (e instanceof DocumentError) errors.push(e); else throw e; }
+  }
+  return { docs, errors };
 }

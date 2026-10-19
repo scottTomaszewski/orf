@@ -5,9 +5,9 @@ system: nimble
 name: Combat variables
 printing_diff: {second: {armor: renamed Defense}}
 variables:
-  - {id: armor.base, name: your Armor, type: integer, default: 0, ops: [base]}
-  - {id: armor.shield, name: your shield bonus, type: integer, default: 0, ops: [add]}
-  - {id: armor, name: your Armor, type: integer, formula: armor.base + armor.shield, alias: ARMOR}
+  - {id: armor.base, name: your Armor, type: integer, default: 0, ops: [base, mul]}
+  - {id: armor.bonus, name: bonuses to your Armor, type: integer, default: 0, ops: [add]}
+  - {id: armor, name: your Armor, type: integer, formula: armor.base + armor.bonus, alias: ARMOR}
   - {id: save.str, name: your Strength save, type: integer, formula: str}
   - {id: save.dex, name: your Dexterity save, type: integer, formula: dex}
   - {id: save.int, name: your Intelligence save, type: integer, formula: int}
