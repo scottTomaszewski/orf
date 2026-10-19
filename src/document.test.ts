@@ -1,0 +1,29 @@
+import { expect, test } from "vitest";
+import { DocumentError, parseDocument } from "./document.js";
+
+test("parses frontmatter and body", () => {
+  const d = parseDocument("---\nid: a.b\ntype: spell\n---\nHello\n", "x.md");
+  expect(d.frontmatter).toEqual({ id: "a.b", type: "spell" });
+  expect(d.body).toBe("Hello\n");
+  expect(d.bodyStartLine).toBe(5);
+});
+
+test("a horizontal rule in the body is body, not frontmatter", () => {
+  const d = parseDocument("---\nid: a.b\n---\nabove\n\n---\n\nbelow\n", "x.md");
+  expect(d.body).toContain("---");
+  expect(d.frontmatter).toEqual({ id: "a.b" });
+});
+
+test("missing frontmatter is a DocumentError naming the path", () => {
+  expect(() => parseDocument("just text", "y.md")).toThrow(/y\.md.*frontmatter/);
+});
+
+test("invalid YAML is a DocumentError with a line", () => {
+  expect(() => parseDocument("---\nid: [\n---\n", "z.md")).toThrow(DocumentError);
+});
+
+test("empty frontmatter block is an empty object", () => {
+  const d = parseDocument("---\n---\nbody\n", "e.md");
+  expect(d.frontmatter).toEqual({});
+  expect(d.bodyStartLine).toBe(3);
+});
