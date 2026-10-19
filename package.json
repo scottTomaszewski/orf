@@ -6,7 +6,8 @@
   "type": "module",
   "scripts": {
     "test": "vitest run",
-    "lint-docs": "tsx src/cli.ts systems/nimble examples/nimble && tsx src/cli.ts systems/srd5e-mini examples/insurance-5e"
+    "lint-docs": "tsx src/cli.ts systems/nimble examples/nimble && tsx src/cli.ts systems/srd5e-mini examples/insurance-5e",
+    "bundle-content": "tsx scripts/bundle-content.ts"
   },
   "dependencies": {
     "yaml": "^2.6.0"
