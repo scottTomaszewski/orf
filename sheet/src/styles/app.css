@@ -69,3 +69,6 @@
 .effect { display: grid; grid-template-columns: repeat(auto-fill, minmax(9rem, 1fr)); gap: .5rem .75rem; align-items: end; border: 1px solid var(--line); border-radius: var(--radius); padding: .5rem .7rem; margin: 0 0 .5rem; }
 .effect > .steel-btn { justify-self: start; }
 .source { width: 100%; box-sizing: border-box; padding: .5rem; font-size: .85rem; line-height: 1.4; resize: vertical; }
+.field > .steel-input, .field > .steel-select { width: 100%; min-width: 0; box-sizing: border-box; }
+.form { border: 0; padding: 0; margin: 0; min-width: 0; }
+.form:disabled { opacity: .6; }

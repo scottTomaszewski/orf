@@ -64,8 +64,12 @@ export function suggestedId(type: string, name: string, system: string, docs: Ma
   return `${system}.${segment ?? `${type}s`}.${slug(name) || "untitled"}`;
 }
 
-/** Parse and lint one draft as if it were loaded at `path` alongside everything else; only the draft's diagnostics come back. */
-export function lintDraft(text: string, path: string, loaded: Loaded): { doc?: Document; diagnostics: Diagnostic[] } {
+/**
+ * Parse and lint one draft as if it were loaded at `path` alongside everything else; only the draft's
+ * diagnostics come back. Editing (default) replaces the file at `path`; a new document (`isNew`) must
+ * not land on a path that is already taken, so that file stays in and the collision is an error.
+ */
+export function lintDraft(text: string, path: string, loaded: Loaded, opts: { isNew?: boolean } = {}): { doc?: Document; diagnostics: Diagnostic[] } {
   let doc: Document;
   try { doc = parseDocument(text, path); }
   catch (e) {
@@ -73,13 +77,17 @@ export function lintDraft(text: string, path: string, loaded: Loaded): { doc?: D
     return { diagnostics: [{ path, message: String(e) }] };
   }
   const others: Document[] = [];
+  const taken: Diagnostic[] = [];
   for (const f of loaded.files) {
-    if (f.path === path) continue;
+    if (f.path === path) {
+      if (!opts.isNew) continue;
+      taken.push({ path, message: `a homebrew file already exists at ${path}; open it from Content and edit it, or pick another name` });
+    }
     try { others.push(parseDocument(f.text, f.path)); } catch { /* a broken sibling is the Content view's problem */ }
   }
   const { registry, diagnostics } = buildRegistry([...others, doc]);
   const mine = diagnostics.filter((d) => d.path === path);
-  return { doc, diagnostics: [...mine, ...lintDocument(doc, registry)] };
+  return { doc, diagnostics: [...taken, ...mine, ...lintDocument(doc, registry)] };
 }
 
 export function targetSuggestions(registry: Registry): { id: string; name: string; type: string }[] {

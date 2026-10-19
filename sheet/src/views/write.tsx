@@ -49,11 +49,14 @@ function Editor({ loaded, path }: { loaded: Loaded; path?: string }) {
   const sourceOnly = useSignal(initial.sourceOnly);
   const idTouched = useSignal(Boolean(existing));
   const saving = useSignal(false);
-  const lint = useComputed(() => lintDraft(text.value, path ?? `homebrew/${String(fm.value.type ?? "doc")}/${slug(String(fm.value.id ?? "").split(".").pop() ?? "") || "untitled"}.md`, loaded));
+  const saveError = useSignal<string | undefined>(undefined);
+  const lint = useComputed(() => lintDraft(text.value, path ?? `homebrew/${String(fm.value.type ?? "doc")}/${slug(String(fm.value.id ?? "").split(".").pop() ?? "") || "untitled"}.md`, loaded, { isNew: !path }));
+  /** The source is the file; while it does not parse, the form must not rewrite it. */
+  const sourceBroken = useComputed(() => lint.value.doc === undefined);
   const errors = useComputed(() => lint.value.diagnostics.filter((d) => d.severity !== "warning"));
 
   /** Form → text. */
-  const commit = (next: FM, nextBody = body.value) => { fm.value = next; body.value = nextBody; text.value = documentText(next, nextBody); };
+  const commit = (next: FM, nextBody = body.value) => { if (sourceBroken.value) return; fm.value = next; body.value = nextBody; text.value = documentText(next, nextBody); };
   const setKey = (k: string, v: unknown) => commit({ ...fm.value, [k]: v });
   const setName = (name: string) => {
     const next: FM = { ...fm.value, name };
@@ -70,7 +73,11 @@ function Editor({ loaded, path }: { loaded: Loaded; path?: string }) {
   const setSource = (src: string) => {
     text.value = src;
     const parsed = lint.value.doc;
-    if (parsed) { fm.value = parsed.frontmatter; body.value = parsed.body; sourceOnly.value = false; }
+    if (parsed) {
+      fm.value = parsed.frontmatter; body.value = parsed.body; sourceOnly.value = false;
+      const id = String(parsed.frontmatter.id ?? "");
+      if (id !== "" && id !== suggestedId(String(parsed.frontmatter.type ?? ""), String(parsed.frontmatter.name ?? ""), system, loaded.docs)) idTouched.value = true;
+    }
   };
   useEffect(() => { if (sourceOnly.value && lint.value.doc) { fm.value = lint.value.doc.frontmatter; body.value = lint.value.doc.body; sourceOnly.value = false; } }, [lint.value]);
 
@@ -83,12 +90,13 @@ function Editor({ loaded, path }: { loaded: Loaded; path?: string }) {
   const savePath = path ?? `homebrew/${String(fm.value.type ?? "doc")}/${slug(String(fm.value.id ?? "").split(".").pop() ?? "") || "untitled"}.md`;
   const canSave = errors.value.length === 0 && lint.value.doc !== undefined && String(lint.value.doc.frontmatter.id ?? "") !== "";
   const save = async () => {
-    saving.value = true;
+    saving.value = true; saveError.value = undefined;
     try {
       await homebrew.put([{ path: savePath, text: text.value, origin: "homebrew" }]);
       await reload();
       navigate(`#/reader/${encodeURIComponent(String(lint.value.doc?.frontmatter.id))}`);
-    } finally { saving.value = false; }
+    } catch (e) { saveError.value = e instanceof Error ? e.message : String(e); }
+    finally { saving.value = false; }
   };
   const suggested = types.find((t) => t.id === fm.value.type)?.properties ?? [];
   const others = Object.keys(fm.value).filter((k) => !FORM_KEYS.has(k) && !suggested.includes(k));
@@ -103,9 +111,11 @@ function Editor({ loaded, path }: { loaded: Loaded; path?: string }) {
           <button type="button" class="steel-btn steel-btn--primary" disabled={!canSave || saving.value} onClick={() => void save()}>Save</button>
         </div>
       </div>
+      {saveError.value && <section class="steel-panel problems" role="alert" aria-label="Save failed"><span class="steel-label">save failed</span><p>{saveError.value}</p><p class="small muted">Nothing was written. Download the file to keep it.</p></section>}
       <div class="write">
         {!sourceOnly.value && (
-          <div class="stack">
+          <fieldset class="stack form" disabled={sourceBroken.value} aria-label="form">
+            {sourceBroken.value && <p class="small" role="status">The source does not parse; fix it there first. The form stays as it was.</p>}
             <Panel title="Document">
               <div class="fields">
                 <label class="field"><span class="steel-label">type</span>
@@ -147,7 +157,7 @@ function Editor({ loaded, path }: { loaded: Loaded; path?: string }) {
             <Panel title="Text">
               <textarea class="steel-input" aria-label="text" rows={6} style="width:100%;box-sizing:border-box;padding:.5rem" placeholder="Rules text. Markdown. {{ wounds.max | your Wounds }} shows a live value." value={body.value} onInput={(e) => commit(fm.value, (e.target as HTMLTextAreaElement).value)} />
             </Panel>
-          </div>
+          </fieldset>
         )}
         <div class="stack">
           <Panel title="Source" right={<span class="small muted">the file, as saved</span>}>

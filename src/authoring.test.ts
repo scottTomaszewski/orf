@@ -97,3 +97,15 @@ describe("suggestions", () => {
     expect(m).toContain("gain-wound");
   });
 });
+
+describe("lintDraft for a new document", () => {
+  test("reports a homebrew file already at the computed path instead of hiding it", () => {
+    const other = RATFOLK.replace("nimble.ancestries.ratfolk", "mine.ancestries.ratfolk");
+    const r = lintDraft(RATFOLK, "homebrew/ancestry/ratfolk.md", loaded([{ path: "homebrew/ancestry/ratfolk.md", text: other }]), { isNew: true });
+    expect(r.diagnostics.map((d) => d.message).join("\n")).toMatch(/already exists at homebrew\/ancestry\/ratfolk\.md/);
+  });
+  test("still sees a same-id file at that path as a duplicate", () => {
+    const r = lintDraft(RATFOLK, "homebrew/ancestry/ratfolk.md", loaded([{ path: "homebrew/ancestry/ratfolk.md", text: RATFOLK }]), { isNew: true });
+    expect(r.diagnostics.map((d) => d.message).join("\n")).toMatch(/duplicate document id/);
+  });
+});

@@ -89,3 +89,55 @@ test("the Content view links each homebrew file to the Write view", async () => 
   expect(link.getAttribute("href")).toBe(`#/write/${encodeURIComponent("homebrew/ratfolk.md")}`);
   expect(screen.getByRole("link", { name: /new document/i }).getAttribute("href")).toBe("#/write");
 });
+
+test("a new document never overwrites a different homebrew file at the same path", async () => {
+  const mine: ContentFile = { ...RATFOLK, path: "homebrew/ancestry/ratfolk.md", text: RATFOLK.text.replace("nimble.ancestries.ratfolk", "mine.ancestries.ratfolk").replace("Hard to kill.", "Precious work.") };
+  const homebrew = memoryHomebrewStore([mine]);
+  location.hash = "#/write";
+  render(<App loader={loaderFor(homebrew)} homebrew={homebrew} storage={localStorage} />);
+  await screen.findByRole("heading", { name: /write/i });
+  fireEvent.change(screen.getByLabelText("type"), { target: { value: "ancestry" } });
+  fireEvent.input(screen.getByLabelText("name"), { target: { value: "Ratfolk" } });
+  await waitFor(() => expect(problems().textContent).toMatch(/already exists at homebrew\/ancestry\/ratfolk\.md/));
+  expect((screen.getByRole("button", { name: /^save$/i }) as HTMLButtonElement).disabled).toBe(true);
+  expect((await homebrew.list())[0].text).toContain("Precious work.");
+});
+
+test("while the source does not parse, the form is disabled and source edits are kept", async () => {
+  const homebrew = memoryHomebrewStore([RATFOLK]);
+  location.hash = `#/write/${encodeURIComponent("homebrew/ratfolk.md")}`;
+  render(<App loader={loaderFor(homebrew)} homebrew={homebrew} storage={localStorage} />);
+  await waitFor(() => expect((screen.getByLabelText("name") as HTMLInputElement).value).toBe("Ratfolk"));
+  const broken = RATFOLK.text.replace("add: 1", "add: 5").replace("name: Ratfolk", "name: \"Rat");
+  fireEvent.input(source(), { target: { value: broken } });
+  await waitFor(() => expect(problems().textContent).toMatch(/invalid YAML/));
+  expect(screen.getByRole("status").textContent).toMatch(/fix it there first/);
+  expect(screen.getByLabelText("name").matches(":disabled")).toBe(true);
+  fireEvent.input(screen.getByLabelText("name"), { target: { value: "Ratfolk X" } });
+  expect(source().value).toBe(broken);
+});
+
+test("an id pasted into the source survives editing the name", async () => {
+  const homebrew = memoryHomebrewStore();
+  location.hash = "#/write";
+  render(<App loader={loaderFor(homebrew)} homebrew={homebrew} storage={localStorage} />);
+  await screen.findByRole("heading", { name: /write/i });
+  fireEvent.input(source(), { target: { value: RATFOLK.text.replace("nimble.ancestries.ratfolk", "nimble.ancestries.my-special-id") } });
+  await waitFor(() => expect((screen.getByLabelText("id") as HTMLInputElement).value).toBe("nimble.ancestries.my-special-id"));
+  fireEvent.input(screen.getByLabelText("name"), { target: { value: "Ratfolk Prime" } });
+  expect((screen.getByLabelText("id") as HTMLInputElement).value).toBe("nimble.ancestries.my-special-id");
+});
+
+test("a failed save is reported, not swallowed", async () => {
+  const base = memoryHomebrewStore();
+  const homebrew = { ...base, put: async () => { throw new Error("quota exceeded"); } };
+  location.hash = "#/write";
+  render(<App loader={loaderFor(homebrew)} homebrew={homebrew} storage={localStorage} />);
+  await screen.findByRole("heading", { name: /write/i });
+  fireEvent.change(screen.getByLabelText("type"), { target: { value: "ancestry" } });
+  fireEvent.input(screen.getByLabelText("name"), { target: { value: "Ratfolk" } });
+  await waitFor(() => expect((screen.getByRole("button", { name: /^save$/i }) as HTMLButtonElement).disabled).toBe(false));
+  fireEvent.click(screen.getByRole("button", { name: /^save$/i }));
+  expect((await screen.findByRole("alert")).textContent).toMatch(/quota exceeded/);
+  expect(location.hash).toBe("#/write");
+});
