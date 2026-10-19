@@ -571,6 +571,11 @@ Each step gated by the one before.
    systems/nimble examples/nimble` prints Pip with provenance.
 4. **Nimble package**: core, Mage, The Cheat, Oathsworn, Zephyr, ancestries, backgrounds, armor and weapons.
 5. **Sheet**: create → play → level-up, phone-first, license notice, homebrew folder.
+   **Built 2026-10-19** (plan `../plans/2026-10-19-phase3-sheet.md`): `sheet/` (Vite +
+   Preact, High-Fantasy Steel tokens in `sheet/src/styles/steel.css`), on the level 1–5
+   content plus Fire/Ice/Lightning/Radiant spells to tier 2. Visual check on a phone and the
+   table test are next; levels 6–20 and the remaining ancestries, backgrounds, and items are
+   the next data plan.
 6. **Table test**: Scott's game for a few sessions; fix what hurts.
 7. **Post**: Nimble Discord, subreddit, note to Sly Flourish, with a short clip of the
    homebrew ripple. Interest decides the next phase (remaining classes, authoring form,

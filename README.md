@@ -24,6 +24,12 @@ npm run lint-docs # lint the Nimble tree and the 5e insurance tree
 npx tsx src/cli.ts sheet scott.characters.pip systems/nimble examples/nimble   # Pip, with provenance
 ```
 
+## The sheet
+
+`sheet/` is the Nimble character sheet (Vite + Preact), built on the engine: see
+[`sheet/README.md`](sheet/README.md) for running it, the homebrew folder, and the demo
+checklist. `cd sheet && npm install && npm run dev`.
+
 ## What the engine does and does not do
 
 It turns content documents plus a character document into numbers with provenance: every

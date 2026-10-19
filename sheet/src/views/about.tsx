@@ -22,7 +22,7 @@ export function AboutView() {
       </Panel>
       <Panel title="About">
         <p>A free, data-driven character sheet for Nimble. Every number on the sheet comes from content documents you can read, copy, and change; tap any number to see where it came from.</p>
-        <p class="small muted">Source and format: <a href={REPO_URL}>{REPO_URL.replace("https://", "")}</a>. No accounts; everything stays in this browser. Export your characters from the Play view.</p>
+        <p class="small muted">Source and format: <a href={REPO_URL}>{REPO_URL.replace("https://", "")}</a> (see <code>sheet/README.md</code> for the homebrew folder). No accounts; everything stays in this browser. Export your characters from the Play view.</p>
       </Panel>
     </div>
   );
