@@ -5,3 +5,6 @@ dist/
 sheet/public/content/
 sheet/node_modules/
 sheet/dist/
+sheet/test-results/
+sheet/playwright-report/
+sheet/demo/

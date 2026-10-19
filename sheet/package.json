@@ -1,5 +1,5 @@
 {
-  "name": "nimble-sheet",
+  "name": "orf-sheet",
   "version": "0.0.0",
   "private": true,
   "type": "module",
@@ -9,7 +9,11 @@
     "prebuild": "cd .. && npm run bundle-content",
     "build": "tsc --noEmit -p . && vite build",
     "preview": "vite preview",
-    "test": "vitest run"
+    "test": "vitest run",
+    "e2e": "playwright test --project desktop --project phone",
+    "e2e:update": "playwright test --project desktop --project phone --update-snapshots",
+    "e2e:report": "playwright show-report",
+    "demo:record": "playwright test --project demo && node scripts/finish-demo.mjs"
   },
   "dependencies": {
     "@preact/signals": "^2.0.0",
@@ -17,6 +21,7 @@
     "yaml": "^2.6.0"
   },
   "devDependencies": {
+    "@playwright/test": "^1.61.1",
     "@preact/preset-vite": "^2.9.0",
     "@testing-library/preact": "^3.2.4",
     "jsdom": "^25.0.0",
