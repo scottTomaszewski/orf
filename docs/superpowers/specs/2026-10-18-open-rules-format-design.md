@@ -2,7 +2,8 @@
 
 Date: 2026-10-18. Status: approved in principle 2026-10-18 (5e-first draft); **revised the same
 day to Nimble-first** after Scott's product decision; revision confirmed by Scott 2026-10-18
-(2.0.3, four classes, no accounts, High-Fantasy Steel UI, native execution). Tracker:
+(2.0.3, four classes, no accounts, High-Fantasy Steel UI, native execution). **Phase 1 (torture
+test) in review**: `examples/nimble/torture-test/README.md`. Tracker:
 Linear SC-451 (project "Open Rules Format"). "ORF" / "Open Rules Format" is a **placeholder
 name**; nothing depends on it.
 
@@ -190,11 +191,11 @@ id: scott.characters.pip
 type: character
 system: nimble@2          # package revision; see §8
 name: Pip
-stats: {str: -1, dex: 2, int: 3, wil: 0}
+stats: {str: -1, dex: 2, int: 2, wil: 0}   # creation array; level-up bumps are choice effects
 ancestry: nimble.ancestries.gnome
 background: nimble.backgrounds.scholar
 classes: [{id: nimble.classes.mage, level: 4}]
-skills: {arcana: 3, lore: 2, examination: 1, perception: 2}
+skills: {arcana: 3, lore: 2, examination: 1, perception: 1}
 levels:                    # per-level history; HP is a sum of these
   - {level: 1, hp: 10}
   - {level: 2, hp: 4, source: roll}
@@ -354,6 +355,10 @@ Every value carries its contribution list. The sheet renders it on hover. This i
 creator's feedback loop and the proof the engine produced the number.
 
 ## 7. Expression and condition language
+
+Draft specs written in Phase 1: [`../../spec/expressions.md`](../../spec/expressions.md),
+[`../../spec/effects-resources-events.md`](../../spec/effects-resources-events.md),
+[`../../spec/choices.md`](../../spec/choices.md).
 
 ### 7.1 Requirements
 

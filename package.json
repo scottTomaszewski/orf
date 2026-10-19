@@ -1,0 +1,20 @@
+{
+  "name": "orf",
+  "version": "0.0.0",
+  "private": true,
+  "description": "Placeholder name. An open, system-agnostic TTRPG content format and reference engine.",
+  "type": "module",
+  "scripts": {
+    "test": "vitest run",
+    "lint-docs": "tsx src/cli.ts systems/nimble examples/nimble && tsx src/cli.ts systems/srd5e-mini examples/insurance-5e"
+  },
+  "dependencies": {
+    "yaml": "^2.6.0"
+  },
+  "devDependencies": {
+    "@types/node": "^20.14.0",
+    "tsx": "^4.19.0",
+    "typescript": "^5.6.0",
+    "vitest": "^2.1.0"
+  }
+}
