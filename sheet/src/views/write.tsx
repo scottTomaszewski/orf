@@ -163,9 +163,14 @@ function Editor({ loaded, path }: { loaded: Loaded; path?: string }) {
           <Panel title="Source" right={<span class="small muted">the file, as saved</span>}>
             <textarea class="steel-input steel-mono source" aria-label="source" rows={sourceOnly.value ? 24 : 18} spellcheck={false} value={text.value} onInput={(e) => setSource((e.target as HTMLTextAreaElement).value)} />
           </Panel>
-          <section class={`steel-panel${errors.value.length ? " problems" : ""}`} aria-label="Problems"><span class="steel-label">problems</span>
-            {lint.value.diagnostics.length === 0 ? <p class="small muted">None. This document would load clean.</p> : (
-              <ul class="small">{lint.value.diagnostics.map((d, i) => <li key={i} class={d.severity === "warning" ? "muted" : ""}>{d.line ? <span class="steel-mono">line {d.line}: </span> : null}{d.message}</li>)}</ul>
+          <section class={`steel-panel${errors.value.length ? " problems" : ""}`} aria-label="Problems">
+            <div class={`band ${errors.value.length ? "band--warn" : lint.value.diagnostics.length ? "band--wound" : "band--ok"}`}>
+              <span class="glyph" aria-hidden="true">◆</span>
+              <span class="band__word">{errors.value.length ? `${errors.value.length} problem${errors.value.length === 1 ? "" : "s"}` : lint.value.diagnostics.length ? `${lint.value.diagnostics.length} warning${lint.value.diagnostics.length === 1 ? "" : "s"}` : "None"}</span>
+              <span class="band__tail">{errors.value.length ? "save waits" : "this document would load clean"}</span>
+            </div>
+            {lint.value.diagnostics.length > 0 && (
+              <ul class="small" style="margin:.6rem 0 0">{lint.value.diagnostics.map((d, i) => <li key={i} class={d.severity === "warning" ? "muted" : ""}>{d.line ? <span class="steel-mono">line {d.line}: </span> : null}{d.message}</li>)}</ul>
             )}
           </section>
         </div>
