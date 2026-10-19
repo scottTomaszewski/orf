@@ -1,6 +1,7 @@
 # Effects, lookups, and resources (draft, revised 2026-10-18)
 
-Status: draft for the readability gate (second round). Design context: design doc §6.
+Status: implemented — fold and stacking in `src/fold.ts`, lookups and assembly in `src/engine.ts` / `src/character.ts`,
+resources and moments in `src/moments.ts`, the Nimble procedures in `src/systems/nimble.ts`. Design context: design doc §6.
 
 **The one rule this spec follows:** the format describes *what is true* about a character.
 What *happens* to a character (damage, healing, rests, wounds, spending) is engine code,

@@ -1,6 +1,6 @@
 # Choices (draft, Phase 1)
 
-Status: draft for the readability gate. Design context: design doc §11. Model borrowed from
+Status: implemented in `src/character.ts` (slots, picks, option effects, subclass grants by level). Design context: design doc §11. Model borrowed from
 Dicecloud's slots.
 
 ## 1. Class levels grant and offer
