@@ -2,8 +2,10 @@
 
 Date: 2026-10-18. Status: approved in principle 2026-10-18 (5e-first draft); **revised the same
 day to Nimble-first** after Scott's product decision; revision confirmed by Scott 2026-10-18
-(2.0.3, four classes, no accounts, High-Fantasy Steel UI, native execution). **Phase 1 (torture
-test) in review**: `examples/nimble/torture-test/README.md`. Tracker:
+(2.0.3, four classes, no accounts, High-Fantasy Steel UI, native execution). **Revised again
+2026-10-18 after Scott's first gate review** ("describe, don't script": handlers and `transfer`
+removed, lookups added, clamp ops renamed, labels first-class; §4.1). Second gate packet:
+`examples/nimble/torture-test/README.md`. Tracker:
 Linear SC-451 (project "Open Rules Format"). "ORF" / "Open Rules Format" is a **placeholder
 name**; nothing depends on it.
 
@@ -122,8 +124,9 @@ sessions.
    content in the same format. Section 8.
 3. **The engine**: parses documents, folds contributions from all active content into a
    character's variables, evaluates expressions in two phases (compile-time numbers,
-   roll-time dice), applies **events** to character state (damage, spend, rest), reports
-   provenance and diagnostics. Sections 6 and 7.
+   roll-time dice), reports provenance and diagnostics. Its **system module** (code, one per
+   system, shipped with the engine) owns the procedures: damage, healing, rests, wounds,
+   Dying, spending. Sections 4.1, 6 and 7.
 4. **Registry / publishing**: stable ids, revisions, dependency declarations. For the MVP, a
    folder of files. Section 9.
 5. **Consumers**: the Nimble sheet (the product), and a Reader view inside it. Section 10.
@@ -132,10 +135,38 @@ sessions.
 content docs (md+yaml) ──┐
 system template (same) ──┼──► engine: parse ─► registry ─► fold ─► evaluate ─► provenance
 character doc (same) ────┘                 │                      ▲
-                                           │ events: damage, spend HD, rest, level-up
+                                           │ system module (code): damage, rests, wounds
                                            ▼
                                   sheet (phone/laptop)  ·  reader view
 ```
+
+### 4.1 What the format describes vs. what the engine does (decision, Scott, 2026-10-18)
+
+The format describes **what is true** about a character: derived values (contributions and
+their fold), conditions (`when`), lookups, resources and their refresh moments, choices,
+grants, and descriptive fields (name, description, cost, dice, range, prose). The engine does
+**what happens**: taking damage, healing, Field and Safe Rests, gaining Wounds, Dying,
+spending and restoring. Those procedures are **code in the engine's system module**, written
+once and imported by every tool (sheet, VTT plugin, Obsidian plugin). Content steers them only
+through declared variables (`hit_die.heal.maximized`, `initiative.floor`, `actions.dying_cap`).
+
+Why: the first torture test put rest and damage procedures into the format as event handlers.
+Scott's review found them dense, error-prone ("will every healing ability need to remember
+`fire: full-hp`?"), and a maintenance hazard once third parties write them. Sharing the engine
+removes the duplication he worried about without putting a program in the data. A tool in
+another language reimplements the module, exactly as it reimplements the fold. If a second
+system shows the same procedure shape, a declarative trigger form is designed then, from two
+real examples.
+
+**Two authors.** System-template authors are few and can read density; they write the
+variables, resources, moments, and the system module. Content creators are many and see about
+five keys: `name`, prose, `effects` (target, one op, `when`), `resources`, and descriptive
+fields. The second group decides adoption, and every design choice below is judged against
+their view first.
+
+**Abilities are fields, not scripts.** Elemental Surge is `trigger: initiative`,
+`restores: {mana: wil}`, `expires: encounter-end`, and prose. A sheet shows it; a VTT may
+automate from it; adding a field never breaks a reader.
 
 ## 5. Content format
 
@@ -219,9 +250,10 @@ state:
 ```
 
 An effect is active when its document is attached (directly, via a class level the character
-has reached, or via a choice), its `when` holds, and its lifecycle allows (`transfer`,
-equipped state, duration). Predicates like `equipped(armor)`, `has(id)`, `level(mage)`,
-`dying` consult this document. `state` is the only part the engine **writes**, via events.
+has reached, or via a choice), its `when` holds (on an item, `when: equipped` or
+`when: carried`), and its `duration` has not elapsed. Predicates like `equipped(armor)`,
+`has(id)`, `level(mage)`, `dying` consult this document. `state` is the only part the engine
+**writes**, through the system module's procedures and resource refreshes.
 
 ### 5.4 Why Markdown + frontmatter
 
@@ -248,7 +280,7 @@ effects:
 effects:
   - target: armor.base
     base: 9 + min(dex, 2)
-    transfer: equipped
+    when: equipped
     source: armor
 requires: {str: 2}
 
@@ -261,23 +293,49 @@ effects:
 | field | meaning |
 |---|---|
 | `target` | a registry variable (open namespace, dotted). Unknown = error. |
-| one op | `base` (candidates compete, highest wins), `add`, `mul`, `min`, `max`, `set` (hard override, rare, variable must allow it; shadowed contributions reported, never dropped) **(my call: Dicecloud's proven set)** |
-| `when` | predicate in the grammar's boolean subset; evaluated, never decorative |
+| one op | `base` (candidates compete, highest wins), `add`, `mul`, `at_least`, `at_most`, `set` (hard override, rare, variable must allow it; shadowed contributions reported, never dropped) **(my call: Dicecloud's set; clamps renamed after both the plan and the implementer misread `max` as "raise to")**. The value is a number, expression, or **lookup** (§6.1a) |
+| `when` | predicate in the grammar's boolean subset; evaluated, never decorative. When false, the contribution does not exist; a variable with none holds its default, never null. On items the bare words `equipped` / `carried` mean this item (decision, Scott: replaces the old `transfer` field) |
 | `source` | stack key, default = document id; stacking policy groups by it |
-| `transfer` | `always` (default for features) / `equipped` / `carried` |
-| `duration` | lifecycle hint: `encounter`, `safe-rest`, `until-full-hp`, a time, or an event name (§6.4) |
+| `note` | free text shown beside the contribution in tooltips and provenance |
+| `duration` | lifecycle hint: `encounter`, `safe-rest`, `until-full-hp`, a time, or a moment name (§6.4) |
+
+Level gating belongs in the class-level document's `grants`, not in a `when`: the Mage's mana
+formula lives on a `Mana` feature granted at level 2, so it needs no condition at all.
+
+### 6.1a Lookups (decision, Scott: replaces nested `if` ladders)
+
+Any op value or variable formula may be a step table keyed on an expression; the row with the
+largest key at or below the value wins. Progressions read as the books print them:
+
+```yaml
+variables:
+  - id: cheat.sneak_attack.dice
+    name: your Sneak Attack dice
+    type: dice
+    formula:
+      by: level(cheat)
+      rows: {1: 1d6, 3: 1d8, 7: 2d8, 9: 2d10, 11: 2d12, 15: 2d20, 17: 3d20}
+```
+
+### 6.1b Labels and descriptions (decision, Scott: tooltips are first-class)
+
+Every variable has a `name` (the phrase a sheet shows: "your Sneak Attack dice") and may have
+a `description` (the tooltip). Every effect may carry a `note`. Moments carry a `description`.
+The UI never shows an identifier; identifiers are for authors and diffs. Naming guidance for
+template authors: name the thing, not the mechanism (`oathsworn.lay_on_hands.pool`, not
+`oathsworn.healing.max`; `hit_die.heal.maximized`, not `always_max`).
 
 ### 6.2 Fold (default; a variable may override)
 
 ```
 value = (max(base contributions) + Σ add) × Π mul
-value = clamp(value, largest min, smallest max)
+value = clamp(value, largest at_least, smallest at_most)
 if any set: value = largest set
 round per the variable's rounding
 ```
 
 Nimble Armor: unarmored contributes `base: dex`; each armor contributes its own `base`
-while equipped; shield contributes `add`. Highest base wins, so no special case for "armor
+`when: equipped`; shield contributes `add`. Highest base wins, so no special case for "armor
 vs unarmored". Empty contribution set = the variable's default, never a crash.
 
 ### 6.3 Stacking
@@ -285,11 +343,11 @@ vs unarmored". Empty contribution set = the variable's default, never a crash.
 Effects carry `source`. The template declares a policy per variable or globally:
 `same-source: highest` (default), `sum`, or a typed-bonus table for d20-style systems later.
 
-### 6.4 Resources, state, and events (new in this revision; my call on shape)
+### 6.4 Resources, state, and moments (revised 2026-10-18)
 
 Nimble's sheet is mostly resource bookkeeping, so **resources are first-class**, not plain
 variables. A resource has a `max` (a variable, folded like any other), a `current` value stored
-in the character's `state`, and **refresh rules** tied to events.
+in the character's `state`, and **refresh rules** tied to moments.
 
 ```yaml
 # in the system template
@@ -304,37 +362,35 @@ resources:
   - id: hit_dice
     max: hit_dice.max
     refresh: [{on: safe-rest, to: max}]
-  - id: temp_hp
-    refresh: [{on: safe-rest, to: 0}]
-
-# in the Mage class document
-resources:
   - id: mana
-    max: mana.max                                 # mana.max declared below
+    max: mana.max
+    when: mana.max > 0
     refresh: [{on: safe-rest, to: max}]
-    when: level(mage) >= 2
-variables:
-  - {id: mana.max, name: your maximum mana, formula: "(max(int, 0) * 3) + level"}
+
+# on the Mage's level-2 Mana feature
+effects:
+  - {target: mana.max, base: "(max(int, 0) * 3) + level", source: mage-mana}
 ```
 
-**Events** are the verbs the sheet exposes: `damage(n, crit)`, `heal(n)`, `spend(resource,
-n)`, `restore(resource, n)`, `catch-breath(hit_dice: k)`, `make-camp(hit_dice: k)`,
-`safe-rest`, `encounter-start`, `encounter-end`, `turn-end`, `level-up`, plus
-**template-declared events** (`gain-wound`, `full-hp`, `rage-end`) that content can refresh
-on (`refresh: [{on: gain-wound, to: max}]` for the Dragonborn ability). Event handlers are
-declared in the template as ordered rules in the expression grammar; e.g. `damage` applies to
-`temp_hp` first, then `hp`, and on reaching 0 fires `gain-wound(1)` and sets the `dying`
-condition. Content may **not** define new event handlers in this phase; it may contribute to
-the variables those handlers read (`hit_die.heal.bonus add: key when: in_wilderness` for Wild
-One).
+**Moments** are named points in play the engine reports: built-in `catch-breath`,
+`make-camp`, `safe-rest`, `encounter-start`, `encounter-end`, `turn-end`, `level-up`, plus
+template-declared ones with a description (Nimble: `gain-wound`, `full-hp`). A refresh rule
+is the only thing in the format that listens for a moment (`{on: gain-wound, to: max}` for
+the Dragonborn breath). The refresh vocabulary is a short closed list, not a second language.
 
-**Conditions** (Dying, Bloodied, Raging, Concentrating) are boolean variables in `state`,
-set by events, readable in `when`.
+**There are no handlers.** Everything that happens to `state` is the system module's code
+(§4.1). Content steers it through variables (`hit_die.heal.bonus add: key when:
+in_wilderness` for Wild One).
+
+**Conditions** (Dying, Bloodied, Raging, Concentrating) are boolean variables. Prefer a
+formula to a flag whenever the state is computable (`bloodied: hp.current * 2 <= hp.max`);
+the system module maintains the rest (`dying`); players toggle the situational ones
+(`in_wilderness`, `ally_nearby`).
 
 ### 6.5 Variable registry, identifiers, scope, errors
 
 The template publishes every variable: id, display name, type, default, fold, allowed ops,
-rounding; and every resource, event, predicate, and function. Content may declare new
+rounding, `name`, `description`; and every resource, moment, predicate, and function. Content may declare new
 variables and resources in its frontmatter; they join the registry for that character.
 
 **Identifiers (my call):** canonical lowercase dotted (`dex`, `wounds.max`, `mana.max`,
@@ -346,7 +402,7 @@ likewise, both declared by the class document.
 properties with `this.` (`this.strength_requirement`). Nothing else is scoped.
 
 **Errors are loud and located**: unknown variable or target, type mismatch, cycle (members
-named), event referencing an undeclared resource. Partial results plus diagnostics, never
+named), refresh naming an undeclared moment. Partial results plus diagnostics, never
 abort, never silent zero.
 
 ### 6.6 Provenance
@@ -356,8 +412,8 @@ creator's feedback loop and the proof the engine produced the number.
 
 ## 7. Expression and condition language
 
-Draft specs written in Phase 1: [`../../spec/expressions.md`](../../spec/expressions.md),
-[`../../spec/effects-resources-events.md`](../../spec/effects-resources-events.md),
+Draft specs: [`../../spec/expressions.md`](../../spec/expressions.md),
+[`../../spec/effects-and-resources.md`](../../spec/effects-and-resources.md),
 [`../../spec/choices.md`](../../spec/choices.md).
 
 ### 7.1 Requirements
@@ -387,19 +443,20 @@ spike. If a Nimble homebrewer would not read them and nod, redesign. Nimble item
 1. Armor: unarmored `dex`, Cloth `n + dex`, Mail `n + min(dex, 2)`, Plate flat; STR
    requirements; shields add; the highest applicable base wins.
 2. Catch Breath vs Make Camp Hit Die healing (roll vs max, + STR with sign), with Oozeling
-   (always max) and Wild One (+KEY in the wild) overrides.
+   (always max) and Wild One (+KEY in the wild) overrides: the procedure is engine code, the
+   overrides are variables.
 3. Mage mana max `(max(int,0)*3)+level`, unlocked at level 2.
 4. Elemental Surge: temporary mana at Initiative, encounter lifetime, scaling WIL →
    WIL+1d4 → WIL+2d4 by level.
 5. A class pool: Oathsworn's healing pool (5 × level, Safe Rest refresh) and one dice or
    charge pool from The Cheat or Zephyr, chosen from the class read.
 6. Devoted Protector: `wounds.max add: 3 when: ally_nearby`.
-7. Initiative → starting actions by digit count (an event handler in the template).
+7. Initiative → starting actions by digit count (engine code; the Cheat's floor is `at_least`).
 8. Mana cost modifiers: upcast ceiling; Methodical Spellweaver −2 (min 1) for +1 action.
 9. Event refreshes: Dragonborn "recharges whenever you gain a Wound"; Gnome "resets at full HP".
 10. Level-up HP as per-level history (roll with advantage; 2.0.3 has no average option).
 11. Non-proficient armor: Defend costs 2 actions; non-proficient weapon cannot crit.
-12. Dying state machine, with whatever overrides the four classes carry (else template only).
+12. Dying (engine code), with the two variables classes may override.
 13. Spells known = schools × unlocked tier; Mage tier N at level 2N.
 14. 5e insurance: Monk Unarmored Defense vs Mage Armor vs armor (competing bases).
 15. 5e insurance: Bless cast twice does not stack (`same-source: highest`).
@@ -412,8 +469,9 @@ table | content-type | slots | package`). The `nimble` package declares: the fou
 (fold `add`, fed by the level history), `wounds.max` (default 6), `hit_dice.max` (default
 `level`), `hit_die.size` (fold base=max; class contributes), `armor.base`/`armor`;
 `initiative`; `speed` 6; `inventory.slots` `10 + str`; `languages` `1 + int`; resources
-`hp wounds hit_dice temp_hp actions`; events of §6.4; predicates; the Field Rest / Safe
-Rest handlers; content types with suggested properties; **choice slots** (§11).
+`hp wounds hit_dice temp_hp actions`; moments of §6.4; predicates; content types with
+suggested properties; **choice slots** (§11). The Field Rest / Safe Rest / damage / Dying
+procedures are the engine's `nimble` system module, not template documents.
 
 **Packaging and versioning (my call):** a manifest document (`type: package`, `id: nimble`)
 lists members; integer revisions with a human `label`. Content declares `system: nimble`
@@ -450,8 +508,10 @@ notice, in its own directory with its own LICENSE note.
 conformance corpus. Sheet as a web app installable to a phone home screen. Framework, editor,
 state library, hosting are the builder's.
 
-- **Engine**: document parser, registry, fold, expression evaluator (compile/roll), events
-  and resource state machine, provenance, diagnostics.
+- **Engine**: document parser, registry, fold (with lookups), expression evaluator
+  (compile/roll), resources and moments, choices, provenance, diagnostics.
+- **Nimble system module**: damage, heal, Catch Breath, Make Camp, Safe Rest, Initiative,
+  Dying, wound gain; reads the steering variables; fires `gain-wound` and `full-hp`.
 - **Sheet**: create, play, level-up views (§3); provenance hover; Reader view of any attached
   document; content folder/upload for homebrew; license notice. **UI style (decision, Scott):
   the High-Fantasy Steel design language from Steel Compendium** (workspace `DESIGN.md`:
@@ -496,9 +556,11 @@ whose options depend on earlier choices beyond tag filters; multiclassing UI.
 Each step gated by the one before.
 
 1. **Torture test on paper** (§7.3) in proposed syntax, linted for shape and references.
-   **Gate: Scott judges readability.**
-2. **Grammar spec and conformance corpus** (expressions, predicates, events).
-3. **Engine**: parser, registry, fold, evaluator, resources and events, choices, provenance.
+   **Gate: Scott judges readability.** Round 1 (2026-10-18): approved the value layer,
+   rejected the event layer; this revision is the result. Round 2: the regenerated packet.
+2. **Grammar spec and conformance corpus** (expressions, predicates, lookups).
+3. **Engine**: parser, registry, fold, evaluator, resources and moments, choices,
+   provenance; the Nimble system module.
 4. **Nimble package**: core, Mage, The Cheat, Oathsworn, Zephyr, ancestries, backgrounds, armor and weapons.
 5. **Sheet**: create → play → level-up, phone-first, license notice, homebrew folder.
 6. **Table test**: Scott's game for a few sessions; fix what hurts.
@@ -513,6 +575,10 @@ For Scott:
 - The project's name.
 - Confirm "thief" means The Cheat.
 - Licence for the specification text (code MIT; Nimble content under the Nimble notice).
+
+Settled 2026-10-18 by Scott's gate review: handlers out (engine module), `transfer` →
+`when: equipped`, lookups in, `min`/`max` → `at_least`/`at_most`, the renames
+(`oathsworn.lay_on_hands.pool`, `hit_die.heal.maximized`), descriptions and notes.
 
 Builder's calls, flagged: exact PEG for `when`; `wil d8` sugar; the hosted character store;
 framework and hosting; how the sheet renders provenance on a phone.

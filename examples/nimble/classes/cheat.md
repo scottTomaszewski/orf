@@ -20,7 +20,12 @@ effects:
   - {target: save.dex.advantage, add: 1}
   - {target: save.wil.advantage, add: -1}
 variables:
-  - {id: cheat.sneak_attack.dice, name: your Sneak Attack dice, type: dice, formula: "if(level(cheat) >= 17, dice(3, 20), if(level(cheat) >= 15, dice(2, 20), if(level(cheat) >= 11, dice(2, 12), if(level(cheat) >= 9, dice(2, 10), if(level(cheat) >= 7, dice(2, 8), if(level(cheat) >= 3, dice(1, 8), dice(1, 6)))))))"}
+  - id: cheat.sneak_attack.dice
+    name: your Sneak Attack dice
+    type: dice
+    formula:
+      by: level(cheat)
+      rows: {1: 1d6, 3: 1d8, 7: 2d8, 9: 2d10, 11: 2d12, 15: 2d20, 17: 3d20}
 ---
 Sneak Attack rides on crits, 1/turn, scaling 1d6 → 1d8 (3) → 2d8 (7) → 2d10 (9) → 2d12 (11) → 2d20 (15) → 3d20 (17) (H2 p.14-15).
 

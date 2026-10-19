@@ -19,21 +19,29 @@ effects:
   - {target: hit_die.size, base: 10, source: class-hit-die}
   - {target: save.str.advantage, add: 1}
   - {target: save.dex.advantage, add: -1}
-  - {target: mana.max, base: "wil + level", when: "level(oathsworn) >= 2", source: oathsworn-mana}
-  - {target: spells.tier.max, base: "if(level(oathsworn) >= 17, 7, if(level(oathsworn) >= 13, 6, if(level(oathsworn) >= 10, 5, if(level(oathsworn) >= 8, 4, if(level(oathsworn) >= 6, 3, if(level(oathsworn) >= 4, 2, if(level(oathsworn) >= 2, 1, 0)))))))", source: oathsworn-tiers}
+  - target: spells.tier.max
+    source: oathsworn-tiers
+    base:
+      by: level(oathsworn)
+      rows: {1: 0, 2: 1, 4: 2, 6: 3, 8: 4, 10: 5, 13: 6, 17: 7}
 variables:
-  - {id: oathsworn.healing.max, name: your Lay on Hands pool, type: integer, formula: "5 * level(oathsworn)"}
-  - {id: oathsworn.judgment.die, name: the size of your Judgment Dice, type: integer, formula: "if(level(oathsworn) >= 10, 20, if(level(oathsworn) >= 8, 12, if(level(oathsworn) >= 5, 10, if(level(oathsworn) >= 3, 8, 6))))"}
+  - {id: oathsworn.lay_on_hands.pool, name: your Lay on Hands pool, type: integer, formula: "5 * level(oathsworn)", description: "HP you can heal by touch between Safe Rests."}
+  - id: oathsworn.judgment.die
+    name: the size of your Judgment Dice
+    type: integer
+    formula:
+      by: level(oathsworn)
+      rows: {1: 6, 3: 8, 5: 10, 8: 12, 10: 20}
   - {id: oathsworn.judgment.count, name: how many Judgment Dice you roll, type: integer, default: 2, ops: [add]}
 resources:
-  - id: oathsworn.healing
-    max: oathsworn.healing.max
+  - id: oathsworn.lay_on_hands
+    max: oathsworn.lay_on_hands.pool
     refresh: [{on: safe-rest, to: max}]
   - id: oathsworn.judgment_dice
     max: 1
     refresh: [{on: encounter-end, to: 0}]
 ---
-Mana at level 2, max WIL+LVL, tiers up to 7 (H2 p.38). Lay on Hands: a pool of 5×LVL HP to heal by touch, refreshed at Safe Rest. Judgment Dice: gained when attacked while holding none, spent on your next melee attack this encounter; 2d6, die grows at 3/5/8/10.
+Mana at level 2 (the Mana feature), tiers up to 7 (H2 p.38). Lay on Hands: a pool of 5×LVL HP to heal by touch, refreshed at Safe Rest. Judgment Dice: gained when attacked while holding none, spent on your next melee attack this encounter; 2d6, die grows at 3/5/8/10.
 
 Starting HP 17 is the character's level-1 `levels[].hp` entry; Hit Die d10.
 Saves: advantage on STR, disadvantage on DEX.

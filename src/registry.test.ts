@@ -17,7 +17,7 @@ const resDoc = doc("res.md", {
 });
 const evDoc = doc("ev.md", {
   id: "nimble.system.events", type: "events", system: "nimble", name: "Events",
-  events: [{ id: "gain-wound", args: ["amount"] }],
+  events: [{ id: "gain-wound", description: "fired by the engine" }],
 });
 const predDoc = doc("pred.md", {
   id: "nimble.system.predicates", type: "predicates", system: "nimble", name: "Predicates",
@@ -115,4 +115,20 @@ test("resource max and floor keep numeric values; bad type/rounding are diagnost
 test("registry records each document's type", () => {
   const { registry } = buildRegistry([doc("g.md", { id: "nimble.ancestries.gnome", type: "ancestry", system: "nimble", name: "Gnome" })]);
   expect(registry.documentTypes.get("nimble.ancestries.gnome")).toBe("ancestry");
+});
+
+test("variable ops vocabulary is base add mul at_least at_most set; min/max are rejected", () => {
+  const d = doc("v.md", { id: "x.v", type: "variables", system: "nimble", name: "v",
+    variables: [{ id: "a.b", name: "a", type: "integer", ops: ["at_least", "at_most"] }, { id: "a.c", name: "c", type: "integer", ops: ["min"] }] });
+  const { diagnostics } = buildRegistry([d]);
+  expect(diagnostics).toHaveLength(1);
+  expect(diagnostics[0].message).toMatch(/"min".*at_least/);
+});
+
+test("events carry an optional description and no args", () => {
+  const d = doc("e.md", { id: "x.e", type: "events", system: "nimble", name: "e", events: [{ id: "full-hp", description: "HP reaches max" }] });
+  const { registry } = buildRegistry([d]);
+  expect(registry.events.get("full-hp")?.description).toBe("HP reaches max");
+  expect(registry.events.has("damage")).toBe(false);
+  expect(registry.events.has("safe-rest")).toBe(true);
 });

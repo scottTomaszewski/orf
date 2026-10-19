@@ -7,4 +7,4 @@ class: nimble.classes.zephyr
 tags: [zephyr]
 effects: []
 ---
-Ignore the first Wound you would gain each encounter; the first 2 at level 10, 3 at level 17 (H2 p.68). Not modelled in Phase 1: it needs a handler hook on `gain-wound` (gap).
+Ignore the first Wound you would gain each encounter; the first 2 at level 10, 3 at level 17 (H2 p.68). Not modelled yet: the engine's wound procedure would need to read a per-encounter `wounds.ignored` counter (gap).

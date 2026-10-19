@@ -1,8 +1,10 @@
-# Torture test: the gate packet
+# Torture test: the gate packet (round 2)
 
-Fifteen rules written as content documents in the proposed syntax. **Scott judges:** would a Nimble homebrewer read these and nod? Each item shows the rule, the YAML verbatim from the real documents (effects, resources, variables, choices; handlers are linked, not inlined), and what a homebrewer reads it as. Full grammar: `docs/spec/expressions.md`; effects, resources, events: `docs/spec/effects-resources-events.md`; choices: `docs/spec/choices.md`.
+Fifteen rules written as content documents in the proposed syntax. **Scott judges:** would a Nimble homebrewer read these and nod? Each item shows the rule, the YAML verbatim from the real documents (effects, resources, variables, choices, moments), and what a homebrewer reads it as. Specs: `docs/spec/expressions.md`, `docs/spec/effects-and-resources.md`, `docs/spec/choices.md`. Design: `docs/superpowers/specs/2026-10-18-open-rules-format-design.md` §4.1.
 
-Everything here lints: `npm run lint-docs` (122 Nimble documents, 7 in the 5e insurance set) and `npm test` (53 tests). A fresh-context code review of the branch found and the fix pass corrected: a Safe Rest that healed two Wounds, a Dying action cap no handler applied, `full-hp` not firing from Field Rests, Spellweaver as a permanent discount, and the `max`-as-floor mis-encoding; all are now as shown.
+**What changed since round 1** (Scott's review, 2026-10-18): the event/handler language is gone; rest, damage, Dying and wound procedures are engine code in the Nimble system module, shared by every tool, and content steers them only through named variables. `transfer: equipped` became `when: equipped`. Nested `if` level ladders became lookups (`by` + `rows`). The clamp ops are `at_least`/`at_most`. `oathsworn.healing.max` is `oathsworn.lay_on_hands.pool`; `hit_die.heal.always_max` is `hit_die.heal.maximized`. Variables carry `description`, effects carry `note`, moments carry `description`. The Mage and Oathsworn mana formulas moved onto level-2 `Mana` features, so they need no `when`.
+
+Everything here lints: `npm run lint-docs` (124 Nimble documents, 7 in the 5e insurance set) and `npm test` (60 tests).
 
 ## Armor: unarmored, cloth, mail with DEX cap, plate, shields
 
@@ -21,8 +23,8 @@ effects:
 
 ```yaml
 effects:
-  - {target: armor.base, base: "2 + dex", transfer: equipped, source: armor}
-  - {target: defend.cost, add: 1, when: "not proficient(cloth)", transfer: equipped, source: unproficient-armor}
+  - {target: armor.base, base: "2 + dex", when: equipped, source: armor}
+  - {target: defend.cost, add: 1, when: "equipped and not proficient(cloth)", source: unproficient-armor}
 ```
 
 `examples/nimble/items/armor/chain-shirt.md`
@@ -30,8 +32,8 @@ effects:
 ```yaml
 requires: {str: 2}
 effects:
-  - {target: armor.base, base: "9 + min(dex, 2)", transfer: equipped, source: armor}
-  - {target: defend.cost, add: 1, when: "not proficient(mail)", transfer: equipped, source: unproficient-armor}
+  - {target: armor.base, base: "9 + min(dex, 2)", when: equipped, source: armor}
+  - {target: defend.cost, add: 1, when: "equipped and not proficient(mail)", source: unproficient-armor}
 ```
 
 `examples/nimble/items/armor/half-plate.md`
@@ -39,15 +41,15 @@ effects:
 ```yaml
 requires: {str: 3}
 effects:
-  - {target: armor.base, base: "14", transfer: equipped, source: armor}
-  - {target: defend.cost, add: 1, when: "not proficient(plate)", transfer: equipped, source: unproficient-armor}
+  - {target: armor.base, base: "14", when: equipped, source: armor}
+  - {target: defend.cost, add: 1, when: "equipped and not proficient(plate)", source: unproficient-armor}
 ```
 
 `examples/nimble/items/armor/wooden-buckler.md`
 
 ```yaml
 effects:
-  - {target: armor.bonus, add: 2, transfer: equipped, source: shield}
+  - {target: armor.bonus, add: 2, when: equipped, source: shield}
 ```
 
 **Encoding notes.** The template contributes `armor.base base: dex` as the unarmored floor. Each worn armor contributes its own `base` while equipped; the fold keeps the highest, so no armor-vs-unarmored special case exists. Mail's DEX cap is `min(dex, 2)` inside the formula; Plate's is a flat number. Shields `add` to `armor.bonus`. STR requirements are a `requires: {str: n}` property the engine enforces at equip time.
@@ -59,25 +61,16 @@ effects:
 `systems/nimble/events.md`
 
 ```yaml
-  catch-breath:
-    - repeat: hit_dice
-      steps:
-        - {spend: hit_dice, amount: 1}
-        - {restore: hp, amount: "if(hit_die.heal.always_max, hit_die.size, roll(hit_die.size, hit_die.heal.advantage)) + str + hit_die.heal.bonus"}
-    - {when: "hp.current == hp.max", fire: full-hp}
-  make-camp:
-    - repeat: hit_dice
-      steps:
-        - {spend: hit_dice, amount: 1}
-        - {restore: hp, amount: "hit_die.size + str + hit_die.heal.bonus"}
-    - {when: "hp.current == hp.max", fire: full-hp}
+events:
+  - {id: gain-wound, description: "You gained a Wound (dropped to 0 HP, or took damage while Dying)."}
+  - {id: full-hp, description: "Your HP reached its maximum."}
 ```
 
 `examples/nimble/ancestries/oozeling.md`
 
 ```yaml
 effects:
-  - {target: hit_die.heal.always_max, set: true}
+  - {target: hit_die.heal.maximized, set: true}
 ```
 
 `examples/nimble/backgrounds/wild-one.md`
@@ -87,34 +80,23 @@ effects:
   - {target: hit_die.heal.advantage, set: true, when: in_wilderness, source: wild-one}
 ```
 
-**Encoding notes.** The two formulas live in the template's `catch-breath` and `make-camp` handlers. Content cannot edit handlers; instead the handler reads template variables: `hit_die.heal.always_max` (Oozeling sets it), `hit_die.heal.advantage` (Wild One sets it when `in_wilderness`; 2.0.3 wording), and `hit_die.heal.bonus` (for the second printing's +KEY form). This is the pattern for every 'change how a core rule computes' feature.
+**Encoding notes.** The two formulas are engine code (the Nimble module's Catch Breath and Make Camp procedures), not content. Content steers them through three template variables: `hit_die.heal.maximized` (Oozeling sets it), `hit_die.heal.advantage` (Wild One sets it when `in_wilderness`; 2.0.3 wording), and `hit_die.heal.bonus` (for the second printing's +KEY form). This is the pattern for every 'change how a core rule computes' feature: the format says what is true, the engine does what happens.
 
 ## Mage mana: (INT×3)+LVL, unlocked at level 2
 
 **Rule.** Mana unlocks at level 2; max = (INT×3) + LVL; refreshes at Safe Rest; spell cost = tier (H2 p.32, CR2 p.45).
 
-`examples/nimble/classes/mage.md`
+`examples/nimble/features/mage/mana.md`
 
 ```yaml
 effects:
-  - {target: key, base: int, source: class-key}
-  - {target: key, base: wil, source: class-key}
-  - {target: secondary, base: str, source: class-secondary}
-  - {target: secondary, base: dex, source: class-secondary}
-  - {target: hit_die.size, base: 6, source: class-hit-die}
-  - {target: save.int.advantage, add: 1}
-  - {target: save.str.advantage, add: -1}
-  - {target: mana.max, base: "(max(int, 0) * 3) + level", when: "level(mage) >= 2", source: mage-mana}
-  - {target: spells.tier.max, base: "floor(level(mage) / 2)", source: mage-tiers}
-variables:
-  - {id: mage.surge.max, name: the mana you regain when you roll Initiative, type: dice, formula: "if(level(mage) >= 17, wil + dice(2, 4), if(level(mage) >= 10, wil + dice(1, 4), wil))"}
-  - {id: spell.cost.modifier, name: change to the mana cost of your spells, type: integer, default: 0, ops: [add]}
-  - {id: spell.cost.min, name: the minimum mana a spell can cost, type: integer, default: 0, ops: [max]}
-resources:
-  - id: mage.surge
-    max: mage.surge.max
-    when: level(mage) >= 5
-    refresh: [{on: encounter-start, to: max}, {on: encounter-end, to: 0}]
+  - {target: mana.max, base: "(max(int, 0) * 3) + level", source: mage-mana, note: "Granted at level 2, so no level condition is needed here."}
+```
+
+`examples/nimble/classes/mage/level-2.md`
+
+```yaml
+grants: [nimble.features.mage.mana, nimble.features.mage.talented-researcher]
 ```
 
 `systems/nimble/core.md`
@@ -151,7 +133,7 @@ resources:
     refresh: [{on: turn-end, to: max}]
 ```
 
-**Encoding notes.** The template owns one `mana` resource and a `mana.max` variable with no formula of its own. The Mage class contributes `mana.max base: (max(int, 0) * 3) + level when: level(mage) >= 2`. The Oathsworn contributes `wil + level`. A multiclass caster gets the higher base; the rules do not say otherwise.
+**Encoding notes.** The template owns one `mana` resource (`when: mana.max > 0`) and a `mana.max` variable with no formula of its own. The Mage's level-2 `Mana` feature contributes `mana.max base: (max(int, 0) * 3) + level`; the Oathsworn's contributes `wil + level`. Because the feature is granted at level 2, no `when` is needed: at level 1 nothing contributes, `mana.max` is its default 0, and the resource does not exist. A multiclass caster gets the higher base; the rules do not say otherwise.
 
 ## Elemental Surge: encounter-lifetime mana that scales
 
@@ -168,12 +150,16 @@ effects:
   - {target: hit_die.size, base: 6, source: class-hit-die}
   - {target: save.int.advantage, add: 1}
   - {target: save.str.advantage, add: -1}
-  - {target: mana.max, base: "(max(int, 0) * 3) + level", when: "level(mage) >= 2", source: mage-mana}
   - {target: spells.tier.max, base: "floor(level(mage) / 2)", source: mage-tiers}
 variables:
-  - {id: mage.surge.max, name: the mana you regain when you roll Initiative, type: dice, formula: "if(level(mage) >= 17, wil + dice(2, 4), if(level(mage) >= 10, wil + dice(1, 4), wil))"}
+  - id: mage.surge.max
+    name: the mana you regain when you roll Initiative
+    type: dice
+    formula:
+      by: level(mage)
+      rows: {1: wil, 10: "wil + 1d4", 17: "wil + 2d4"}
   - {id: spell.cost.modifier, name: change to the mana cost of your spells, type: integer, default: 0, ops: [add]}
-  - {id: spell.cost.min, name: the minimum mana a spell can cost, type: integer, default: 0, ops: [max]}
+  - {id: spell.cost.min, name: the minimum mana a spell can cost, type: integer, default: 0, ops: [at_least]}
 resources:
   - id: mage.surge
     max: mage.surge.max
@@ -187,7 +173,7 @@ resources:
 effects: []
 ```
 
-**Encoding notes.** Encoded as a second resource `mage.surge` with `max` = a dice-typed formula and refresh rules on `encounter-start` (to max) and `encounter-end` (to 0). **Gap:** spending mana should draw from surge first; that needs a `spend` handler rule owned by the class, which content cannot declare in this phase.
+**Encoding notes.** Encoded as a second resource `mage.surge` whose `max` is a dice-typed lookup by level (`rows: {1: wil, 10: wil + 1d4, 17: wil + 2d4}`) with refresh rules on `encounter-start` (to max) and `encounter-end` (to 0). **Gap:** spending mana should draw from surge first; that is an engine rule for the Nimble module, not something content declares.
 
 ## Class pools: Lay on Hands, Judgment Dice, Sneak Attack dice, Bursts of Speed
 
@@ -204,15 +190,23 @@ effects:
   - {target: hit_die.size, base: 10, source: class-hit-die}
   - {target: save.str.advantage, add: 1}
   - {target: save.dex.advantage, add: -1}
-  - {target: mana.max, base: "wil + level", when: "level(oathsworn) >= 2", source: oathsworn-mana}
-  - {target: spells.tier.max, base: "if(level(oathsworn) >= 17, 7, if(level(oathsworn) >= 13, 6, if(level(oathsworn) >= 10, 5, if(level(oathsworn) >= 8, 4, if(level(oathsworn) >= 6, 3, if(level(oathsworn) >= 4, 2, if(level(oathsworn) >= 2, 1, 0)))))))", source: oathsworn-tiers}
+  - target: spells.tier.max
+    source: oathsworn-tiers
+    base:
+      by: level(oathsworn)
+      rows: {1: 0, 2: 1, 4: 2, 6: 3, 8: 4, 10: 5, 13: 6, 17: 7}
 variables:
-  - {id: oathsworn.healing.max, name: your Lay on Hands pool, type: integer, formula: "5 * level(oathsworn)"}
-  - {id: oathsworn.judgment.die, name: the size of your Judgment Dice, type: integer, formula: "if(level(oathsworn) >= 10, 20, if(level(oathsworn) >= 8, 12, if(level(oathsworn) >= 5, 10, if(level(oathsworn) >= 3, 8, 6))))"}
+  - {id: oathsworn.lay_on_hands.pool, name: your Lay on Hands pool, type: integer, formula: "5 * level(oathsworn)", description: "HP you can heal by touch between Safe Rests."}
+  - id: oathsworn.judgment.die
+    name: the size of your Judgment Dice
+    type: integer
+    formula:
+      by: level(oathsworn)
+      rows: {1: 6, 3: 8, 5: 10, 8: 12, 10: 20}
   - {id: oathsworn.judgment.count, name: how many Judgment Dice you roll, type: integer, default: 2, ops: [add]}
 resources:
-  - id: oathsworn.healing
-    max: oathsworn.healing.max
+  - id: oathsworn.lay_on_hands
+    max: oathsworn.lay_on_hands.pool
     refresh: [{on: safe-rest, to: max}]
   - id: oathsworn.judgment_dice
     max: 1
@@ -223,7 +217,12 @@ resources:
 
 ```yaml
 variables:
-  - {id: cheat.sneak_attack.dice, name: your Sneak Attack dice, type: dice, formula: "if(level(cheat) >= 17, dice(3, 20), if(level(cheat) >= 15, dice(2, 20), if(level(cheat) >= 11, dice(2, 12), if(level(cheat) >= 9, dice(2, 10), if(level(cheat) >= 7, dice(2, 8), if(level(cheat) >= 3, dice(1, 8), dice(1, 6)))))))"}
+  - id: cheat.sneak_attack.dice
+    name: your Sneak Attack dice
+    type: dice
+    formula:
+      by: level(cheat)
+      rows: {1: 1d6, 3: 1d8, 7: 2d8, 9: 2d10, 11: 2d12, 15: 2d20, 17: 3d20}
 ```
 
 `examples/nimble/classes/zephyr.md`
@@ -244,7 +243,7 @@ resources:
 effects: []
 ```
 
-**Encoding notes.** Lay on Hands: resource with `max: oathsworn.healing.max` (formula `5 * level(oathsworn)`). Judgment Dice: a resource holding 'one set' (max 1) refreshing to 0 at encounter end; die size and count are variables (`oathsworn.judgment.die` nested `if` by level; `oathsworn.judgment.count` default 2, Vengeance adds 1). Sneak Attack: a dice-typed variable with a seven-way nested `if`. Bursts: resource with max `max(dex, 0)` refreshing to max at `encounter-start`. **Gaps:** auto-spend on attack (no attack event), and nested `if` chains read badly; a `steps(level(cheat), {3: 1d8, 7: 2d8, ...})` table-lookup form would be friendlier.
+**Encoding notes.** Lay on Hands: resource `oathsworn.lay_on_hands` with `max: oathsworn.lay_on_hands.pool` (formula `5 * level(oathsworn)`). Judgment Dice: a resource holding 'one set' (max 1) refreshing to 0 at encounter end; die size is a lookup by level (`rows: {1: 6, 3: 8, 5: 10, 8: 12, 10: 20}`), count is a variable (default 2, Vengeance adds 1). Sneak Attack: a dice-typed lookup by level, seven rows, one line each. Bursts: resource with max `max(dex, 0)` refreshing to max at `encounter-start`. **Gap:** auto-spend on attack is an engine concern (no attack procedure yet).
 
 ## Devoted Protector: +3 max Wounds while an ally is nearby
 
@@ -266,8 +265,9 @@ effects:
 `systems/nimble/events.md`
 
 ```yaml
-  encounter-start:
-    - {restore: actions, amount: "min(if(dying, actions.dying_cap, 3), if(max(initiative_roll, initiative.floor) >= 20, 3, if(max(initiative_roll, initiative.floor) >= 10, 2, 1))) - actions.current"}
+events:
+  - {id: gain-wound, description: "You gained a Wound (dropped to 0 HP, or took damage while Dying)."}
+  - {id: full-hp, description: "Your HP reached its maximum."}
 ```
 
 `examples/nimble/ancestries/human.md`
@@ -281,10 +281,10 @@ effects:
 
 ```yaml
 effects:
-  - {target: initiative.floor, min: 10, source: cheat}
+  - {target: initiative.floor, at_least: 10, source: cheat}
 ```
 
-**Encoding notes.** The digit-count mapping is a template handler on `encounter-start`. Human contributes `initiative.bonus add: 1`. The Cheat's floor is `initiative.floor min: 10` on a template variable the handler reads as `max(initiative_roll, initiative.floor)`. **This was first encoded as `max: 10` by both the plan and the implementer**, because `max` reads as 'raise to'. Under the fold `max` is the upper clamp. The op names mislead; see the gate question.
+**Encoding notes.** The digit-count mapping is engine code in the Nimble module. Human contributes `initiative.bonus add: 1`. The Cheat contributes `initiative.floor at_least: 10`, which the engine applies as `max(roll, initiative.floor)` before counting digits. (The first draft wrote this as `max: 10` because `max` read as 'raise to'; the clamp ops are now `at_least`/`at_most` for exactly that reason.)
 
 ## Methodical Spellweaver: −2 mana (min 1) for +1 action
 
@@ -319,7 +319,7 @@ resources:
   - {id: gnome.reroll, max: 1, refresh: [{on: full-hp, to: max}, {on: safe-rest, to: max}]}
 ```
 
-**Encoding notes.** Both are resources with two refresh rules; the template declares the `gain-wound` and `full-hp` events and fires them from its `damage` and `heal` handlers. Any content can refresh on any declared event.
+**Encoding notes.** Both are resources with two refresh rules. `gain-wound` and `full-hp` are **moments** declared by the template; the engine's Nimble module fires them from its damage and heal procedures. Any content can refresh on any declared moment, and refresh rules are the only thing in the format that listens for one.
 
 ## Max HP as a per-level history
 
@@ -352,8 +352,8 @@ choices:
 ```yaml
 requires: {str: 2}
 effects:
-  - {target: armor.base, base: "9 + min(dex, 2)", transfer: equipped, source: armor}
-  - {target: defend.cost, add: 1, when: "not proficient(mail)", transfer: equipped, source: unproficient-armor}
+  - {target: armor.base, base: "9 + min(dex, 2)", when: equipped, source: armor}
+  - {target: defend.cost, add: 1, when: "equipped and not proficient(mail)", source: unproficient-armor}
 ```
 
 `examples/nimble/items/weapons/staff.md`
@@ -362,30 +362,11 @@ effects:
 effects: []
 ```
 
-**Encoding notes.** Armor contributes `defend.cost add: 1 when: not proficient(mail)` with `transfer: equipped`. The weapon half is **not encoded**: a `crit.allowed` flag on the character would turn off crits for every weapon when one unproficient weapon is equipped, and `proficient(weapon)` cannot name which weapon. Proficiency itself comes from the class document's `armor_proficiency`/`weapon_proficiency` properties, which are free text today; `proficient()` needs a declared vocabulary in Phase 2 (gap).
+**Encoding notes.** Armor contributes `defend.cost add: 1 when: equipped and not proficient(mail)`. The weapon half is **not encoded**: a `crit.allowed` flag on the character would turn off crits for every weapon when one unproficient weapon is equipped, and `proficient(weapon)` cannot name which weapon. Proficiency itself comes from the class document's `armor_proficiency`/`weapon_proficiency` properties, which are free text today; `proficient()` needs a declared vocabulary (gap).
 
 ## Dying: action cap, Wound costs, class overrides
 
 **Rule.** At 0 HP: gain 1 Wound and Dying; actions capped at 1; attacking costs a Wound unless DC 10 STR save; damage while Dying = 2 Wounds, 3 on a crit (CR2 p.9). Zephyr level 20: max 2 actions while Dying (H2 p.69).
-
-`systems/nimble/events.md`
-
-```yaml
-  damage:
-    - {spend: temp_hp, amount: "min(amount, temp_hp.current)"}
-    - {spend: hp, amount: "amount - spent"}
-    - {when: "hp.current == 0 and not dying", fire: gain-wound, amount: 1}
-    - {when: "hp.current == 0 and not dying", set: dying}
-    - {when: "dying and spent == 0 and amount > 0", fire: gain-wound, amount: "if(crit, wound.damage_while_dying + 1, wound.damage_while_dying)"}
-  gain-wound:
-    - {spend: wounds, amount: "-amount"}
-  heal:
-    - {restore: hp, amount: amount}
-    - {when: "hp.current > 0", clear: dying}
-    - {when: "hp.current == hp.max", fire: full-hp}
-  turn-end:
-    - {restore: actions, amount: "if(dying, actions.dying_cap, actions.max) - actions.current"}
-```
 
 `systems/nimble/combat.md`
 
@@ -396,7 +377,15 @@ effects:
     source: unarmored
 ```
 
-**Encoding notes.** The `damage` handler sets `dying` and fires `gain-wound` with `wound.damage_while_dying` (default 2, +1 on crit). `turn-end` and `encounter-start` cap actions at `actions.dying_cap` (default 1) while `dying`; a class raises the cap with `base: 2`. `heal` clears `dying` above 0 HP. None of the four MVP classes override Dying below level 17, so no content document does yet. Death at max Wounds is not yet a transition (gap).
+`systems/nimble/events.md`
+
+```yaml
+events:
+  - {id: gain-wound, description: "You gained a Wound (dropped to 0 HP, or took damage while Dying)."}
+  - {id: full-hp, description: "Your HP reached its maximum."}
+```
+
+**Encoding notes.** All engine code in the Nimble module: damage sets `dying` and adds `wound.damage_while_dying` Wounds (default 2, +1 on a crit) while Dying; turn end and Initiative cap actions at `actions.dying_cap` (default 1) while `dying`; healing above 0 clears `dying`. Content steers it only through those two variables: Zephyr 20 contributes `actions.dying_cap base: 2`. None of the four MVP classes override Dying below level 17, so no content document does yet. Death at max Wounds is an engine gap.
 
 ## Spells known = schools × unlocked tier
 
@@ -413,12 +402,16 @@ effects:
   - {target: hit_die.size, base: 6, source: class-hit-die}
   - {target: save.int.advantage, add: 1}
   - {target: save.str.advantage, add: -1}
-  - {target: mana.max, base: "(max(int, 0) * 3) + level", when: "level(mage) >= 2", source: mage-mana}
   - {target: spells.tier.max, base: "floor(level(mage) / 2)", source: mage-tiers}
 variables:
-  - {id: mage.surge.max, name: the mana you regain when you roll Initiative, type: dice, formula: "if(level(mage) >= 17, wil + dice(2, 4), if(level(mage) >= 10, wil + dice(1, 4), wil))"}
+  - id: mage.surge.max
+    name: the mana you regain when you roll Initiative
+    type: dice
+    formula:
+      by: level(mage)
+      rows: {1: wil, 10: "wil + 1d4", 17: "wil + 2d4"}
   - {id: spell.cost.modifier, name: change to the mana cost of your spells, type: integer, default: 0, ops: [add]}
-  - {id: spell.cost.min, name: the minimum mana a spell can cost, type: integer, default: 0, ops: [max]}
+  - {id: spell.cost.min, name: the minimum mana a spell can cost, type: integer, default: 0, ops: [at_least]}
 resources:
   - id: mage.surge
     max: mage.surge.max
@@ -458,14 +451,14 @@ effects:
 
 ```yaml
 effects:
-  - {target: ac.base, base: "13 + dex.mod", when: "not equipped(armor)", source: mage-armor, transfer: always, duration: 8 hours}
+  - {target: ac.base, base: "13 + dex.mod", when: "not equipped(armor)", source: mage-armor, duration: 8 hours}
 ```
 
 `examples/insurance-5e/chain-mail.md`
 
 ```yaml
 effects:
-  - {target: ac.base, base: 16, transfer: equipped, source: armor}
+  - {target: ac.base, base: 16, when: equipped, source: armor}
 ```
 
 **Encoding notes.** Same shape as Nimble Armor: three `base` contributions to `ac.base` with `when` clauses; the highest applicable wins. Proves the fold is not Nimble-specific. Lives in `examples/insurance-5e/` with a 12-line `srd5e-mini` template.
@@ -490,29 +483,22 @@ effects:
 
 ## Known gaps (honest list)
 
-- Surge-first mana spending (Mage Elemental Surge) and encounter-lifetime Hit Dice (Zephyr Enduring Soul): need a content-owned `spend` rule; Phase 1 models the pools, not the ordering.
-- Spell cost modifiers (Methodical Spellweaver, Archmage): declared as variables; no `cast` event applies them yet.
-- Auto-spent dice pools on attack (Oathsworn Judgment Dice; Cheat Sneak Attack on crit): no attack event in this phase.
-- Unyielding Resolve (ignore the first N Wounds per encounter): needs a hook on `gain-wound`.
+- Engine-module rules not yet written: surge-first mana spending (Elemental Surge), encounter-lifetime Hit Dice (Zephyr Enduring Soul), Judgment Dice and Sneak Attack auto-spend on attack, Unyielding Resolve (ignore the first N Wounds), death at max Wounds, spell cost modifiers at cast time.
 - Kinetic Momentum is a second burst counter instead of adding to `zephyr.bursts`: resources cannot yet refresh another resource.
-- Level-scaled dice (Sneak Attack, Judgment die) are seven-deep nested `if` chains. Readable? Probably not. A step table form (`steps(level(cheat), {1: 1d6, 3: 1d8, 7: 2d8, ...})`) is the obvious fix.
-- The Cheat's Initiative floor is a `max: 10` contribution, which reads backwards. A `floor:` op name may be clearer.
 - Distracted (The Cheat) and 'Reach' auras (Oathsworn) are target- or position-state predicates with no model yet.
-- Unproficient-armor Defend cost is on each item (`when: not proficient(mail)`); it belongs in the template once `proficient()` can see the worn item's category.
-- Dueling-style one-weapon conditions (5e) and anything else needing attack objects.
+- Unproficient-armor Defend cost is on each item (`when: equipped and not proficient(mail)`); it belongs in the template once `proficient()` can see the worn item's category.
 - Non-proficient weapons cannot crit: not encoded, because a `crit.allowed` flag is character-wide and the rule is per weapon.
-- `proficient()` and `knows()` have thin data sources: class `armor_proficiency` is free text and spell schools are plain documents; both need a declared vocabulary in Phase 2.
-- Death at maximum Wounds is not an event yet.
-- The op names `min`/`max` were misread by both the plan author and the implementer (the Cheat's Initiative floor was first written as `max: 10`, which under the fold is a ceiling). This is the strongest readability signal in the packet; see the gate question below.
+- `proficient()` and `knows()` have thin data sources: class `armor_proficiency` is free text and spell schools are plain documents; both need a declared vocabulary.
+- Ability fields (`cost`, `trigger`, `restores`, `expires`) are described in the spec but the content-type documents do not yet list them per type.
 
 ## What you're approving
 
-1. **The syntax is readable enough** to build the grammar implementation, conformance corpus, and engine against (Phase 2), with the gap fixes above as Phase 2 work items.
-2. **The six-op fold**: `base` competes (highest), `add` sums, `mul` multiplies, `min`/`max` clamp, `set` overrides last and must be allowed by the variable.
-3. **Resources and events as first-class**, with handlers owned by the system template and content influencing them through declared variables (`hit_die.heal.bonus`, `initiative.floor`, `wound.damage_while_dying`).
-4. **The slot model for choices** (`choices:` on class levels; `choices:` map on the character; option lists for stats and schools).
-5. **Identifier convention**: lowercase dotted ids, upper-case aliases, `key`/`secondary`, `this.`, `<resource>.current`; table ids, column names and `has()` ids quoted.
-6. **Op naming (open question)**: keep `min`/`max` as the clamp names, or rename to `at_least`/`at_most` (or `floor`/`ceiling`) before any grammar is implemented? The reviewer and the evidence above say rename.
-7. **Step tables**: approve adding a `steps(level(cheat), {1: 1d6, 3: 1d8, 7: 2d8, ...})` form in Phase 2 to replace nested `if` ladders.
+1. **The line** (§4.1): the format describes what is true; the engine's system module does what happens. No handlers, no scripting, in content or templates.
+2. **The six-op fold**: `base` competes (highest), `add` sums, `mul` multiplies, `at_least`/`at_most` clamp, `set` overrides last and must be allowed by the variable.
+3. **Lookups** (`by` + `rows`) as the one form for level ladders and other step tables, usable as any op value or formula.
+4. **Resources and moments**: resources with `max`/`refresh`; moments as a short closed list that only refresh rules listen for.
+5. **`when: equipped` / `when: carried`** on item effects, explicit, no hidden default.
+6. **Labels first-class**: `name` + `description` on variables, `note` on effects, `description` on moments; the UI never shows an id.
+7. **The slot model for choices** and the identifier convention, unchanged from round 1.
 
-**Approve** = the Phase 2 plan is written (grammar + corpus + engine). **Decline** = name the items; the named parts are redesigned before any engine code.
+**Approve** = the Phase 2 plan is written (grammar + corpus + engine + Nimble module). **Decline** = name the items; the named parts are redesigned before any engine code.

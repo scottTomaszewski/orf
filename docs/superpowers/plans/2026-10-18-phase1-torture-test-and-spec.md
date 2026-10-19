@@ -233,12 +233,12 @@ test("character state key must be a declared resource", () => {
 
 ### Task 6: Grammar and format spec (draft)
 
-**Files:** Create `docs/spec/expressions.md`, `docs/spec/effects-resources-events.md`, `docs/spec/choices.md`
+**Files:** Create `docs/spec/expressions.md`, `docs/spec/effects-and-resources.md`, `docs/spec/choices.md`
 
 No code. This is what the gate judges. Pin exactly:
 
 - [ ] **Step 1: `expressions.md`.** Lexical: integers; dice `NdM` with optional `kh N | kl N | dh N | dl N`; `dice(count, sides)` function and `wil d8` sugar; identifiers (dotted lowercase), aliases (upper), `key`, `secondary`, `this.`; double-quoted strings only as arguments. Precedence low→high: `or`; `and`; `not`; `< <= > >= == !=`; `+ -`; `* /`; unary `-`; call; parentheses. `/` rounds per the target variable's `rounding`. Functions `floor ceil round abs max min if table dice`; template helpers as named-arg expressions. Predicates: `equipped(kind)`, `has(id)`, `level(class)`, `proficient(thing)`, and state booleans. Inline form and both renderings (symbolic uses registry names; resolved folds literals, leaves dice). Phases compile/roll. Errors. Deliberately absent. A PEG block (≈25 rules).
-- [ ] **Step 2: `effects-resources-events.md`.** Effect record (spec 6.1 table), fold (6.2), stacking (6.3). Resource record (`id max floor refresh[] when`), refresh rule (`on to add`), built-in events with argument lists, template-declared events, and the **handler language**: a template `type: events` document declares handlers as ordered steps, e.g.
+- [ ] **Step 2: `effects-and-resources.md`.** Effect record (spec 6.1 table), fold (6.2), stacking (6.3). Resource record (`id max floor refresh[] when`), refresh rule (`on to add`), built-in events with argument lists, template-declared events, and the **handler language**: a template `type: events` document declares handlers as ordered steps, e.g.
   ```yaml
   handlers:
     damage:
