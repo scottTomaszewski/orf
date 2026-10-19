@@ -106,7 +106,6 @@ function CreateForm({ docs, storage }: { docs: Map<string, Document>; storage: S
             </label>
           ))}
         </div>
-        {!placementOk.value && <p class="small muted">Place each value once.</p>}
       </Panel>
       <Panel title={`Skills (${spent.value}/${opts.skillPoints} points)`}>
         <div class="grid-2" role="group" aria-label="Skills">
