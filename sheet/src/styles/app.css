@@ -23,3 +23,7 @@
 .log { font-family: var(--font-mono); font-size: .8rem; color: var(--fg-2); max-height: 12rem; overflow: auto; margin: 0; padding-left: 1rem; }
 .problems { border-color: var(--sem-warn); }
 .about p { max-width: 60ch; }
+.pick { display: inline-flex; align-items: center; gap: .4rem; }
+.pick input { accent-color: var(--accent); }
+.pick--on { border-color: var(--accent); color: var(--accent); }
+.option-text { margin-top: .6rem; border-top: 1px solid var(--line); padding-top: .4rem; }
