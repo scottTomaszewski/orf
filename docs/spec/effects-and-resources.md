@@ -1,6 +1,7 @@
 # Effects, lookups, and resources (draft, revised 2026-10-18)
 
-Status: draft for the readability gate (second round). Design context: design doc §6.
+Status: implemented — fold and stacking in `src/fold.ts`, lookups and assembly in `src/engine.ts` / `src/character.ts`,
+resources and moments in `src/moments.ts`, the Nimble procedures in `src/systems/nimble.ts`. Design context: design doc §6.
 
 **The one rule this spec follows:** the format describes *what is true* about a character.
 What *happens* to a character (damage, healing, rests, wounds, spending) is engine code,
@@ -82,11 +83,14 @@ if any set: value = largest set
 round per the variable's rounding (default: floor)
 ```
 
-- A variable with a `formula` uses it as the first `base` candidate; its `default` applies
-  only when nothing contributes and there is no formula.
+- A variable with a `formula` uses it as a `base` candidate. Its `default` is the base when
+  nothing contributes a base: `speed` (default 6) with a gnome's `add: -1` is 5. Provenance
+  marks a value as defaulted only when nothing contributed at all.
 - Dice values fold by adding dice and constants (`1d8 + str`); `base` competition between
   dice compares averages. `mul` on dice multiplies the constant part and the dice count.
-- Booleans accept `set` only.
+- Booleans accept `set` only; a boolean `formula` acts as a `set` (so `bloodied` is derived).
+- Values are type-checked against the variable: dice into an integer variable, or a boolean
+  into a number, is a diagnostic and the contribution is skipped. Nothing crashes the sheet.
 
 Nimble Armor: the template contributes `base: dex` (unarmored); each armor contributes its
 own `base` with `when: equipped`; shields contribute `armor.bonus add: n`. Highest base wins,
@@ -113,6 +117,7 @@ resources:
   - id: mana
     max: mana.max                  # expression; usually a declared variable
     floor: 0                       # optional lower bound (default 0)
+    start: max                     # optional: value when the character has none yet; "max" (default) or a number (Wounds: 0)
     when: mana.max > 0             # optional: resource exists only when true
     refresh:
       - {on: safe-rest, to: max}   # set to max
@@ -121,7 +126,10 @@ resources:
 ```
 
 `<id>.current` is readable in expressions. Refresh rules run in declaration order when the
-named **moment** occurs. A refresh naming an undeclared moment is an error.
+named **moment** occurs. A refresh naming an undeclared moment is an error. A resource exists on
+a character only when its declaring document is attached (the template, or an attached class,
+ancestry, feature) and its `when` holds. A `max` that evaluates to dice (Elemental Surge at
+level 10: `wil + 1d4`) is kept as dice; a `to: max` refresh then asks the consumer to roll it.
 
 Nimble core resources: `hp` (max `hp.max`, floor 0), `temp_hp`, `wounds` (max `wounds.max`;
 Wounds count **up**, so "heal a Wound" is `add: -1`), `hit_dice` (max `hit_dice.max`),

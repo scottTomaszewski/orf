@@ -2,6 +2,7 @@ import type { Document } from "./document.js";
 import { DocumentError } from "./document.js";
 import { extractInlineExpressions, extractReferences } from "./expr-refs.js";
 import { DOC_ID_RE, OPS, RETIRED_OPS, isLookup, type Diagnostic, type Registry } from "./registry.js";
+import { parse, ParseError } from "./expr/parser.js";
 
 const STATS = ["str", "dex", "int", "wil"];
 const RESERVED = ["id", "type", "system", "name", "effects", "grants", "choices", "variables", "resources", "requires", "tags", "version"];
@@ -36,14 +37,16 @@ export function lintDocument(doc: Document, registry: Registry): Diagnostic[] {
   // Reserved list-valued properties must be lists
   for (const k of ["effects", "grants", "tags", "variables", "resources", "members"]) if (k in fm && !Array.isArray(fm[k])) err(`${k} must be a list`);
   if ("choices" in fm && fm.type !== "character" && !Array.isArray(fm.choices)) err(`choices must be a list`);
+  if (fm.type === "functions") err(`helper functions (type: functions) are not implemented yet; the engine would report them as unknown functions`);
   if ("handlers" in fm) err(`handlers were removed from the format: rest, damage, and wound procedures live in the engine's system module, not in content`);
 
   const resolveVar = (id: string): string | undefined => (registry.variables.has(id) ? id : registry.aliases.get(id));
 
   const checkExpression = (expr: string, context: string, line?: number, opts: ExprOpts = {}) => {
-    let depth = 0;
-    for (const ch of expr) { if (ch === "(") depth++; else if (ch === ")") depth--; if (depth < 0) break; }
-    if (depth !== 0) { err(`unbalanced parentheses in "${context}"`, line); return; }
+    try { parse(expr); } catch (e) {
+      if (e instanceof ParseError) { err(`syntax error in "${context}": ${e.message}`, line); return; }
+      throw e;
+    }
     const refs = extractReferences(expr);
     const consumedArgs = new Set<string>();
     const isItem = ITEM_TYPES.includes(String(fm.type));
@@ -127,7 +130,12 @@ export function lintDocument(doc: Document, registry: Registry): Diagnostic[] {
         if (def.ops && !def.ops.includes(ops[0])) err(`${label}: op "${ops[0]}" not allowed on ${canon} (allowed: ${def.ops.join(", ")})`);
       }
     }
-    for (const op of ops) checkValue(e[op], `${label}.${op}`, opts);
+    for (const op of ops) {
+      checkValue(e[op], `${label}.${op}`, opts);
+      const def = typeof e.target === "string" ? registry.variables.get(resolveVar(e.target) ?? "") : undefined;
+      if (def && typeof e[op] === "boolean" && def.type !== "boolean") err(`${label}.${op}: ${def.id} is ${def.type}, not boolean`);
+      if (def && typeof e[op] === "number" && def.type === "boolean") err(`${label}.${op}: ${def.id} is boolean, not a number`);
+    }
     for (const k of ["when", "source", "duration", "note"]) if (k in e && typeof e[k] !== "string") err(`${label}.${k} must be a string`);
     if (typeof e.when === "string") checkExpression(e.when, `when: ${e.when}`, undefined, opts);
   };
@@ -160,12 +168,14 @@ export function lintDocument(doc: Document, registry: Registry): Diagnostic[] {
     if (!isObj(raw)) { err(`resources[${i}] must be a mapping`); continue; }
     if (typeof raw.max === "string") checkExpression(raw.max, `resources[${i}].max: ${raw.max}`);
     if (typeof raw.when === "string") checkExpression(raw.when, `resources[${i}].when: ${raw.when}`);
+    if ("start" in raw && raw.start !== "max" && typeof raw.start !== "number") err(`resources[${i}].start must be "max" or a number`);
     if ("refresh" in raw && !Array.isArray(raw.refresh)) err(`resources[${i}].refresh must be a list`);
     for (const [j, rr] of asArray(raw.refresh).entries()) {
       if (!isObj(rr)) { err(`resources[${i}].refresh[${j}] must be a mapping`); continue; }
       for (const k of Object.keys(rr)) if (!REFRESH_KEYS.has(k)) err(`resources[${i}].refresh[${j}]: unknown key "${k}"`);
       if (typeof rr.on !== "string" || !registry.events.has(rr.on)) err(`resources[${i}].refresh[${j}]: unknown event "${String(rr.on)}" (declared: ${[...registry.events.keys()].join(", ")})`);
       if ("to" in rr && rr.to !== "max" && typeof rr.to !== "number") err(`resources[${i}].refresh[${j}].to must be "max" or a number`);
+      if (rr.to === "max" && !("max" in raw)) err(`resources[${i}].refresh[${j}]: "to: max" on a resource with no max (${String(raw.id)})`);
       if ("add" in rr && typeof rr.add !== "number") err(`resources[${i}].refresh[${j}].add must be a number`);
       if (!("to" in rr) && !("add" in rr)) err(`resources[${i}].refresh[${j}] needs "to" or "add"`);
     }
@@ -235,7 +245,11 @@ export function lintDocument(doc: Document, registry: Registry): Diagnostic[] {
       refOfType(e.id, `equipment[${i}]`, ITEM_TYPES, "an item");
     }
     if (!isObj(fm.state)) err(`character missing "state"`);
-    else for (const k of Object.keys(fm.state)) if (k !== "conditions" && !registry.resources.has(k)) err(`state.${k}: not a declared resource (declared: ${[...registry.resources.keys()].join(", ")})`);
+    else for (const k of Object.keys(fm.state)) {
+      if (k === "conditions" || registry.resources.has(k)) continue;
+      if (registry.variables.get(k)?.type === "boolean") continue;
+      err(`state.${k}: not a declared resource or boolean variable (resources: ${[...registry.resources.keys()].join(", ")})`);
+    }
   }
 
   // Rule 7: class-level

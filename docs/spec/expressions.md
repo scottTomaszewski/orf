@@ -1,6 +1,7 @@
 # Expression and condition language (draft, revised 2026-10-18)
 
-Status: draft for the readability gate. Changes freely until the conformance corpus exists.
+Status: implemented in `src/expr/` (parser, evaluator, values); pinned by the language-neutral corpus
+`conformance/expressions.json` (run by `src/expr/conformance.test.ts`). Changes go through the corpus first.
 Design context: `../superpowers/specs/2026-10-18-open-rules-format-design.md` §7.
 
 One grammar serves three places: `{{ }}` inline in prose and property values, effect operation

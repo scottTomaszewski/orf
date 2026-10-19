@@ -13,10 +13,23 @@ Party Creator License. Nimble TTRPG © Nimble Co.
   variables used only by two insurance tests.
 - `examples/nimble/` classes, features, items, ancestries, backgrounds, a sample character, and
   the torture test (`torture-test/README.md` is the review packet).
-- `src/` document parser, registry, linter, CLI.
+- `src/` document parser, registry, linter, expression language (`src/expr/`), fold, character
+  assembly, the engine (`evaluateCharacter`), moments, the Nimble system module
+  (`src/systems/nimble.ts`), CLI. `conformance/expressions.json` pins the grammar.
 
 ```bash
 npm install
-npm test          # parser, registry, linter, and "every example lints clean"
+npm test          # parser, evaluator, corpus, fold, assembly, engine, moments, Nimble module, linter
 npm run lint-docs # lint the Nimble tree and the 5e insurance tree
+npx tsx src/cli.ts sheet scott.characters.pip systems/nimble examples/nimble   # Pip, with provenance
 ```
+
+## What the engine does and does not do
+
+It turns content documents plus a character document into numbers with provenance: every
+variable's value and the contributions behind it, every resource's current and max, and
+diagnostics instead of crashes (unknown names, cycles, unmet requirements, shadowed values).
+It applies **moments** (rests, encounter start/end, turn end, `gain-wound`, `full-hp`) to
+resource refresh rules. The Nimble module implements what *happens* (damage, healing, Field
+and Safe Rests, Dying, Initiative) in code, once, for every tool. The engine never rolls dice;
+it keeps them symbolic (`1d8 - 1`) and consumers supply rolls. Content never scripts.

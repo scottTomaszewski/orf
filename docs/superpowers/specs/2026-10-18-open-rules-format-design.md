@@ -508,10 +508,14 @@ notice, in its own directory with its own LICENSE note.
 conformance corpus. Sheet as a web app installable to a phone home screen. Framework, editor,
 state library, hosting are the builder's.
 
-- **Engine**: document parser, registry, fold (with lookups), expression evaluator
-  (compile/roll), resources and moments, choices, provenance, diagnostics.
-- **Nimble system module**: damage, heal, Catch Breath, Make Camp, Safe Rest, Initiative,
-  Dying, wound gain; reads the steering variables; fires `gain-wound` and `full-hp`.
+- **Engine** (`src/`): `document.ts` parser, `registry.ts`, `lint.ts`, `expr/` (parser,
+  evaluator, values), `fold.ts` (stacking, set shadowing, provenance), `character.ts`
+  (assembly: template docs, ancestry, background, class levels, grants, choices, subclasses,
+  equipment), `engine.ts` (`evaluateCharacter` → `Sheet`: lazy cycle-checked fold, predicates,
+  resources, `render`), `moments.ts` (refresh rules).
+- **Nimble system module** (`src/systems/nimble.ts`): damage, heal, Catch Breath, Make Camp,
+  Safe Rest, Initiative, turn and encounter ends, Dying, wound gain; reads the steering
+  variables; fires `gain-wound` and `full-hp`. Takes rolls as arguments; never rolls.
 - **Sheet**: create, play, level-up views (§3); provenance hover; Reader view of any attached
   document; content folder/upload for homebrew; license notice. **UI style (decision, Scott):
   the High-Fantasy Steel design language from Steel Compendium** (workspace `DESIGN.md`:
@@ -558,9 +562,13 @@ Each step gated by the one before.
 1. **Torture test on paper** (§7.3) in proposed syntax, linted for shape and references.
    **Gate: Scott judges readability.** Round 1 (2026-10-18): approved the value layer,
    rejected the event layer; this revision is the result. Round 2: the regenerated packet.
-2. **Grammar spec and conformance corpus** (expressions, predicates, lookups).
+2. **Grammar spec and conformance corpus** (expressions, predicates, lookups). **Done
+   2026-10-18**: `src/expr/`, `conformance/expressions.json` (63 cases).
 3. **Engine**: parser, registry, fold, evaluator, resources and moments, choices,
-   provenance; the Nimble system module.
+   provenance; the Nimble system module. **Done 2026-10-18** (plan
+   `../plans/2026-10-18-phase2-engine.md`): `src/fold.ts`, `src/character.ts`, `src/engine.ts`,
+   `src/moments.ts`, `src/systems/nimble.ts`; `npx tsx src/cli.ts sheet scott.characters.pip
+   systems/nimble examples/nimble` prints Pip with provenance.
 4. **Nimble package**: core, Mage, The Cheat, Oathsworn, Zephyr, ancestries, backgrounds, armor and weapons.
 5. **Sheet**: create → play → level-up, phone-first, license notice, homebrew folder.
 6. **Table test**: Scott's game for a few sessions; fix what hurts.

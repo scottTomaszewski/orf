@@ -155,7 +155,7 @@ test("effects given as a mapping, and unknown effect keys, are errors", () => {
 
 test("a swallowed {{ }} (mapping with null value) and unbalanced parentheses are errors", () => {
   expect(lintDocument(content({ damage: { "{ 1d4 + dex }": null } }), reg)[0].message).toMatch(/damage.*looks like an unquoted \{\{/);
-  expect(lintDocument(content({ effects: [{ target: "wounds.max", add: "if(dex > 1" }] }), reg).map((d) => d.message).join("\n")).toMatch(/unbalanced/);
+  expect(lintDocument(content({ effects: [{ target: "wounds.max", add: "if(dex > 1" }] }), reg).map((d) => d.message).join("\n")).toMatch(/syntax error.*expected "\)"/);
 });
 
 test("grants on class and subclass docs, grants_by_level, and choice effect/when are checked", () => {
@@ -265,4 +265,22 @@ test("effects accept a note; variables accept a description", () => {
   expect(diagnostics).toEqual([]);
   expect(registry.variables.get("x.y")?.description).toBe("A longer explanation shown as a tooltip.");
   expect(lintDocument(d, registry)).toEqual([]);
+});
+
+test("expressions that do not parse are syntax errors with a column", () => {
+  const msgs = lintDocument(content({ effects: [{ target: "wounds.max", add: "1 +" }] }), reg).map((d) => d.message).join("\n");
+  expect(msgs).toMatch(/syntax error.*column 4/);
+  expect(msgs).not.toMatch(/unknown identifier/);
+});
+
+test("character state may hold boolean variables (dying, in_wilderness) as well as resources", () => {
+  const ch = doc("pip.md", { id: "scott.characters.pip", type: "character", system: "nimble", name: "Pip", stats: { str: 0, dex: 0, int: 0, wil: 0 }, state: { hp: 3, dying: true, ki: 1 } });
+  const msgs = lintDocument(ch, reg).map((x) => x.message).join("\n");
+  expect(msgs).toMatch(/ki/);
+  expect(msgs).not.toMatch(/dying/);
+});
+
+test("refresh to: max on a resource with no max is an error", () => {
+  const d = content({ resources: [{ id: "x", refresh: [{ on: "safe-rest", to: "max" }] }] });
+  expect(lintDocument(d, buildRegistry([...base, d]).registry).map((x) => x.message).join("\n")).toMatch(/refresh\[0\].*to: max.*no max/);
 });

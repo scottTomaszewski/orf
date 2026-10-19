@@ -1,8 +1,37 @@
 import { loadDocumentsLenient } from "./document.js";
+import { evaluateCharacter } from "./engine.js";
+import { formatValue } from "./expr/value.js";
 import { lintAll } from "./lint.js";
 import { buildRegistry, type Diagnostic } from "./registry.js";
 
+/** `sheet <character-id> <dirs...>`: print a character's variables with provenance, resources, diagnostics. */
+function sheet(characterId: string, dirs: string[]): number {
+  const { docs, errors } = loadDocumentsLenient(dirs.length ? dirs : ["systems", "examples"]);
+  for (const e of errors) console.log(`${e.path}: ${e.message}`);
+  const { registry, diagnostics: regDiags } = buildRegistry(docs);
+  const byId = new Map(docs.map((d) => [String(d.frontmatter.id), d]));
+  const character = byId.get(characterId);
+  if (!character) { console.log(`no document with id "${characterId}"`); return 1; }
+  const s = evaluateCharacter(character, registry, byId);
+  for (const id of [...s.variables.keys()].sort()) {
+    const v = s.variables.get(id)!;
+    console.log(`${id} = ${formatValue(v.value)}  (${v.name})`);
+    for (const c of v.provenance.contributions) console.log(`  ← ${c.op} ${formatValue(c.value)} from ${c.origin}${c.whenText ? ` when ${c.whenText}` : ""}`);
+    for (const c of v.provenance.shadowed) console.log(`  ✗ ${c.op} ${formatValue(c.value)} from ${c.origin} (shadowed by set)`);
+    for (const c of v.provenance.dropped) console.log(`  ✗ ${c.op} ${formatValue(c.value)} from ${c.origin} (same source, lower)`);
+  }
+  console.log("");
+  for (const id of [...s.resources.keys()].sort()) {
+    const r = s.resources.get(id)!;
+    console.log(`${id}: ${r.current}${r.max !== undefined ? `/${r.max}` : ""}`);
+  }
+  const all = [...regDiags, ...s.diagnostics];
+  if (all.length) { console.log(""); for (const d of all) console.log(`${d.severity === "warning" ? "warning: " : ""}${d.path}: ${d.message}`); }
+  return all.some((d) => d.severity !== "warning") ? 1 : 0;
+}
+
 export function main(argv: string[]): number {
+  if (argv[0] === "sheet") return sheet(argv[1] ?? "", argv.slice(2));
   const dirs = argv.length ? argv : ["systems", "examples"];
   const diagnostics: Diagnostic[] = [];
   const { docs, errors } = loadDocumentsLenient(dirs);
