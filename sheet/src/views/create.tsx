@@ -30,7 +30,7 @@ function Picker({ title, name, options, value, onPick }: { title: string; name: 
   const focused = options.find((o) => o.id === value);
   return (
     <Panel title={title}>
-      <div class="row" role="radiogroup" aria-label={title}>
+      <div class="cards" role="radiogroup" aria-label={title}>
         {options.map((o) => (
           <label key={o.id} class={`steel-btn pick${value === o.id ? " pick--on" : ""}`}>
             <input type="radio" name={name} value={o.id} checked={value === o.id} onChange={() => onPick(o.id)} /> {o.name}
@@ -99,7 +99,7 @@ function CreateForm({ docs, storage }: { docs: Map<string, Document>; storage: S
       <Picker title="Ancestry" name="ancestry" options={opts.ancestries} value={ancestryId.value} onPick={(v) => (ancestryId.value = v)} />
       <Picker title="Background" name="background" options={opts.backgrounds} value={backgroundId.value} onPick={(v) => (backgroundId.value = v)} />
       <Panel title="Stats">
-        <div class="row" role="radiogroup" aria-label="Stat array">
+        <div class="cards" role="radiogroup" aria-label="Stat array">
           {opts.statArrays.map((a) => (
             <label key={a.id} class={`steel-btn pick${arrayId.value === a.id ? " pick--on" : ""}`}>
               <input type="radio" name="array" value={a.id} checked={arrayId.value === a.id} onChange={() => { arrayId.value = a.id; placed.value = { str: "", dex: "", int: "", wil: "" }; }} /> {a.name} ({a.values.map((v) => (v >= 0 ? `+${v}` : v)).join(" / ")})

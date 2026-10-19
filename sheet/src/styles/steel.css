@@ -42,11 +42,14 @@ hr.steel::after { content: "◆"; position: absolute; left: 50%; top: 50%; trans
 .steel-h1, .steel-h2 { font-family: var(--font-display); font-weight: var(--display-weight); letter-spacing: 0; text-transform: uppercase; line-height: 1.05; margin: 0; color: var(--fg); text-shadow: var(--fx-emboss); }
 .steel-h1 { font-size: calc(1.5rem * var(--display-scale)); }
 .steel-h2 { font-size: calc(1.15rem * var(--display-scale)); }
+@media (min-width: 800px) { .steel-h1 { font-size: calc(1.9rem * var(--display-scale)); } }
 .steel-label { font-family: var(--font-sub); font-weight: var(--sub-weight); font-variant: small-caps; letter-spacing: .06em; font-size: .78rem; color: var(--fg-2); text-transform: lowercase; }
 .steel-mono { font-family: var(--font-mono); font-variant-numeric: tabular-nums; }
 
 .steel-panel { background: var(--fx-card-bg); border: 1px solid var(--fx-metal-line); border-radius: var(--radius); box-shadow: var(--fx-bevel); padding: .75rem .9rem; }
-.steel-panel > .steel-panel__title { display: flex; align-items: baseline; justify-content: space-between; gap: .5rem; margin-bottom: .5rem; }
+.steel-panel > .steel-panel__title { display: flex; align-items: baseline; justify-content: space-between; gap: .5rem; margin-bottom: .55rem; padding-bottom: .3rem; border-bottom: 1px solid var(--fx-metal-faint); }
+.steel-panel > .steel-panel__title > .steel-label { font-size: .82rem; }
+@media (min-width: 800px) { .steel-panel { padding: .9rem 1.1rem; } }
 .steel-panel--hp { border-color: color-mix(in srgb, var(--sem-hp) 55%, var(--fx-metal-line)); }
 .steel-panel--mana { border-color: color-mix(in srgb, var(--sem-mana) 55%, var(--fx-metal-line)); }
 .steel-panel--wound { border-color: color-mix(in srgb, var(--sem-wound) 55%, var(--fx-metal-line)); }
@@ -57,6 +60,7 @@ hr.steel::after { content: "◆"; position: absolute; left: 50%; top: 50%; trans
 .steel-btn:active { transform: none; }
 .steel-btn:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
 .steel-btn--primary { border-color: var(--accent); color: var(--accent); }
+.steel-btn--primary:hover { background: var(--accent-soft); }
 .steel-btn:disabled { opacity: .45; cursor: not-allowed; transform: none; }
 
 /* Stepper: bevelled − / + framing a sunken well; always visible (DESIGN.md rule 9) */
