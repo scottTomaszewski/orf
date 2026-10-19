@@ -1,7 +1,12 @@
-# orf (placeholder name)
+# ORF: Open Rules Format
 
 An open, system-agnostic TTRPG content format and reference engine, built first as a free
-character sheet for Nimble. Design: `docs/superpowers/specs/2026-10-18-open-rules-format-design.md`.
+character sheet for Nimble (`sheet/`, **ORF Sheet for Nimble**). Design:
+`docs/superpowers/specs/2026-10-18-open-rules-format-design.md`.
+
+**Every ORF document is a Markdown file with YAML frontmatter.** Any Markdown tool renders it
+(Obsidian shows the properties as a table and the body as prose); ORF only adds meaning to a few
+frontmatter keys and to `{{ }}` spans in text. Writing content: [`docs/guide/writing-content.md`](docs/guide/writing-content.md).
 
 Nimble content in this repository is an independent product published under the Nimble 3rd
 Party Creator License. Nimble TTRPG © Nimble Co.

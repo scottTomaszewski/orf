@@ -6,8 +6,9 @@ day to Nimble-first** after Scott's product decision; revision confirmed by Scot
 2026-10-18 after Scott's first gate review** ("describe, don't script": handlers and `transfer`
 removed, lookups added, clamp ops renamed, labels first-class; §4.1). Second gate packet:
 `examples/nimble/torture-test/README.md`. Tracker:
-Linear SC-451 (project "Open Rules Format"). "ORF" / "Open Rules Format" is a **placeholder
-name**; nothing depends on it.
+Linear SC-451 (project "Open Rules Format"). "ORF" / "Open Rules Format" began as a placeholder
+name; **settled as the name 2026-10-19 (Scott)**: descriptive, not flashy. The sheet is "ORF Sheet
+for Nimble".
 
 Companion research:
 - [`../research/2026-10-18-prior-art-survey.md`](../research/2026-10-18-prior-art-survey.md):
@@ -260,6 +261,13 @@ has reached, or via a choice), its `when` holds (on an item, `when: equipped` or
 The one authoring format with an ecosystem (Obsidian, Hugo, static-site tools); keeps Steel
 Compendium's lessons; works as plain files on day one. Cost: "computed value", "custom field",
 "effect", "resource" semantics are defined by this project, since Markdown has none.
+
+**Guarantee (decision, Scott, 2026-10-19): ORF is a strict superset of Markdown.** Every ORF
+document is a valid Markdown file with a YAML frontmatter block, and renders acceptably in any
+Markdown tool that ignores the format: the properties show as a table, `{{ expr | display }}`
+spans show their display text (or the expression when there is none). Nothing in the format may
+require a non-Markdown construct. Content should use the display form wherever the raw expression
+would read badly in a plain renderer.
 
 ## 6. The effects model
 
@@ -585,13 +593,14 @@ Each step gated by the one before.
 
 For Scott:
 
-- The project's name.
 - Confirm "thief" means The Cheat.
 - Licence for the specification text (code MIT; Nimble content under the Nimble notice).
 
 Settled 2026-10-18 by Scott's gate review: handlers out (engine module), `transfer` →
 `when: equipped`, lookups in, `min`/`max` → `at_least`/`at_most`, the renames
 (`oathsworn.lay_on_hands.pool`, `hit_die.heal.maximized`), descriptions and notes.
+Settled 2026-10-19 by Scott: the name (ORF, Open Rules Format); the Markdown-superset guarantee
+(§5.4); the interest test is creator adoption (§1).
 
 Builder's calls, flagged: exact PEG for `when`; `wil d8` sugar; the hosted character store;
 framework and hosting; how the sheet renders provenance on a phone.

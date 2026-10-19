@@ -1,4 +1,4 @@
-# Nimble Sheet (placeholder name)
+# ORF Sheet for Nimble
 
 A free, phone-first character sheet for Nimble, driven entirely by the content documents in
 `../systems/nimble` and `../examples/nimble`. No accounts, no server: characters live in this
@@ -6,7 +6,7 @@ browser, export as `.md`, and travel as share links.
 
 This app is free to use for anyone who already owns the content, is trying the system out, or
 cannot afford to buy it right now. If you enjoy Nimble and are able, please support the game by
-purchasing the official content at nimbleRPG.com. Nimble Sheet is an independent product
+purchasing the official content at nimbleRPG.com. ORF Sheet for Nimble is an independent product
 published under the Nimble 3rd Party Creator License. Nimble TTRPG © Nimble Co.
 
 ## Run

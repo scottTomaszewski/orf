@@ -4,7 +4,7 @@ import { useContext, useEffect, useMemo } from "preact/hooks";
 import { fromShareLink, localCharacterStore } from "./character-store.js";
 import { loadContent, type HomebrewStore, type Loaded } from "../../src/content-store.js";
 import { AppContext, type AppServices } from "./app-context.js";
-import { PRODUCT_NAME } from "./notice.js";
+import { SHORT_NAME } from "./notice.js";
 import { navigate, parseHash, route, type Route } from "./router.js";
 import { AboutView } from "./views/about.js";
 import { CreateView } from "./views/create.js";
@@ -45,7 +45,7 @@ export function App({ loader, homebrew, storage, rng = Math.random }: { loader: 
     <AppContext.Provider value={services}>
       <div class="app">
         <header class="app__header">
-          <span class="steel-h1">{PRODUCT_NAME}</span>
+          <span class="steel-h1">{SHORT_NAME}</span>
           <button type="button" class="steel-btn" onClick={toggleTheme} aria-label="toggle theme">{theme.value === "slate" ? "☾" : "☀"}</button>
         </header>
         <nav class="app__tabs" role="tablist" aria-label="views">
