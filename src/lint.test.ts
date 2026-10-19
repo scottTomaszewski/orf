@@ -42,6 +42,11 @@ test("clean document has no diagnostics", () => {
   expect(lintDocument(content({ effects: [{ target: "wounds.max", add: 1, when: "not equipped(armor)" }] }, "You have {{ wounds.max }} Wounds."), reg)).toEqual([]);
 });
 
+test("package ids are bare; content ids are dotted", () => {
+  expect(lintDocument(doc("p.md", { id: "nimble", type: "package", system: "nimble", name: "Nimble" }), reg)).toEqual([]);
+  expect(lintDocument(doc("p.md", { id: "nimble", type: "ancestry", system: "nimble", name: "Nimble" }), reg)[0].message).toMatch(/dotted/);
+});
+
 test("missing id/type/system/name are reported", () => {
   const d = lintDocument(doc("n.md", { id: "bad id" }), reg);
   expect(d.map((x) => x.message).join("\n")).toMatch(/id.*bad id/);

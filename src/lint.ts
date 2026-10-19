@@ -17,7 +17,8 @@ export function lintDocument(doc: Document, registry: Registry): Diagnostic[] {
   const err = (message: string, line?: number) => out.push({ path: doc.path, message, line });
 
   // Rule 1: identity
-  if (typeof fm.id !== "string" || !DOC_ID_RE.test(fm.id)) err(`id missing or malformed: "${String(fm.id)}" (want dotted lowercase like nimble.ancestries.dwarf)`);
+  const idOk = typeof fm.id === "string" && (fm.type === "package" ? /^[a-z0-9-]+$/.test(fm.id) : DOC_ID_RE.test(fm.id));
+  if (!idOk) err(`id missing or malformed: "${String(fm.id)}" (want ${fm.type === "package" ? "a bare package id like nimble" : "dotted lowercase like nimble.ancestries.dwarf"})`);
   for (const k of ["type", "name"]) if (typeof fm[k] !== "string" || fm[k] === "") err(`missing "${k}"`);
   if (typeof fm.system !== "string") err(`missing "system"`);
   else if (registry.packages.size > 0 && fm.type !== "package") {
