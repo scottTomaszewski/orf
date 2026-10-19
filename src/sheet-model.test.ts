@@ -1,5 +1,6 @@
 import { expect, test } from "vitest";
-import { loadDocuments, type Document } from "./document.js";
+import { type Document } from "./document.js";
+import { loadDocuments } from "./document-fs.js";
 import { buildRegistry } from "./registry.js";
 import { evaluateCharacter } from "./engine.js";
 import { applyLevelUp, creationOptions, levelUpPrompts, newCharacter, rollDice, skillRows, spellsKnown } from "./sheet-model.js";

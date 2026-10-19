@@ -1,6 +1,6 @@
 import { readFileSync } from "node:fs";
 import { expect, test } from "vitest";
-import { listDocumentFiles } from "./document.js";
+import { listDocumentFiles } from "./document-fs.js";
 import { evaluateCharacter } from "./engine.js";
 import { loadContent, memoryHomebrewStore, type ContentFile } from "./content-store.js";
 

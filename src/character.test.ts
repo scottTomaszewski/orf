@@ -1,5 +1,5 @@
 import { expect, test } from "vitest";
-import { loadDocuments } from "./document.js";
+import { loadDocuments } from "./document-fs.js";
 import { buildRegistry } from "./registry.js";
 import { assembleCharacter } from "./character.js";
 
