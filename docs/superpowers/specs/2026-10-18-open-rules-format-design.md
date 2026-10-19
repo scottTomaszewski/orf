@@ -191,11 +191,11 @@ id: scott.characters.pip
 type: character
 system: nimble@2          # package revision; see §8
 name: Pip
-stats: {str: -1, dex: 2, int: 3, wil: 0}
+stats: {str: -1, dex: 2, int: 2, wil: 0}   # creation array; level-up bumps are choice effects
 ancestry: nimble.ancestries.gnome
 background: nimble.backgrounds.scholar
 classes: [{id: nimble.classes.mage, level: 4}]
-skills: {arcana: 3, lore: 2, examination: 1, perception: 2}
+skills: {arcana: 3, lore: 2, examination: 1, perception: 1}
 levels:                    # per-level history; HP is a sum of these
   - {level: 1, hp: 10}
   - {level: 2, hp: 4, source: roll}

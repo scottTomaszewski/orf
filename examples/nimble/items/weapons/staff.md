@@ -5,7 +5,6 @@ system: nimble
 name: Staff
 damage: "{{ 1d6 + str }}"
 slots: 1
-effects:
-  - {target: crit.allowed, set: false, when: "not proficient(weapon)", transfer: equipped, source: unproficient-weapon}
+effects: []
 ---
-Deals {{ 1d6 + str }}. A non-proficient wielder cannot crit (CR2 p.32).
+Deals {{ 1d6 + str }}. A non-proficient wielder cannot crit (CR2 p.32); not encoded, because `crit.allowed` would be character-wide and the rule is per weapon (gap).

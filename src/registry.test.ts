@@ -100,3 +100,19 @@ test("slots carry their options list", () => {
   const { registry } = buildRegistry([cl]);
   expect(registry.slots.get("nimble.classes.mage.level-3.school")?.options).toEqual(["fire", "ice"]);
 });
+
+test("resource max and floor keep numeric values; bad type/rounding are diagnostics", () => {
+  const d = doc("r.md", { id: "x.r", type: "resources", system: "nimble", name: "r", resources: [{ id: "breath", max: 1, floor: 0, refresh: [] }] });
+  const { registry, diagnostics } = buildRegistry([d]);
+  expect(diagnostics).toEqual([]);
+  expect(registry.resources.get("breath")?.max).toBe(1);
+  const v = doc("v.md", { id: "x.v", type: "variables", system: "nimble", name: "v", variables: [{ id: "a", name: "a", type: "integr" }, { id: "b", name: "b", type: "integer", rounding: "sometimes" }] });
+  const msgs = buildRegistry([v]).diagnostics.map((x) => x.message).join("\n");
+  expect(msgs).toMatch(/integr/);
+  expect(msgs).toMatch(/sometimes/);
+});
+
+test("registry records each document's type", () => {
+  const { registry } = buildRegistry([doc("g.md", { id: "nimble.ancestries.gnome", type: "ancestry", system: "nimble", name: "Gnome" })]);
+  expect(registry.documentTypes.get("nimble.ancestries.gnome")).toBe("ancestry");
+});

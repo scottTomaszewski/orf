@@ -26,7 +26,7 @@ const base = [
     resources: [{ id: "hp", max: "hp.max", refresh: [{ on: "safe-rest", to: "max" }] }, { id: "wounds", max: "wounds.max", refresh: [] }] }),
   doc("ev.md", { id: "nimble.system.events", type: "events", system: "nimble", name: "Events", events: [{ id: "gain-wound", args: ["amount"] }] }),
   doc("pred.md", { id: "nimble.system.predicates", type: "predicates", system: "nimble", name: "Predicates",
-    predicates: [{ id: "equipped", name: "equipped", args: ["armor", "shield"] }, { id: "level", name: "level", args: ["mage"] }] }),
+    predicates: [{ id: "equipped", name: "equipped", args: ["armor", "shield"] }, { id: "level", name: "level", args: ["mage"] }, { id: "has", name: "has", args: [] }] }),
   doc("t.md", { id: "nimble.tables.starting-gold", type: "table", system: "nimble", name: "gold", columns: ["level", "gold"], rows: [[1, 50]] }),
   doc("gnome.md", { id: "nimble.ancestries.gnome", type: "ancestry", system: "nimble", name: "Gnome" }),
   doc("mage.md", { id: "nimble.classes.mage", type: "class", system: "nimble", name: "Mage" }),
@@ -72,7 +72,7 @@ test("unknown target is named", () => {
 });
 
 test("alias, key, and this. resolve; near miss is named with the expression", () => {
-  const d = lintDocument(content({}, "{{ DEX }} {{ key }} {{ this.strength_requirement }} {{ wound.max }}"), reg);
+  const d = lintDocument(content({ strength_requirement: 2 }, "{{ DEX }} {{ key }} {{ this.strength_requirement }} {{ wound.max }}"), reg);
   expect(d).toHaveLength(1);
   expect(d[0].message).toMatch(/unknown identifier "wound\.max" in "\{\{ wound\.max \}\}"/);
   expect(d[0].line).toBe(1);
@@ -165,4 +165,67 @@ test("character: a pick listed in the slot's options is valid", () => {
   const ch = doc("pip.md", { id: "scott.characters.pip", type: "character", system: "nimble", name: "Pip", stats: { str: 0, dex: 0, int: 0, wil: 0 },
     choices: { "nimble.classes.mage.level-3.school": ["fire"], "nimble.classes.mage.level-4.key-stat": ["wil"] }, state: {} });
   expect(lintDocument(ch, reg2)).toEqual([]);
+});
+
+// ---- review fix pass ----
+test("effects given as a mapping, and unknown effect keys, are errors", () => {
+  expect(lintDocument(content({ effects: { target: "wounds.max", add: 1 } }), reg)[0].message).toMatch(/effects must be a list/);
+  expect(lintDocument(content({ effects: [{ target: "wounds.max", add: 1, whn: "dying" }] }), reg)[0].message).toMatch(/effects\[0\].*unknown key "whn"/);
+});
+
+test("a swallowed {{ }} (mapping with null value) and unbalanced parentheses are errors", () => {
+  expect(lintDocument(content({ damage: { "{ 1d4 + dex }": null } }), reg)[0].message).toMatch(/damage.*looks like an unquoted \{\{/);
+  expect(lintDocument(content({ effects: [{ target: "wounds.max", add: "if(dex > 1" }] }), reg).map((d) => d.message).join("\n")).toMatch(/unbalanced/);
+});
+
+test("handlers on a non-events document is an error", () => {
+  expect(lintDocument(content({ handlers: { damage: [] } }), reg)[0].message).toMatch(/handlers.*type: events/);
+});
+
+test("grants on class and subclass docs, grants_by_level, and choice effect/when are checked", () => {
+  const cls = doc("c.md", { id: "x.classes.c", type: "class", system: "nimble", name: "C", grants: ["x.nope"] });
+  expect(lintDocument(cls, reg)[0].message).toMatch(/grants.*x\.nope/);
+  const sub = doc("s.md", { id: "x.subclasses.s", type: "subclass", system: "nimble", name: "S", class: "nimble.classes.mage", grants_by_level: { 7: ["x.nope"] } });
+  expect(lintDocument(sub, reg)[0].message).toMatch(/grants_by_level\[7\].*x\.nope/);
+  const cl = doc("cl.md", { id: "nimble.classes.mage.level-6", type: "class-level", system: "nimble", name: "M6", class: "nimble.classes.mage", level: 6,
+    choices: [{ slot: "k", count: 1, from: { options: ["int"] }, effect: { target: "{{ choice }}", add: "nope" }, when: "levl(mage) > 1" }] });
+  const msgs = lintDocument(cl, reg).map((d) => d.message).join("\n");
+  expect(msgs).toMatch(/nope/);
+  expect(msgs).toMatch(/levl/);
+});
+
+test("character: stat picks must be in the slot's options; skills must be declared; references are type-checked; level 1-20", () => {
+  const regS = buildRegistry([...base, doc("sk.md", { id: "nimble.system.skills", type: "variables", system: "nimble", name: "Skills",
+    variables: [{ id: "skill.arcana.points", name: "a", type: "integer" }] })]).registry;
+  const ch = doc("pip.md", {
+    id: "scott.characters.pip", type: "character", system: "nimble", name: "Pip",
+    stats: { str: 0, dex: 0, int: 0, wil: 0 },
+    ancestry: "nimble.classes.mage",
+    classes: [{ id: "nimble.ancestries.gnome", level: 99 }],
+    skills: { arcana: 3, arcna: 1 },
+    choices: { "nimble.classes.mage.level-4.key-stat": ["dex"] },
+    equipment: [{ id: "nimble.classes.mage", equipped: true }],
+    state: {},
+  });
+  const msgs = lintDocument(ch, regS).map((d) => d.message).join("\n");
+  expect(msgs).toMatch(/ancestry.*not an ancestry/);
+  expect(msgs).toMatch(/classes\[0\].*not a class/);
+  expect(msgs).toMatch(/level.*1-20/);
+  expect(msgs).toMatch(/arcna/);
+  expect(msgs).not.toMatch(/"arcana"/);
+  expect(msgs).toMatch(/key-stat.*dex/);
+  expect(msgs).toMatch(/equipment\[0\].*not an item/);
+});
+
+test("amount/spent/choice resolve only in their contexts; this.x must exist on the document", () => {
+  const d = lintDocument(content({ strength_requirement: 2 }, "{{ amount }} {{ choice }} {{ this.strength_requirement }} {{ this.nope }}"), reg);
+  const msgs = d.map((x) => x.message);
+  expect(msgs.filter((m) => /"amount"|"choice"|"this\.nope"/.test(m))).toHaveLength(3);
+  expect(msgs.filter((m) => /this\.strength_requirement/.test(m))).toHaveLength(0);
+});
+
+test("has() takes a quoted document id and checks it", () => {
+  expect(lintDocument(content({ effects: [{ target: "wounds.max", add: 1, when: 'has("nimble.ancestries.gnome")' }] }), reg)).toEqual([]);
+  expect(lintDocument(content({ effects: [{ target: "wounds.max", add: 1, when: 'has("nimble.ancestries.elf")' }] }), reg)[0].message).toMatch(/elf/);
+  expect(lintDocument(content({ effects: [{ target: "wounds.max", add: 1, when: "has(nimble.ancestries.gnome)" }] }), reg)[0].message).toMatch(/has\(\) needs a quoted/);
 });

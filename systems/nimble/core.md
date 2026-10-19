@@ -17,15 +17,16 @@ variables:
   - {id: hit_die.size, name: your Hit Die, type: integer, default: 6, ops: [base]}
   - {id: hit_die.heal.bonus, name: bonus healing per Hit Die, type: integer, default: 0, ops: [add]}
   - {id: hit_die.heal.always_max, name: Hit Dice always heal their maximum, type: boolean, default: false, ops: [set]}
+  - {id: hit_die.heal.advantage, name: Hit Dice are rolled with advantage, type: boolean, default: false, ops: [set]}
   - {id: speed, name: your Speed, type: integer, default: 6, ops: [add]}
   - {id: mana.max, name: your maximum mana, type: integer, default: 0, ops: [base, add]}
   - {id: spells.tier.max, name: the highest spell tier you can cast, type: integer, default: 0, ops: [base]}
   - {id: inventory.slots, name: your inventory slots, type: integer, formula: 10 + str}
   - {id: languages, name: the number of languages you know, type: integer, formula: 1 + int}
   - {id: initiative.bonus, name: your Initiative bonus, type: integer, formula: dex, ops: [add]}
-  - {id: initiative.floor, name: the minimum you can roll for Initiative, type: integer, default: 0, ops: [max]}
+  - {id: initiative.floor, name: the minimum you can roll for Initiative, type: integer, default: 0, ops: [min]}
   - {id: dying, name: Dying, type: boolean, default: false}
-  - {id: bloodied, name: Bloodied, type: boolean, default: false}
+  - {id: bloodied, name: Bloodied, type: boolean, formula: "hp.current * 2 <= hp.max"}
   - {id: raging, name: Raging, type: boolean, default: false}
   - {id: concentrating, name: Concentrating, type: boolean, default: false}
   - {id: in_wilderness, name: in the wilderness, type: boolean, default: false}

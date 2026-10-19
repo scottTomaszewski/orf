@@ -2,7 +2,7 @@
 
 Fifteen rules written as content documents in the proposed syntax. **Scott judges:** would a Nimble homebrewer read these and nod? Each item shows the rule, the YAML verbatim from the real documents (effects, resources, variables, choices; handlers are linked, not inlined), and what a homebrewer reads it as. Full grammar: `docs/spec/expressions.md`; effects, resources, events: `docs/spec/effects-resources-events.md`; choices: `docs/spec/choices.md`.
 
-Everything here lints: `npm run lint-docs` (116 Nimble documents, 7 in the 5e insurance set) and `npm test` (44 tests).
+Everything here lints: `npm run lint-docs` (122 Nimble documents, 7 in the 5e insurance set) and `npm test` (53 tests). A fresh-context code review of the branch found and the fix pass corrected: a Safe Rest that healed two Wounds, a Dying action cap no handler applied, `full-hp` not firing from Field Rests, Spellweaver as a permanent discount, and the `max`-as-floor mis-encoding; all are now as shown.
 
 ## Armor: unarmored, cloth, mail with DEX cap, plate, shields
 
@@ -50,7 +50,7 @@ effects:
   - {target: armor.bonus, add: 2, transfer: equipped, source: shield}
 ```
 
-**What a homebrewer reads.** The template contributes `armor.base base: dex` as the unarmored floor. Each worn armor contributes its own `base` while equipped; the fold keeps the highest, so no armor-vs-unarmored special case exists. Mail's DEX cap is `min(dex, 2)` inside the formula; Plate's is a flat number. Shields `add` to `armor.bonus`. STR requirements are a `requires: {str: n}` property the engine enforces at equip time.
+**Encoding notes.** The template contributes `armor.base base: dex` as the unarmored floor. Each worn armor contributes its own `base` while equipped; the fold keeps the highest, so no armor-vs-unarmored special case exists. Mail's DEX cap is `min(dex, 2)` inside the formula; Plate's is a flat number. Shields `add` to `armor.bonus`. STR requirements are a `requires: {str: n}` property the engine enforces at equip time.
 
 ## Catch Breath vs Make Camp, with Oozeling and Wild One
 
@@ -58,7 +58,20 @@ effects:
 
 `systems/nimble/events.md`
 
-Handlers are in that file (`handlers:` block); see also `docs/spec/effects-resources-events.md` §5.1.
+```yaml
+  catch-breath:
+    - repeat: hit_dice
+      steps:
+        - {spend: hit_dice, amount: 1}
+        - {restore: hp, amount: "if(hit_die.heal.always_max, hit_die.size, roll(hit_die.size, hit_die.heal.advantage)) + str + hit_die.heal.bonus"}
+    - {when: "hp.current == hp.max", fire: full-hp}
+  make-camp:
+    - repeat: hit_dice
+      steps:
+        - {spend: hit_dice, amount: 1}
+        - {restore: hp, amount: "hit_die.size + str + hit_die.heal.bonus"}
+    - {when: "hp.current == hp.max", fire: full-hp}
+```
 
 `examples/nimble/ancestries/oozeling.md`
 
@@ -71,10 +84,10 @@ effects:
 
 ```yaml
 effects:
-  - {target: hit_die.heal.bonus, add: key, when: in_wilderness, source: wild-one}
+  - {target: hit_die.heal.advantage, set: true, when: in_wilderness, source: wild-one}
 ```
 
-**What a homebrewer reads.** The two formulas live in the template's `catch-breath` and `make-camp` handlers. Content cannot edit handlers; instead the handler reads two template variables, `hit_die.heal.always_max` (Oozeling sets it) and `hit_die.heal.bonus` (Wild One adds KEY when `in_wilderness`). This is the pattern for every 'change how a core rule computes' feature.
+**Encoding notes.** The two formulas live in the template's `catch-breath` and `make-camp` handlers. Content cannot edit handlers; instead the handler reads template variables: `hit_die.heal.always_max` (Oozeling sets it), `hit_die.heal.advantage` (Wild One sets it when `in_wilderness`; 2.0.3 wording), and `hit_die.heal.bonus` (for the second printing's +KEY form). This is the pattern for every 'change how a core rule computes' feature.
 
 ## Mage mana: (INT×3)+LVL, unlocked at level 2
 
@@ -138,7 +151,7 @@ resources:
     refresh: [{on: turn-end, to: max}]
 ```
 
-**What a homebrewer reads.** The template owns one `mana` resource and a `mana.max` variable with no formula of its own. The Mage class contributes `mana.max base: (max(int, 0) * 3) + level when: level(mage) >= 2`. The Oathsworn contributes `wil + level`. A multiclass caster gets the higher base; the rules do not say otherwise.
+**Encoding notes.** The template owns one `mana` resource and a `mana.max` variable with no formula of its own. The Mage class contributes `mana.max base: (max(int, 0) * 3) + level when: level(mage) >= 2`. The Oathsworn contributes `wil + level`. A multiclass caster gets the higher base; the rules do not say otherwise.
 
 ## Elemental Surge: encounter-lifetime mana that scales
 
@@ -174,7 +187,7 @@ resources:
 effects: []
 ```
 
-**What a homebrewer reads.** Encoded as a second resource `mage.surge` with `max` = a dice-typed formula and refresh rules on `encounter-start` (to max) and `encounter-end` (to 0). **Gap:** spending mana should draw from surge first; that needs a `spend` handler rule owned by the class, which content cannot declare in this phase.
+**Encoding notes.** Encoded as a second resource `mage.surge` with `max` = a dice-typed formula and refresh rules on `encounter-start` (to max) and `encounter-end` (to 0). **Gap:** spending mana should draw from surge first; that needs a `spend` handler rule owned by the class, which content cannot declare in this phase.
 
 ## Class pools: Lay on Hands, Judgment Dice, Sneak Attack dice, Bursts of Speed
 
@@ -209,14 +222,6 @@ resources:
 `examples/nimble/classes/cheat.md`
 
 ```yaml
-effects:
-  - {target: key, base: dex, source: class-key}
-  - {target: key, base: int, source: class-key}
-  - {target: secondary, base: wil, source: class-secondary}
-  - {target: secondary, base: str, source: class-secondary}
-  - {target: hit_die.size, base: 6, source: class-hit-die}
-  - {target: save.dex.advantage, add: 1}
-  - {target: save.wil.advantage, add: -1}
 variables:
   - {id: cheat.sneak_attack.dice, name: your Sneak Attack dice, type: dice, formula: "if(level(cheat) >= 17, dice(3, 20), if(level(cheat) >= 15, dice(2, 20), if(level(cheat) >= 11, dice(2, 12), if(level(cheat) >= 9, dice(2, 10), if(level(cheat) >= 7, dice(2, 8), if(level(cheat) >= 3, dice(1, 8), dice(1, 6)))))))"}
 ```
@@ -224,14 +229,6 @@ variables:
 `examples/nimble/classes/zephyr.md`
 
 ```yaml
-effects:
-  - {target: key, base: dex, source: class-key}
-  - {target: key, base: str, source: class-key}
-  - {target: secondary, base: int, source: class-secondary}
-  - {target: secondary, base: wil, source: class-secondary}
-  - {target: hit_die.size, base: 8, source: class-hit-die}
-  - {target: save.dex.advantage, add: 1}
-  - {target: save.int.advantage, add: -1}
 variables:
   - {id: zephyr.bursts.max, name: your Bursts of Speed per encounter, type: integer, formula: "max(dex, 0)", ops: [add]}
 resources:
@@ -247,7 +244,7 @@ resources:
 effects: []
 ```
 
-**What a homebrewer reads.** Lay on Hands: resource with `max: oathsworn.healing.max` (formula `5 * level(oathsworn)`). Judgment Dice: a resource holding 'one set' (max 1) refreshing to 0 at encounter end; die size and count are variables (`oathsworn.judgment.die` nested `if` by level; `oathsworn.judgment.count` default 2, Vengeance adds 1). Sneak Attack: a dice-typed variable with a seven-way nested `if`. Bursts: resource with max `max(dex, 0)` refreshing to max at `encounter-start`. **Gaps:** auto-spend on attack (no attack event), and nested `if` chains read badly; a `steps(level(cheat), {3: 1d8, 7: 2d8, ...})` table-lookup form would be friendlier.
+**Encoding notes.** Lay on Hands: resource with `max: oathsworn.healing.max` (formula `5 * level(oathsworn)`). Judgment Dice: a resource holding 'one set' (max 1) refreshing to 0 at encounter end; die size and count are variables (`oathsworn.judgment.die` nested `if` by level; `oathsworn.judgment.count` default 2, Vengeance adds 1). Sneak Attack: a dice-typed variable with a seven-way nested `if`. Bursts: resource with max `max(dex, 0)` refreshing to max at `encounter-start`. **Gaps:** auto-spend on attack (no attack event), and nested `if` chains read badly; a `steps(level(cheat), {3: 1d8, 7: 2d8, ...})` table-lookup form would be friendlier.
 
 ## Devoted Protector: +3 max Wounds while an ally is nearby
 
@@ -260,7 +257,7 @@ effects:
   - {target: wounds.max, add: 3, when: ally_nearby, source: devoted-protector}
 ```
 
-**What a homebrewer reads.** `wounds.max add: 3 when: ally_nearby`. `ally_nearby` is a player-toggled boolean declared in the template. The engine recomputes `wounds.max` when it flips; what happens to a character whose current Wounds exceed the new max is a rules question the sheet should surface, not decide.
+**Encoding notes.** `wounds.max add: 3 when: ally_nearby`. `ally_nearby` is a player-toggled boolean declared in the template. The engine recomputes `wounds.max` when it flips; what happens to a character whose current Wounds exceed the new max is a rules question the sheet should surface, not decide.
 
 ## Initiative sets first-turn actions; Human +1; Cheat floor of 10
 
@@ -268,7 +265,10 @@ effects:
 
 `systems/nimble/events.md`
 
-Handlers are in that file (`handlers:` block); see also `docs/spec/effects-resources-events.md` §5.1.
+```yaml
+  encounter-start:
+    - {restore: actions, amount: "min(if(dying, actions.dying_cap, 3), if(max(initiative_roll, initiative.floor) >= 20, 3, if(max(initiative_roll, initiative.floor) >= 10, 2, 1))) - actions.current"}
+```
 
 `examples/nimble/ancestries/human.md`
 
@@ -281,10 +281,10 @@ effects:
 
 ```yaml
 effects:
-  - {target: initiative.floor, max: 10, source: cheat}
+  - {target: initiative.floor, min: 10, source: cheat}
 ```
 
-**What a homebrewer reads.** The digit-count mapping is a template handler on `encounter-start`. Human contributes `initiative.bonus add: 1`. The Cheat's floor is `initiative.floor max: 10` on a template variable the handler reads as `max(initiative_roll, initiative.floor)`. A clamp expressed as a `max` contribution reads oddly; the README should ask whether `floor: 10` as an op name would be clearer.
+**Encoding notes.** The digit-count mapping is a template handler on `encounter-start`. Human contributes `initiative.bonus add: 1`. The Cheat's floor is `initiative.floor min: 10` on a template variable the handler reads as `max(initiative_roll, initiative.floor)`. **This was first encoded as `max: 10` by both the plan and the implementer**, because `max` reads as 'raise to'. Under the fold `max` is the upper clamp. The op names mislead; see the gate question.
 
 ## Methodical Spellweaver: −2 mana (min 1) for +1 action
 
@@ -293,12 +293,10 @@ effects:
 `examples/nimble/features/mage/methodical-spellweaver.md`
 
 ```yaml
-effects:
-  - {target: spell.cost.modifier, add: -2, when: "spell.cost.min >= 0", source: methodical-spellweaver}
-  - {target: spell.cost.min, max: 1}
+effects: []
 ```
 
-**What a homebrewer reads.** Declared as contributions to `spell.cost.modifier` (add −2) and `spell.cost.min` (max 1). **Gap:** nothing applies them yet; a `cast` event with a cost handler is Phase 2. The encoding is readable; the mechanics are not yet wired.
+**Encoding notes.** A per-cast option, so it carries **no standing effects**: a −2 that applied to every spell would be wrong. The Mage class declares `spell.cost.modifier` and `spell.cost.min` for a future `cast` event to read. **Gap:** per-cast choices (pay an action, take a discount) need a `cast` event and a way for a feature to offer an option at cast time; neither exists in Phase 1.
 
 ## Dragonborn breath recharges on gaining a Wound; Gnome reroll resets at full HP
 
@@ -321,7 +319,7 @@ resources:
   - {id: gnome.reroll, max: 1, refresh: [{on: full-hp, to: max}, {on: safe-rest, to: max}]}
 ```
 
-**What a homebrewer reads.** Both are resources with two refresh rules; the template declares the `gain-wound` and `full-hp` events and fires them from its `damage` and `heal` handlers. Any content can refresh on any declared event.
+**Encoding notes.** Both are resources with two refresh rules; the template declares the `gain-wound` and `full-hp` events and fires them from its `damage` and `heal` handlers. Any content can refresh on any declared event.
 
 ## Max HP as a per-level history
 
@@ -330,6 +328,12 @@ resources:
 `examples/nimble/characters/pip.md`
 
 ```yaml
+stats: {str: -1, dex: 2, int: 2, wil: 0}   # creation array; the level-4 Key stat bump is a choice effect
+levels:
+  - {level: 1, hp: 10, source: starting}
+  - {level: 2, hp: 4, source: roll}
+  - {level: 3, hp: 6, source: roll}
+  - {level: 4, hp: 5, source: roll}
 choices:
   nimble.classes.mage.level-3.subclass: [nimble.subclasses.mage.control]
   nimble.classes.mage.level-3.elemental-mastery: [fire]
@@ -337,7 +341,7 @@ choices:
   nimble.classes.mage.level-4.key-stat: [int]
 ```
 
-**What a homebrewer reads.** The character document's `levels[]` list records each level's HP gain and its source; `hp.max` folds those entries plus any `add` contributions (Tough-style features). Max HP is therefore history, not a formula of level, which matches the rules exactly.
+**Encoding notes.** The character document's `levels[]` list records each level's HP gain and its source; `hp.max` folds those entries plus any `add` contributions (Tough-style features). Max HP is therefore history, not a formula of level, which matches the rules exactly.
 
 ## Non-proficient armor costs 2 actions to Defend; non-proficient weapons cannot crit
 
@@ -355,11 +359,10 @@ effects:
 `examples/nimble/items/weapons/staff.md`
 
 ```yaml
-effects:
-  - {target: crit.allowed, set: false, when: "not proficient(weapon)", transfer: equipped, source: unproficient-weapon}
+effects: []
 ```
 
-**What a homebrewer reads.** Items contribute `defend.cost add: 1 when: not proficient(mail)` and `crit.allowed set: false when: not proficient(weapon)`, both `transfer: equipped`. Proficiency itself comes from the class document's `armor_proficiency`/`weapon_proficiency` properties, which the `proficient()` predicate reads.
+**Encoding notes.** Armor contributes `defend.cost add: 1 when: not proficient(mail)` with `transfer: equipped`. The weapon half is **not encoded**: a `crit.allowed` flag on the character would turn off crits for every weapon when one unproficient weapon is equipped, and `proficient(weapon)` cannot name which weapon. Proficiency itself comes from the class document's `armor_proficiency`/`weapon_proficiency` properties, which are free text today; `proficient()` needs a declared vocabulary in Phase 2 (gap).
 
 ## Dying: action cap, Wound costs, class overrides
 
@@ -367,7 +370,22 @@ effects:
 
 `systems/nimble/events.md`
 
-Handlers are in that file (`handlers:` block); see also `docs/spec/effects-resources-events.md` §5.1.
+```yaml
+  damage:
+    - {spend: temp_hp, amount: "min(amount, temp_hp.current)"}
+    - {spend: hp, amount: "amount - spent"}
+    - {when: "hp.current == 0 and not dying", fire: gain-wound, amount: 1}
+    - {when: "hp.current == 0 and not dying", set: dying}
+    - {when: "dying and spent == 0 and amount > 0", fire: gain-wound, amount: "if(crit, wound.damage_while_dying + 1, wound.damage_while_dying)"}
+  gain-wound:
+    - {spend: wounds, amount: "-amount"}
+  heal:
+    - {restore: hp, amount: amount}
+    - {when: "hp.current > 0", clear: dying}
+    - {when: "hp.current == hp.max", fire: full-hp}
+  turn-end:
+    - {restore: actions, amount: "if(dying, actions.dying_cap, actions.max) - actions.current"}
+```
 
 `systems/nimble/combat.md`
 
@@ -378,7 +396,7 @@ effects:
     source: unarmored
 ```
 
-**What a homebrewer reads.** The `damage` handler sets `dying` and fires `gain-wound` with `wound.damage_while_dying` (default 2, +1 on crit). `actions.dying_cap` (default 1) is a template variable a class may raise with `base: 2`. None of the four MVP classes override Dying below level 17, so no content document does yet; the hooks exist.
+**Encoding notes.** The `damage` handler sets `dying` and fires `gain-wound` with `wound.damage_while_dying` (default 2, +1 on crit). `turn-end` and `encounter-start` cap actions at `actions.dying_cap` (default 1) while `dying`; a class raises the cap with `base: 2`. `heal` clears `dying` above 0 HP. None of the four MVP classes override Dying below level 17, so no content document does yet. Death at max Wounds is not yet a transition (gap).
 
 ## Spells known = schools × unlocked tier
 
@@ -423,7 +441,7 @@ choices:
   - {slot: elemental-mastery, count: 1, from: {options: [fire, ice, lightning]}, unique: character}
 ```
 
-**What a homebrewer reads.** `spells.tier.max base: floor(level(mage) / 2)` on the class. Known schools are the level-1 grant (Fire, Ice, Lightning) plus choice slots whose options are school names. The sheet lists spells by filtering spell documents on `school in known and tier <= spells.tier.max`; no per-spell selection exists, which matches the rules.
+**Encoding notes.** `spells.tier.max base: floor(level(mage) / 2)` on the class. Known schools are the level-1 grant (Fire, Ice, Lightning) plus choice slots whose options are school names. The sheet lists spells by filtering spell documents on `school in known and tier <= spells.tier.max`; no per-spell selection exists, which matches the rules.
 
 ## 5e insurance: Monk Unarmored Defense vs Mage Armor vs armor
 
@@ -450,7 +468,7 @@ effects:
   - {target: ac.base, base: 16, transfer: equipped, source: armor}
 ```
 
-**What a homebrewer reads.** Same shape as Nimble Armor: three `base` contributions to `ac.base` with `when` clauses; the highest applicable wins. Proves the fold is not Nimble-specific. Lives in `examples/insurance-5e/` with a 12-line `srd5e-mini` template.
+**Encoding notes.** Same shape as Nimble Armor: three `base` contributions to `ac.base` with `when` clauses; the highest applicable wins. Proves the fold is not Nimble-specific. Lives in `examples/insurance-5e/` with a 12-line `srd5e-mini` template.
 
 ## 5e insurance: Bless cast twice does not stack
 
@@ -468,7 +486,7 @@ effects:
   - {target: save.cha, add: 1d4, source: bless}
 ```
 
-**What a homebrewer reads.** One `bless` document contributing `save.* add: 1d4` with `source: bless`. Two instances on a character group by source and the policy `same-source: highest` keeps one. Nothing in the content says 'does not stack'; the system policy does.
+**Encoding notes.** One `bless` document contributing `save.* add: 1d4` with `source: bless`. Two instances on a character group by source and the policy `same-source: highest` keeps one. Nothing in the content says 'does not stack'; the system policy does.
 
 ## Known gaps (honest list)
 
@@ -482,6 +500,10 @@ effects:
 - Distracted (The Cheat) and 'Reach' auras (Oathsworn) are target- or position-state predicates with no model yet.
 - Unproficient-armor Defend cost is on each item (`when: not proficient(mail)`); it belongs in the template once `proficient()` can see the worn item's category.
 - Dueling-style one-weapon conditions (5e) and anything else needing attack objects.
+- Non-proficient weapons cannot crit: not encoded, because a `crit.allowed` flag is character-wide and the rule is per weapon.
+- `proficient()` and `knows()` have thin data sources: class `armor_proficiency` is free text and spell schools are plain documents; both need a declared vocabulary in Phase 2.
+- Death at maximum Wounds is not an event yet.
+- The op names `min`/`max` were misread by both the plan author and the implementer (the Cheat's Initiative floor was first written as `max: 10`, which under the fold is a ceiling). This is the strongest readability signal in the packet; see the gate question below.
 
 ## What you're approving
 
@@ -489,6 +511,8 @@ effects:
 2. **The six-op fold**: `base` competes (highest), `add` sums, `mul` multiplies, `min`/`max` clamp, `set` overrides last and must be allowed by the variable.
 3. **Resources and events as first-class**, with handlers owned by the system template and content influencing them through declared variables (`hit_die.heal.bonus`, `initiative.floor`, `wound.damage_while_dying`).
 4. **The slot model for choices** (`choices:` on class levels; `choices:` map on the character; option lists for stats and schools).
-5. **Identifier convention**: lowercase dotted ids, upper-case aliases, `key`/`secondary`, `this.`, `<resource>.current`; table ids and columns quoted.
+5. **Identifier convention**: lowercase dotted ids, upper-case aliases, `key`/`secondary`, `this.`, `<resource>.current`; table ids, column names and `has()` ids quoted.
+6. **Op naming (open question)**: keep `min`/`max` as the clamp names, or rename to `at_least`/`at_most` (or `floor`/`ceiling`) before any grammar is implemented? The reviewer and the evidence above say rename.
+7. **Step tables**: approve adding a `steps(level(cheat), {1: 1d6, 3: 1d8, 7: 2d8, ...})` form in Phase 2 to replace nested `if` ladders.
 
 **Approve** = the Phase 2 plan is written (grammar + corpus + engine). **Decline** = name the items; the named parts are redesigned before any engine code.

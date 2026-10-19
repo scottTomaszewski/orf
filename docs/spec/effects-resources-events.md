@@ -42,8 +42,14 @@ if any set: value = largest set
 round per the variable's rounding (Nimble: floor)
 ```
 
-If a variable has no `base` contributions, its `default` is the base. If it has none at all,
-the default stands. Empty sets never crash and never become zero unless the default is zero.
+**How `formula`, `default`, and contributions combine.** A variable's `formula` is evaluated
+first and acts as a `base` contribution from the template itself. If there is no formula, the
+`default` is the base. Content `base` contributions compete with that; `add`/`mul`/clamps/`set`
+apply after. Empty sets never crash and never become zero unless the default is zero.
+
+**Dice values.** A resource whose `max` is dice-valued (Mage surge) is refreshed `to: max` by
+asking the consumer to roll; the engine itself never rolls outside handlers. Where the stacking
+policy or a clamp must compare dice (two Bless `1d4`s), it compares by average.
 
 Nimble Armor: the template contributes `armor.base base: dex`; each worn armor contributes its
 own `base` with `transfer: equipped`; shields contribute `armor.bonus add: n`;
@@ -180,10 +186,14 @@ handlers:
 ```
 
 Content influences handlers only through the variables they read: Wild One contributes
-`hit_die.heal.bonus add: key when: in_wilderness`; Oozeling contributes
+`hit_die.heal.advantage set: true when: in_wilderness`; Oozeling contributes
 `hit_die.heal.always_max set: true`; The Cheat's Initiative floor contributes
-`initiative.floor max: 10`, which the template's `encounter-start` applies as
-`max(initiative_roll, initiative.floor)`.
+`initiative.floor min: 10` (a `min` contribution raises the lower clamp), which the template's
+`encounter-start` applies as `max(initiative_roll, initiative.floor)`.
+
+**Op naming is a gate question.** Both the plan's author and the implementer first wrote the
+Cheat floor as `max: 10`, reading `max` as "raise to at least". Under the fold, `max` is the
+*upper* clamp. Candidate renames: `at_least` / `at_most`, or `floor` / `ceiling`.
 
 ## 6. Provenance
 

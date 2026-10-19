@@ -35,7 +35,8 @@ sugar for it.
 8. call `f(a, b)`
 9. parentheses
 
-`/` on integers rounds per the **target variable's** `rounding` (Nimble and 5e: floor). Division
+`/` on integers rounds per the **target variable's** `rounding`; where there is no target (`{{ }}`
+in prose, a `when`), the system's default rounding applies (Nimble and 5e: floor). Division
 where either operand contains dice is an error. Comparison of dice is an error. `and`/`or`
 operate on booleans only; a number is not a boolean.
 
@@ -49,6 +50,7 @@ Built-in, always available:
 | `max(a, b, ...)`, `min(a, b, ...)` | at least two arguments |
 | `if(cond, a, b)` | both branches typed alike |
 | `dice(count, sides)` | a dice value; `count` may be an expression (`dice(wil, 8)`) |
+| `roll(sides, advantage?)` | **handlers only**: one die, rolled by the consumer, with advantage when the second argument is true |
 | `table("id", row_key, "column")` | lookup in a system table: the row whose first column equals `row_key`, returning `column`. Table id and column are quoted strings. Missing row = error. |
 
 System templates may add **helpers** (`type: functions`), each defined as an expression over
@@ -62,7 +64,7 @@ argument vocabulary the linter checks:
 | predicate | Nimble vocabulary |
 |---|---|
 | `equipped(kind)` | `armor shield weapon cloth leather mail plate` |
-| `has(id)` | any document id |
+| `has("id")` | a quoted document id (ids contain hyphens, which identifiers cannot) |
 | `level(class)` | a class short name; returns an integer, so `level(mage) >= 2` |
 | `proficient(thing)` | `armor weapon` and armor categories |
 
@@ -76,7 +78,7 @@ State booleans are ordinary boolean variables set by events and readable anywher
 |---|---|---|
 | `{{ }}` in body or property | none | number, dice, or text |
 | effect `base/add/mul/min/max/set` | `choice` (the picked option, in a choice's `effect`) | number or dice |
-| effect `when`, resource `when`, choice `slotCondition` | none | boolean |
+| effect `when`, resource `when`, choice `when` | none | boolean |
 | variable `formula` | none | number |
 | resource `max` | none | number |
 | event handler steps (template only) | `amount`, `spent`, the event's declared args | per step |
@@ -122,15 +124,17 @@ expressions, host-language escape hatches, floats, implicit boolean coercion.
 
 ```peg
 Expr        <- OrExpr
-OrExpr      <- AndExpr ( _ "or" _ AndExpr )*
-AndExpr     <- NotExpr ( _ "and" _ NotExpr )*
-NotExpr     <- "not" _ NotExpr / CmpExpr
+OrExpr      <- AndExpr ( __ "or" !IdChar __ AndExpr )*
+AndExpr     <- NotExpr ( __ "and" !IdChar __ NotExpr )*
+NotExpr     <- "not" !IdChar __ NotExpr / CmpExpr
 CmpExpr     <- AddExpr ( _ CmpOp _ AddExpr )?
 CmpOp       <- "<=" / ">=" / "==" / "!=" / "<" / ">"
 AddExpr     <- MulExpr ( _ ("+" / "-") _ MulExpr )*
 MulExpr     <- Unary ( _ ("*" / "/") _ Unary )*
 Unary       <- "-" _ Unary / Primary
 Primary     <- Call / DiceSugar / Dice / Integer / String / Bool / Ident / "(" _ Expr _ ")"
+# Word operators and keywords end at a word boundary: `nothing` is an identifier, not `not hing`;
+# `true_damage` is an identifier, not `true` + junk. Word operators require surrounding whitespace.
 Call        <- Name _ "(" _ Args? _ ")"
 Args        <- Expr ( _ "," _ Expr )*
 DiceSugar   <- Ident _ "d" Digits                 # wil d8  ==  dice(wil, 8)
@@ -139,12 +143,14 @@ KeepDrop    <- ("kh" / "kl" / "dh" / "dl") Digits?
 Integer     <- Digits
 Digits      <- [0-9]+
 String      <- '"' [^"]* '"'
-Bool        <- "true" / "false"
+Bool        <- ("true" / "false") !IdChar
 Ident       <- Alias / Scoped / Name
 Alias       <- [A-Z] [A-Z0-9_]*
 Scoped      <- "this." Name
 Name        <- [a-z] [a-z0-9_]* ( "." [a-z] [a-z0-9_]* )*
 _           <- [ \t]*
+__          <- [ \t]+
+IdChar      <- [A-Za-z0-9_.]
 ```
 
 Keywords (`and or not true false`) are excluded from `Name`.

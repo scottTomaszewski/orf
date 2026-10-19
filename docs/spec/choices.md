@@ -47,6 +47,9 @@ document, keyed by level: `grants_by_level: {7: [...], 11: [...], 15: [...]}`.
 
 ## 2. The character records picks
 
+`stats` on a character is the **creation array** (after placement). Stat increases from
+level-up choices are the `effect` of those choices, so they are never written into `stats`.
+
 ```yaml
 choices:
   nimble.classes.mage.level-3.subclass: [nimble.subclasses.mage.control]

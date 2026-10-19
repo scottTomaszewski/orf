@@ -26,7 +26,7 @@ export interface VariableDef {
   declaredIn: string;
 }
 export interface RefreshRule { on: string; to?: string | number; add?: number }
-export interface ResourceDef { id: string; max?: string; floor?: number; refresh: RefreshRule[]; when?: string; declaredIn: string }
+export interface ResourceDef { id: string; max?: string | number; floor?: number; refresh: RefreshRule[]; when?: string; declaredIn: string }
 export interface EventDef { id: string; args: string[]; declaredIn: string }
 export interface PredicateDef { id: string; name: string; args: string[]; declaredIn: string }
 export interface TableDef { id: string; columns: string[]; rows: unknown[][]; declaredIn: string }
@@ -45,6 +45,7 @@ export interface Registry {
   packages: Map<string, PackageDef>;
   documentIds: Set<string>;
   documentPaths: Map<string, string>;
+  documentTypes: Map<string, string>;
 }
 
 const asArray = (v: unknown): Record<string, unknown>[] =>
@@ -55,7 +56,7 @@ export function buildRegistry(docs: Document[]): { registry: Registry; diagnosti
   const registry: Registry = {
     variables: new Map(), aliases: new Map(), resources: new Map(), events: new Map(),
     predicates: new Map(), functions: new Set(BUILTIN_FUNCTIONS), tables: new Map(),
-    slots: new Map(), packages: new Map(), documentIds: new Set(), documentPaths: new Map(),
+    slots: new Map(), packages: new Map(), documentIds: new Set(), documentPaths: new Map(), documentTypes: new Map(),
   };
   for (const ev of BUILTIN_EVENTS) registry.events.set(ev, { id: ev, args: [], declaredIn: "<builtin>" });
 
@@ -75,6 +76,7 @@ export function buildRegistry(docs: Document[]): { registry: Registry; diagnosti
       if (prev) diagnostics.push({ path, message: `duplicate document id "${docId}": declared in ${prev} and ${path}` });
       registry.documentIds.add(docId);
       registry.documentPaths.set(docId, path);
+      if (typeof fm.type === "string") registry.documentTypes.set(docId, fm.type);
     }
 
     for (const v of asArray(fm.variables)) {
@@ -83,6 +85,10 @@ export function buildRegistry(docs: Document[]): { registry: Registry; diagnosti
       if (dup(registry.variables, "variable", id, path)) continue;
       const ops = Array.isArray(v.ops) ? v.ops.map(String) : undefined;
       for (const op of ops ?? []) if (!(OPS as readonly string[]).includes(op)) diagnostics.push({ path, message: `variable "${id}": unknown op "${op}" (allowed: ${OPS.join(", ")})` });
+      const VTYPES = ["integer", "dice", "boolean", "text", "list"];
+      const ROUND = ["floor", "ceil", "round", "none"];
+      if (v.type !== undefined && !VTYPES.includes(String(v.type))) diagnostics.push({ path, message: `variable "${id}": unknown type "${String(v.type)}" (allowed: ${VTYPES.join(", ")})` });
+      if (v.rounding !== undefined && !ROUND.includes(String(v.rounding))) diagnostics.push({ path, message: `variable "${id}": unknown rounding "${String(v.rounding)}" (allowed: ${ROUND.join(", ")})` });
       const def: VariableDef = {
         id, name: String(v.name ?? id), type: (v.type as VariableDef["type"]) ?? "integer",
         default: v.default, formula: typeof v.formula === "string" ? v.formula : undefined,
@@ -103,7 +109,7 @@ export function buildRegistry(docs: Document[]): { registry: Registry; diagnosti
       if (!VAR_ID_RE.test(id)) { diagnostics.push({ path, message: `malformed resource id "${id}"` }); continue; }
       if (dup(registry.resources, "resource", id, path)) continue;
       registry.resources.set(id, {
-        id, max: typeof r.max === "string" ? r.max : undefined,
+        id, max: typeof r.max === "string" || typeof r.max === "number" ? r.max : undefined,
         floor: typeof r.floor === "number" ? r.floor : undefined,
         refresh: asArray(r.refresh) as unknown as RefreshRule[],
         when: typeof r.when === "string" ? r.when : undefined, declaredIn: path,

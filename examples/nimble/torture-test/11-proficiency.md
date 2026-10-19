@@ -9,4 +9,4 @@ covers: [nimble.items.armor.chain-shirt, nimble.items.weapons.staff]
 Non-proficient armor: Defend costs an extra action. Non-proficient weapon: cannot crit (CR2 p.32).
 
 ## Encoding notes
-Items contribute `defend.cost add: 1 when: not proficient(mail)` and `crit.allowed set: false when: not proficient(weapon)`, both `transfer: equipped`. Proficiency itself comes from the class document's `armor_proficiency`/`weapon_proficiency` properties, which the `proficient()` predicate reads.
+Armor contributes `defend.cost add: 1 when: not proficient(mail)` with `transfer: equipped`. The weapon half is **not encoded**: a `crit.allowed` flag on the character would turn off crits for every weapon when one unproficient weapon is equipped, and `proficient(weapon)` cannot name which weapon. Proficiency itself comes from the class document's `armor_proficiency`/`weapon_proficiency` properties, which are free text today; `proficient()` needs a declared vocabulary in Phase 2 (gap).
