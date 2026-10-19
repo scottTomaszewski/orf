@@ -38,3 +38,8 @@
 .wounds .w.on { color: var(--sem-wound); }
 .actions .w.on { color: var(--accent); }
 .steel-btn.small { min-height: 28px; padding: 0 .5rem; }
+.reader { display: grid; gap: 1rem; }
+@media (min-width: 800px) { .reader { grid-template-columns: 16rem 1fr; } }
+.reader__list { max-height: 70vh; overflow: auto; }
+.steel-value.on { color: var(--accent); }
+.props th { text-align: left; font-family: var(--font-sub); font-variant: small-caps; color: var(--fg-2); padding-right: .8rem; font-weight: var(--sub-weight); }

@@ -8,6 +8,8 @@ import { AboutView } from "./views/about.js";
 import { CreateView } from "./views/create.js";
 import { PlayView } from "./views/play.js";
 import { LevelUpView } from "./views/level-up.js";
+import { ReaderView } from "./views/reader.js";
+import { ContentView } from "./views/content.js";
 
 const TABS: { view: string; label: string; glyph: string; hash: string }[] = [
   { view: "play", label: "Play", glyph: "◆", hash: "#/play" },
@@ -68,6 +70,8 @@ function View() {
     case "create": return <CreateView />;
     case "play": return <PlayView />;
     case "level-up": return <LevelUpView />;
+    case "reader": return <ReaderView />;
+    case "content": return <ContentView />;
     default: return <p class="muted">{placeholder.value ? `${r.view}: coming in a later task` : ""}</p>;
   }
 }
