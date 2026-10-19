@@ -2,6 +2,7 @@ import type { Document } from "./document.js";
 import { DocumentError } from "./document.js";
 import { extractInlineExpressions, extractReferences } from "./expr-refs.js";
 import { DOC_ID_RE, OPS, RETIRED_OPS, isLookup, type Diagnostic, type Registry } from "./registry.js";
+import { parse, ParseError } from "./expr/parser.js";
 
 const STATS = ["str", "dex", "int", "wil"];
 const RESERVED = ["id", "type", "system", "name", "effects", "grants", "choices", "variables", "resources", "requires", "tags", "version"];
@@ -41,9 +42,10 @@ export function lintDocument(doc: Document, registry: Registry): Diagnostic[] {
   const resolveVar = (id: string): string | undefined => (registry.variables.has(id) ? id : registry.aliases.get(id));
 
   const checkExpression = (expr: string, context: string, line?: number, opts: ExprOpts = {}) => {
-    let depth = 0;
-    for (const ch of expr) { if (ch === "(") depth++; else if (ch === ")") depth--; if (depth < 0) break; }
-    if (depth !== 0) { err(`unbalanced parentheses in "${context}"`, line); return; }
+    try { parse(expr); } catch (e) {
+      if (e instanceof ParseError) { err(`syntax error in "${context}": ${e.message}`, line); return; }
+      throw e;
+    }
     const refs = extractReferences(expr);
     const consumedArgs = new Set<string>();
     const isItem = ITEM_TYPES.includes(String(fm.type));

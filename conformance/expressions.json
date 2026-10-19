@@ -1,0 +1,863 @@
+[
+ {
+  "name": "integer literal",
+  "expr": "12",
+  "expect": {
+   "kind": "int",
+   "value": 12
+  }
+ },
+ {
+  "name": "dice literal",
+  "expr": "2d6",
+  "expect": {
+   "kind": "dice",
+   "format": "2d6"
+  }
+ },
+ {
+  "name": "bare die",
+  "expr": "d8",
+  "expect": {
+   "kind": "dice",
+   "format": "1d8"
+  }
+ },
+ {
+  "name": "keep highest",
+  "expr": "4d6kh3",
+  "expect": {
+   "kind": "dice",
+   "format": "4d6kh3"
+  }
+ },
+ {
+  "name": "drop lowest default count",
+  "expr": "2d20dl",
+  "expect": {
+   "kind": "dice",
+   "format": "2d20dl1"
+  }
+ },
+ {
+  "name": "dotted identifier",
+  "expr": "skill.cap",
+  "env": {
+   "str": -1,
+   "dex": 2,
+   "int": 3,
+   "wil": 0,
+   "level": 4,
+   "skill.cap": 12,
+   "skill.arcana.points": 3,
+   "hp.current": 17,
+   "hp.max": 25,
+   "armor.base": 4,
+   "armor.bonus": 0,
+   "key": 3,
+   "in_wilderness": true
+  },
+  "expect": {
+   "kind": "int",
+   "value": 12
+  }
+ },
+ {
+  "name": "resource current",
+  "expr": "hp.current",
+  "env": {
+   "str": -1,
+   "dex": 2,
+   "int": 3,
+   "wil": 0,
+   "level": 4,
+   "skill.cap": 12,
+   "skill.arcana.points": 3,
+   "hp.current": 17,
+   "hp.max": 25,
+   "armor.base": 4,
+   "armor.bonus": 0,
+   "key": 3,
+   "in_wilderness": true
+  },
+  "expect": {
+   "kind": "int",
+   "value": 17
+  }
+ },
+ {
+  "name": "boolean literal true",
+  "expr": "true",
+  "expect": {
+   "kind": "bool",
+   "value": true
+  }
+ },
+ {
+  "name": "keyword boundary: nothing is an identifier",
+  "expr": "nothing",
+  "env": {
+   "nothing": 5
+  },
+  "expect": {
+   "kind": "int",
+   "value": 5
+  }
+ },
+ {
+  "name": "keyword boundary: true_damage is an identifier",
+  "expr": "true_damage",
+  "env": {
+   "true_damage": 7
+  },
+  "expect": {
+   "kind": "int",
+   "value": 7
+  }
+ },
+ {
+  "name": "dice sugar wil d8",
+  "expr": "wil d8",
+  "env": {
+   "wil": 3
+  },
+  "expect": {
+   "kind": "dice",
+   "format": "3d8"
+  }
+ },
+ {
+  "name": "dice sugar with zero count collapses to 0",
+  "expr": "wil d8",
+  "env": {
+   "wil": 0
+  },
+  "expect": {
+   "kind": "int",
+   "value": 0
+  }
+ },
+ {
+  "name": "mul before add",
+  "expr": "1 + 2 * 3",
+  "expect": {
+   "kind": "int",
+   "value": 7
+  }
+ },
+ {
+  "name": "parentheses",
+  "expr": "(1 + 2) * 3",
+  "expect": {
+   "kind": "int",
+   "value": 9
+  }
+ },
+ {
+  "name": "unary minus",
+  "expr": "-dex",
+  "env": {
+   "str": -1,
+   "dex": 2,
+   "int": 3,
+   "wil": 0,
+   "level": 4,
+   "skill.cap": 12,
+   "skill.arcana.points": 3,
+   "hp.current": 17,
+   "hp.max": 25,
+   "armor.base": 4,
+   "armor.bonus": 0,
+   "key": 3,
+   "in_wilderness": true
+  },
+  "expect": {
+   "kind": "int",
+   "value": -2
+  }
+ },
+ {
+  "name": "double unary minus",
+  "expr": "--dex",
+  "env": {
+   "str": -1,
+   "dex": 2,
+   "int": 3,
+   "wil": 0,
+   "level": 4,
+   "skill.cap": 12,
+   "skill.arcana.points": 3,
+   "hp.current": 17,
+   "hp.max": 25,
+   "armor.base": 4,
+   "armor.bonus": 0,
+   "key": 3,
+   "in_wilderness": true
+  },
+  "expect": {
+   "kind": "int",
+   "value": 2
+  }
+ },
+ {
+  "name": "floor division positive",
+  "expr": "7 / 2",
+  "expect": {
+   "kind": "int",
+   "value": 3
+  }
+ },
+ {
+  "name": "floor division negative",
+  "expr": "-7 / 2",
+  "expect": {
+   "kind": "int",
+   "value": -4
+  }
+ },
+ {
+  "name": "comparison chain via and",
+  "expr": "dex > 1 and dex < 3",
+  "env": {
+   "str": -1,
+   "dex": 2,
+   "int": 3,
+   "wil": 0,
+   "level": 4,
+   "skill.cap": 12,
+   "skill.arcana.points": 3,
+   "hp.current": 17,
+   "hp.max": 25,
+   "armor.base": 4,
+   "armor.bonus": 0,
+   "key": 3,
+   "in_wilderness": true
+  },
+  "expect": {
+   "kind": "bool",
+   "value": true
+  }
+ },
+ {
+  "name": "not binds tighter than and",
+  "expr": "not false and true",
+  "expect": {
+   "kind": "bool",
+   "value": true
+  }
+ },
+ {
+  "name": "or lower than and",
+  "expr": "false and true or true",
+  "expect": {
+   "kind": "bool",
+   "value": true
+  }
+ },
+ {
+  "name": "equality",
+  "expr": "level == 4",
+  "env": {
+   "str": -1,
+   "dex": 2,
+   "int": 3,
+   "wil": 0,
+   "level": 4,
+   "skill.cap": 12,
+   "skill.arcana.points": 3,
+   "hp.current": 17,
+   "hp.max": 25,
+   "armor.base": 4,
+   "armor.bonus": 0,
+   "key": 3,
+   "in_wilderness": true
+  },
+  "expect": {
+   "kind": "bool",
+   "value": true
+  }
+ },
+ {
+  "name": "inequality",
+  "expr": "level != 4",
+  "env": {
+   "str": -1,
+   "dex": 2,
+   "int": 3,
+   "wil": 0,
+   "level": 4,
+   "skill.cap": 12,
+   "skill.arcana.points": 3,
+   "hp.current": 17,
+   "hp.max": 25,
+   "armor.base": 4,
+   "armor.bonus": 0,
+   "key": 3,
+   "in_wilderness": true
+  },
+  "expect": {
+   "kind": "bool",
+   "value": false
+  }
+ },
+ {
+  "name": "boolean identifier",
+  "expr": "in_wilderness",
+  "env": {
+   "str": -1,
+   "dex": 2,
+   "int": 3,
+   "wil": 0,
+   "level": 4,
+   "skill.cap": 12,
+   "skill.arcana.points": 3,
+   "hp.current": 17,
+   "hp.max": 25,
+   "armor.base": 4,
+   "armor.bonus": 0,
+   "key": 3,
+   "in_wilderness": true
+  },
+  "expect": {
+   "kind": "bool",
+   "value": true
+  }
+ },
+ {
+  "name": "floor",
+  "expr": "floor(7)",
+  "expect": {
+   "kind": "int",
+   "value": 7
+  }
+ },
+ {
+  "name": "abs",
+  "expr": "abs(str)",
+  "env": {
+   "str": -1,
+   "dex": 2,
+   "int": 3,
+   "wil": 0,
+   "level": 4,
+   "skill.cap": 12,
+   "skill.arcana.points": 3,
+   "hp.current": 17,
+   "hp.max": 25,
+   "armor.base": 4,
+   "armor.bonus": 0,
+   "key": 3,
+   "in_wilderness": true
+  },
+  "expect": {
+   "kind": "int",
+   "value": 1
+  }
+ },
+ {
+  "name": "max of three",
+  "expr": "max(dex, 0, str)",
+  "env": {
+   "str": -1,
+   "dex": 2,
+   "int": 3,
+   "wil": 0,
+   "level": 4,
+   "skill.cap": 12,
+   "skill.arcana.points": 3,
+   "hp.current": 17,
+   "hp.max": 25,
+   "armor.base": 4,
+   "armor.bonus": 0,
+   "key": 3,
+   "in_wilderness": true
+  },
+  "expect": {
+   "kind": "int",
+   "value": 2
+  }
+ },
+ {
+  "name": "min two",
+  "expr": "min(int + skill.arcana.points, skill.cap)",
+  "env": {
+   "str": -1,
+   "dex": 2,
+   "int": 3,
+   "wil": 0,
+   "level": 4,
+   "skill.cap": 12,
+   "skill.arcana.points": 3,
+   "hp.current": 17,
+   "hp.max": 25,
+   "armor.base": 4,
+   "armor.bonus": 0,
+   "key": 3,
+   "in_wilderness": true
+  },
+  "expect": {
+   "kind": "int",
+   "value": 6
+  }
+ },
+ {
+  "name": "if true branch",
+  "expr": "if(level >= 2, 1, 0)",
+  "env": {
+   "str": -1,
+   "dex": 2,
+   "int": 3,
+   "wil": 0,
+   "level": 4,
+   "skill.cap": 12,
+   "skill.arcana.points": 3,
+   "hp.current": 17,
+   "hp.max": 25,
+   "armor.base": 4,
+   "armor.bonus": 0,
+   "key": 3,
+   "in_wilderness": true
+  },
+  "expect": {
+   "kind": "int",
+   "value": 1
+  }
+ },
+ {
+  "name": "if false branch",
+  "expr": "if(level >= 20, 1, 0)",
+  "env": {
+   "str": -1,
+   "dex": 2,
+   "int": 3,
+   "wil": 0,
+   "level": 4,
+   "skill.cap": 12,
+   "skill.arcana.points": 3,
+   "hp.current": 17,
+   "hp.max": 25,
+   "armor.base": 4,
+   "armor.bonus": 0,
+   "key": 3,
+   "in_wilderness": true
+  },
+  "expect": {
+   "kind": "int",
+   "value": 0
+  }
+ },
+ {
+  "name": "if is lazy",
+  "expr": "if(true, 1, nope)",
+  "expect": {
+   "kind": "int",
+   "value": 1
+  }
+ },
+ {
+  "name": "dice() with expression count",
+  "expr": "dice(wil + 2, 4)",
+  "env": {
+   "str": -1,
+   "dex": 2,
+   "int": 3,
+   "wil": 0,
+   "level": 4,
+   "skill.cap": 12,
+   "skill.arcana.points": 3,
+   "hp.current": 17,
+   "hp.max": 25,
+   "armor.base": 4,
+   "armor.bonus": 0,
+   "key": 3,
+   "in_wilderness": true
+  },
+  "expect": {
+   "kind": "dice",
+   "format": "2d4"
+  }
+ },
+ {
+  "name": "max of dice by average",
+  "expr": "max(1d6, 1d8)",
+  "expect": {
+   "kind": "dice",
+   "format": "1d8"
+  }
+ },
+ {
+  "name": "dice plus negative constant",
+  "expr": "1d8 + str",
+  "env": {
+   "str": -1,
+   "dex": 2,
+   "int": 3,
+   "wil": 0,
+   "level": 4,
+   "skill.cap": 12,
+   "skill.arcana.points": 3,
+   "hp.current": 17,
+   "hp.max": 25,
+   "armor.base": 4,
+   "armor.bonus": 0,
+   "key": 3,
+   "in_wilderness": true
+  },
+  "expect": {
+   "kind": "dice",
+   "format": "1d8 - 1"
+  }
+ },
+ {
+  "name": "merge equal dice",
+  "expr": "2d6 + 1d6 + 2",
+  "expect": {
+   "kind": "dice",
+   "format": "3d6 + 2"
+  }
+ },
+ {
+  "name": "scale dice",
+  "expr": "2 * (1d6 + 1)",
+  "expect": {
+   "kind": "dice",
+   "format": "2d6 + 2"
+  }
+ },
+ {
+  "name": "mixed dice sorted by sides",
+  "expr": "1d4 + 1d8",
+  "expect": {
+   "kind": "dice",
+   "format": "1d8 + 1d4"
+  }
+ },
+ {
+  "name": "dice minus dice constant only",
+  "expr": "1d6 - 2",
+  "expect": {
+   "kind": "dice",
+   "format": "1d6 - 2"
+  }
+ },
+ {
+  "name": "Nimble mage mana",
+  "expr": "(max(int, 0) * 3) + level",
+  "env": {
+   "str": -1,
+   "dex": 2,
+   "int": 3,
+   "wil": 0,
+   "level": 4,
+   "skill.cap": 12,
+   "skill.arcana.points": 3,
+   "hp.current": 17,
+   "hp.max": 25,
+   "armor.base": 4,
+   "armor.bonus": 0,
+   "key": 3,
+   "in_wilderness": true
+  },
+  "expect": {
+   "kind": "int",
+   "value": 13
+  }
+ },
+ {
+  "name": "Nimble mage mana with negative INT",
+  "expr": "(max(int, 0) * 3) + level",
+  "env": {
+   "str": -1,
+   "dex": 2,
+   "int": -1,
+   "wil": 0,
+   "level": 4,
+   "skill.cap": 12,
+   "skill.arcana.points": 3,
+   "hp.current": 17,
+   "hp.max": 25,
+   "armor.base": 4,
+   "armor.bonus": 0,
+   "key": 3,
+   "in_wilderness": true
+  },
+  "expect": {
+   "kind": "int",
+   "value": 4
+  }
+ },
+ {
+  "name": "Nimble skill cap",
+  "expr": "min(int + skill.arcana.points, skill.cap)",
+  "env": {
+   "str": -1,
+   "dex": 2,
+   "int": 3,
+   "wil": 0,
+   "level": 4,
+   "skill.cap": 12,
+   "skill.arcana.points": 3,
+   "hp.current": 17,
+   "hp.max": 25,
+   "armor.base": 4,
+   "armor.bonus": 0,
+   "key": 3,
+   "in_wilderness": true
+  },
+  "expect": {
+   "kind": "int",
+   "value": 6
+  }
+ },
+ {
+  "name": "Nimble armor",
+  "expr": "armor.base + armor.bonus",
+  "env": {
+   "str": -1,
+   "dex": 2,
+   "int": 3,
+   "wil": 0,
+   "level": 4,
+   "skill.cap": 12,
+   "skill.arcana.points": 3,
+   "hp.current": 17,
+   "hp.max": 25,
+   "armor.base": 4,
+   "armor.bonus": 0,
+   "key": 3,
+   "in_wilderness": true
+  },
+  "expect": {
+   "kind": "int",
+   "value": 4
+  }
+ },
+ {
+  "name": "Nimble bloodied",
+  "expr": "hp.current * 2 <= hp.max",
+  "env": {
+   "str": -1,
+   "dex": 2,
+   "int": 3,
+   "wil": 0,
+   "level": 4,
+   "skill.cap": 12,
+   "skill.arcana.points": 3,
+   "hp.current": 17,
+   "hp.max": 25,
+   "armor.base": 4,
+   "armor.bonus": 0,
+   "key": 3,
+   "in_wilderness": true
+  },
+  "expect": {
+   "kind": "bool",
+   "value": false
+  }
+ },
+ {
+  "name": "Nimble bloodied true",
+  "expr": "hp.current * 2 <= hp.max",
+  "env": {
+   "str": -1,
+   "dex": 2,
+   "int": 3,
+   "wil": 0,
+   "level": 4,
+   "skill.cap": 12,
+   "skill.arcana.points": 3,
+   "hp.current": 12,
+   "hp.max": 25,
+   "armor.base": 4,
+   "armor.bonus": 0,
+   "key": 3,
+   "in_wilderness": true
+  },
+  "expect": {
+   "kind": "bool",
+   "value": true
+  }
+ },
+ {
+  "name": "Nimble mail armor",
+  "expr": "6 + min(dex, 2)",
+  "env": {
+   "str": -1,
+   "dex": 2,
+   "int": 3,
+   "wil": 0,
+   "level": 4,
+   "skill.cap": 12,
+   "skill.arcana.points": 3,
+   "hp.current": 17,
+   "hp.max": 25,
+   "armor.base": 4,
+   "armor.bonus": 0,
+   "key": 3,
+   "in_wilderness": true
+  },
+  "expect": {
+   "kind": "int",
+   "value": 8
+  }
+ },
+ {
+  "name": "Nimble DC",
+  "expr": "10 + key",
+  "env": {
+   "str": -1,
+   "dex": 2,
+   "int": 3,
+   "wil": 0,
+   "level": 4,
+   "skill.cap": 12,
+   "skill.arcana.points": 3,
+   "hp.current": 17,
+   "hp.max": 25,
+   "armor.base": 4,
+   "armor.bonus": 0,
+   "key": 3,
+   "in_wilderness": true
+  },
+  "expect": {
+   "kind": "int",
+   "value": 13
+  }
+ },
+ {
+  "name": "Nimble tier",
+  "expr": "floor(level / 2)",
+  "env": {
+   "str": -1,
+   "dex": 2,
+   "int": 3,
+   "wil": 0,
+   "level": 4,
+   "skill.cap": 12,
+   "skill.arcana.points": 3,
+   "hp.current": 17,
+   "hp.max": 25,
+   "armor.base": 4,
+   "armor.bonus": 0,
+   "key": 3,
+   "in_wilderness": true
+  },
+  "expect": {
+   "kind": "int",
+   "value": 2
+  }
+ },
+ {
+  "name": "Nimble inventory",
+  "expr": "10 + str",
+  "env": {
+   "str": -1,
+   "dex": 2,
+   "int": 3,
+   "wil": 0,
+   "level": 4,
+   "skill.cap": 12,
+   "skill.arcana.points": 3,
+   "hp.current": 17,
+   "hp.max": 25,
+   "armor.base": 4,
+   "armor.bonus": 0,
+   "key": 3,
+   "in_wilderness": true
+  },
+  "expect": {
+   "kind": "int",
+   "value": 9
+  }
+ },
+ {
+  "name": "unknown identifier",
+  "expr": "nope + 1",
+  "error": "unknown identifier \"nope\""
+ },
+ {
+  "name": "unknown function",
+  "expr": "bogus(1)",
+  "error": "unknown function \"bogus\""
+ },
+ {
+  "name": "and on integer",
+  "expr": "dex and true",
+  "env": {
+   "str": -1,
+   "dex": 2,
+   "int": 3,
+   "wil": 0,
+   "level": 4,
+   "skill.cap": 12,
+   "skill.arcana.points": 3,
+   "hp.current": 17,
+   "hp.max": 25,
+   "armor.base": 4,
+   "armor.bonus": 0,
+   "key": 3,
+   "in_wilderness": true
+  },
+  "error": "boolean"
+ },
+ {
+  "name": "compare dice",
+  "expr": "1d6 > 3",
+  "error": "compare dice"
+ },
+ {
+  "name": "divide dice",
+  "expr": "1d6 / 2",
+  "error": "divide dice"
+ },
+ {
+  "name": "division by zero",
+  "expr": "1 / 0",
+  "error": "division by zero"
+ },
+ {
+  "name": "max needs two",
+  "expr": "max(1)",
+  "error": "at least two"
+ },
+ {
+  "name": "if branches typed alike",
+  "expr": "if(true, 1, false)",
+  "error": "same type"
+ },
+ {
+  "name": "negative dice count",
+  "expr": "dice(-1, 6)",
+  "error": "negative"
+ },
+ {
+  "name": "trailing operator",
+  "expr": "1 +",
+  "parseError": true
+ },
+ {
+  "name": "missing paren",
+  "expr": "max(1, 2",
+  "parseError": true
+ },
+ {
+  "name": "two literals",
+  "expr": "1 2",
+  "parseError": true
+ },
+ {
+  "name": "empty",
+  "expr": "",
+  "parseError": true
+ },
+ {
+  "name": "unterminated string",
+  "expr": "table(\"x",
+  "parseError": true
+ },
+ {
+  "name": "float",
+  "expr": "1.5",
+  "parseError": true
+ }
+]
