@@ -467,3 +467,88 @@ One golden test (`TestBob`). D&D 5e fixtures: ability modifiers, multiclass leve
 - Keep: single dot-path namespace with layered deep-merge overrides; the open-contribution pattern (make first-class, empty = 0); formula-level `conditions` separate from expression.
 - Drop: hand-written `dependencies`; goval/Go-int semantics; hardcoded helpers; one-shot global toposort.
 - Missing: typed bonuses, provenance, max-vs-sum policy per variable, stacking rules, choice modeling, versioning, prose annotation, error ergonomics (partial results with per-variable diagnostics).
+
+## Report H: Open Character Format (OCF), pixelqueue/opencharacter (added 2026-10-20)
+
+Found by Scott after the design was built. The closest prior art to ORF by a wide margin:
+"one character format for every tabletop RPG" — a spec (JSON Schemas + a plain-data conformance
+suite), a dependency-free TypeScript reference engine, packs per game (5e SRD 5.1/5.2, ORC 2e,
+Mothership, Forged in the Dark, Mörk Borg mechanics-only, Fate Core), and a web editor. Spec
+0.1.0, 21 commits, 3 stars at the time of reading; Apache-2.0 code, CC0 original packs.
+https://opencharacterformat.org/spec/ · `packages/spec/docs/*.md`.
+
+### 1. Data model
+
+YAML everywhere, no prose. A **pack** = `pack.yaml` manifest (id, semver, `specVersion`,
+`license` as SPDX/ORC/OGL/mechanics-only, `credit`, `notices`, `dependencies`) + `rules/*.yaml`
+(merged) + `content/<type>/<id>.yaml` (one item per file, id = path) + `i18n/` + `upgrades/`.
+Rules files declare **fields** (`abilities.str.score`; `type` integer/decimal/boolean/string/
+enum/dice/id/set; `input: true` for player-supplied base state, `formula` for derived; `min`/`max`,
+`default`, `limits`, `absorbedBy`, `overflow`), **content types** (fields, effects, actions,
+per-copy state; `carried`, `equippable`, copy limits), settings, constraints, result bands, roll
+tallies, situational choices, links, follow-ups, creation starts. A **character** stores only
+inputs (`values` keyed `5e-srd-5.1:abilities.str.base`) plus copies in `features`/`inventory`.
+Content items are mechanics only; every name and description is an i18n key.
+
+### 2. Effects / fold
+
+`{ id, target, op, value, when, stackKey, rounding, scope, then }`. Targets: a field, a query over
+fields, a **roll selector** (`{ rolls: [attack, save] }`), **incoming changes** (damage before it
+lands), choice steps, change steps. Ops: `set` (competing sets reported, not resolved), `add`,
+`multiply`, `atLeast`/`atMost`, `grant`, `rollModifier` (advantage etc.), `option`, `changes`.
+Order: own value → set → sum of adds → each multiply (rounding each) → highest atLeast, lowest
+atMost. **Stacking by `stackKey`** with per-key policy (`addAll`, `highestOnly`, `lowestOnly`,
+`playerChooses`); `source` reserved for "same item". Suppressed effects stay in the breakdown.
+
+### 3. Conditions and expressions
+
+"CEL-like": `&& || ! ? :`, `in`, lists, `@id` literals checked at build time, dice literals with
+keep/drop/explode/reroll/success-count/clamp, aggregate macros over copies/fields/lists, typed
+context roots per site (`item`, `self`, `roll`, `incoming`, `params`...). No user functions. Stable
+error codes; a field with an error reports it, dependents inherit it, the rest still computes.
+
+### 4. Procedures
+
+**Actions**: a fixed set of step types (roll, choice, allocate, branch, changes, nested action,
+outcome) declared in data; the engine *proposes* changes and never applies them; app-controlled
+dice pause/resume with replayable answers. Rest/damage/level-up are built from those steps per
+pack, not engine built-ins.
+
+### 5. Where ORF and OCF agree (independently)
+
+target + op + value + `when`; highest-base competition; clamps as ops; provenance breakdown per
+field; stacking identity as a first-class key; loud unknowns; app-controlled dice; the engine
+never mutates on its own; homebrew as an overlay pack; semver'd editions as separate ids.
+
+### 6. Where they differ, by design
+
+| | ORF | OCF |
+|---|---|---|
+| Unit of content | a **Markdown document** with a YAML header; prose is the product, `{{ }}` lives in it | a YAML file of mechanics; text is an i18n key elsewhere |
+| Audience | creators who already write in Obsidian/Markdown; a sheet that reads their files | app developers integrating one engine for many games |
+| Procedures | engine system module in code ("describe, don't script") + `moments` for refresh | data-declared actions over a fixed step vocabulary |
+| Roll targets | none yet (saves/advantage are variables) | first-class roll selectors, roll modifiers, incoming-change effects, tallies, result bands |
+| Rounding/stacking policy | per variable `rounding`; `stack` key, highest-wins within a source | per effect/field/settings; named stack keys with four policies |
+| Characters | a Markdown document too (shareable, exportable) | a YAML inputs file |
+| i18n | none | engine returns keys, text package renders |
+| Maturity | one system, one sheet | six packs, schemas, conformance suite, editor |
+
+### 7. Lessons for ORF
+
+- **Roll-level effects are a real gap.** Advantage on a save, +1d4 to attack rolls, "halve
+  incoming fire damage": OCF's `{ rolls: [...] }` / `{ incoming: ... }` targets and
+  `rollModifier` are the clean shape. Nimble needs the first two (Trail Cook's advantage is
+  a flag today). Adopt the target shapes, not the whole action system.
+- **Stack policy per key** (`highestOnly`, `playerChooses`) is better than ORF's single
+  "highest within a source" rule. Cheap to add to the registry.
+- **Competing `set`s are reported, never resolved.** Same instinct as ORF's provenance;
+  worth copying the "the engine does not decide" wording.
+- **`@id` literals checked at build time** and stable error codes are good ergonomics.
+- **Pack manifest with `license`/`credit`/`notices` as legal text** is exactly the provenance
+  layer the marketplace notes want; adopt the key names so the two ecosystems can map.
+- **Not to copy:** YAML-only content with i18n keys (kills the creator-in-Markdown story and
+  the superset guarantee), actions-as-data (the design's §4.1 rejects scripting in content;
+  the engine module stays), the full CEL-like language (ORF's grammar is deliberately smaller).
+- **Interop is plausible.** The effect models are close enough that an ORF→OCF pack export (and
+  an OCF pack → ORF system template import) is a bounded project. That would let ORF content
+  run in any OCF app, which answers the "nobody adopts a format" worry from the other side.

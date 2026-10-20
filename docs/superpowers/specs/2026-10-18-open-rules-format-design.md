@@ -622,6 +622,10 @@ Settled 2026-10-18 by Scott's gate review: handlers out (engine module), `transf
 Settled 2026-10-19 by Scott: the name (ORF, Open Rules Format); the Markdown-superset guarantee
 (§5.4); the interest test is creator adoption (§1).
 
+Prior art found 2026-10-20: **Open Character Format** (pixelqueue/opencharacter), the closest
+existing design — survey Report H. Lessons queued there: roll-level and incoming-change effect
+targets, per-key stack policies, pack manifest license/credit keys, a possible ORF↔OCF export.
+
 Open after the 2026-10-19 community conversations (notes and ideas in
 `docs/ideas/2026-10-19-marketplace-and-portable-prose.md`): a creator marketplace as the likely
 condition for success; what, if anything, the format offers against AI piracy; and the portable
