@@ -141,3 +141,17 @@ test("a failed save is reported, not swallowed", async () => {
   expect((await screen.findByRole("alert")).textContent).toMatch(/quota exceeded/);
   expect(location.hash).toBe("#/write");
 });
+
+test("Download emits the portable spelling; the Text field shows the short one for a portable file", async () => {
+  const PORTABLE: ContentFile = { path: "homebrew/ancestry/ratfolk.md", origin: "homebrew", text: '---\nid: nimble.ancestries.ratfolk\ntype: ancestry\nsystem: nimble\nname: Ratfolk\neffects: []\n---\nYou can suffer <span data-orf="wounds.max">one more Wound</span> before you die.\n' };
+  const homebrew = memoryHomebrewStore([PORTABLE]);
+  location.hash = `#/write/${encodeURIComponent(PORTABLE.path)}`;
+  render(<App loader={loaderFor(homebrew)} homebrew={homebrew} storage={localStorage} />);
+  await screen.findByRole("heading", { name: /write/i });
+  expect((screen.getByLabelText("text") as HTMLTextAreaElement).value.trim()).toBe("You can suffer {{ wounds.max | one more Wound }} before you die.");
+  expect(source().value).toContain('<span data-orf="wounds.max">');          // the file is untouched until edited
+  fireEvent.input(screen.getByLabelText("text"), { target: { value: "You can suffer {{ wounds.max | one more Wound }} before you die!" } });
+  expect(source().value).toContain("{{ wounds.max | one more Wound }} before you die!");
+  const download = screen.getByRole("link", { name: /download/i }) as HTMLAnchorElement;
+  expect(decodeURIComponent(download.href)).toContain('<span data-orf="wounds.max">one more Wound</span> before you die!');
+});

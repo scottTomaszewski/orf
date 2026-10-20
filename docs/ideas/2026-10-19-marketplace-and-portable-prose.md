@@ -66,8 +66,12 @@ same thing):
   and boundaries are found by regex. The "just a prefix" simplification does not work: the
   display text must still be delimited, and nesting would be confusing.
 
-Leaning **span**. To verify before deciding: how Obsidian Live Preview shows each (reading
-view hides both); whether GitHub's sanitizer keeps `data-*` attributes.
+**Decided 2026-10-19: span.** Scott verified Obsidian: reading view shows the text; Live Preview
+shows the tag only while the cursor is inside it. A prefix-only comment cannot work (the display
+text still needs a closing delimiter, and nesting would be confusing), which makes the span the
+simpler of the two. Implemented in `src/inline.ts`: both spellings parsed, `fmt --portable` /
+`fmt --short` in the CLI, Download emits portable, the Write view's Text field shows short.
+Still unverified: whether GitHub's sanitizer keeps `data-*` (the prose renders either way).
 
 Either way the Markdown-superset guarantee (design §5.4) is strengthened: a portable ORF file
 reads as prose in every renderer, and nothing is lost if ORF itself disappears.

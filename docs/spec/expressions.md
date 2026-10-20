@@ -101,6 +101,15 @@ formula to a flag whenever the state can be computed.
   result carries provenance.
 - **Display override**: `{{ expr | text }}` renders `text` symbolically and the resolved value
   on a sheet. Use it when the generated phrase would read badly.
+- **Portable spelling** (decision, Scott, 2026-10-19): the same construct may be written as
+  `<span data-orf="expr">display</span>`. CommonMark has no inline syntax that hides data and
+  shows text except raw HTML, so this is how a document reads as prose in any Markdown tool with
+  no plugin: Obsidian's reading view and GitHub show `display`; Obsidian's Live Preview shows the
+  tag only while the cursor is inside it. The two spellings are equivalent everywhere: the engine
+  resolves both, the linter checks both, `fmt --short` / `fmt --portable` convert a file either
+  way (`src/inline.ts`), and the sheet's Download emits the portable form while its Text field
+  shows the short one. Quotes in the expression are attribute-escaped (`&quot;`). Without a
+  display the expression text stands in. Spans do not nest.
 
 ## 7. Evaluation phases
 

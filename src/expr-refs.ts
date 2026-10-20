@@ -1,4 +1,4 @@
-import { DocumentError } from "./document.js";
+import { findInline } from "./inline.js";
 
 export interface InlineExpression { expr: string; display?: string; line: number }
 
@@ -8,26 +8,10 @@ const NUMBER_RE = /\b\d+(?:\.\d+)?\b/g;
 const STRING_RE = /"[^"]*"/g;
 const IDENT_RE = /[A-Za-z_][A-Za-z0-9_.]*/g;
 
-/** Find every `{{ expr }}` / `{{ expr | display }}` in a body. Throws on unbalanced or nested braces. */
+/** Every `{{ expr }}` / `{{ expr | display }}` / `<span data-orf="expr">display</span>` in a body, with its line. Throws on unbalanced or nested braces. */
 export function extractInlineExpressions(body: string, startLine: number): InlineExpression[] {
-  const out: InlineExpression[] = [];
   const lineAt = (pos: number) => startLine + (body.slice(0, pos).match(/\n/g)?.length ?? 0);
-  let i = 0;
-  while (i < body.length) {
-    const open = body.indexOf("{{", i);
-    if (open === -1) break;
-    const close = body.indexOf("}}", open + 2);
-    const nextOpen = body.indexOf("{{", open + 2);
-    const line = lineAt(open);
-    if (close === -1) throw new DocumentError("<body>", `unbalanced "{{" at line ${line}`, line);
-    if (nextOpen !== -1 && nextOpen < close) throw new DocumentError("<body>", `nested "{{" at line ${line}`, line);
-    const inner = body.slice(open + 2, close);
-    const pipe = inner.indexOf("|");
-    if (pipe === -1) out.push({ expr: inner.trim(), line });
-    else out.push({ expr: inner.slice(0, pipe).trim(), display: inner.slice(pipe + 1).trim(), line });
-    i = close + 2;
-  }
-  return out;
+  return findInline(body, startLine).map((m) => (m.display === undefined ? { expr: m.expr, line: lineAt(m.start) } : { expr: m.expr, display: m.display, line: lineAt(m.start) }));
 }
 
 export interface References {

@@ -1,6 +1,7 @@
 import { useComputed, useSignal } from "@preact/signals";
 import { useContext, useEffect, useMemo } from "preact/hooks";
 import { blankDocument, contentTypes, documentText, lintDraft, momentSuggestions, slug, suggestedId, targetSuggestions } from "../../../src/authoring.js";
+import { mapBody, toPortable, toShort } from "../../../src/inline.js";
 import type { Loaded } from "../../../src/content-store.js";
 import type { Document } from "../../../src/document.js";
 import { OPS } from "../../../src/registry.js";
@@ -13,6 +14,9 @@ type Row = Record<string, unknown>;
 /** Keys the form renders itself; everything else in the header is "another property". */
 const FORM_KEYS = new Set(["id", "type", "system", "name", "effects", "resources"]);
 const EFFECT_META = new Set(["target", "when", "note", "source"]);
+
+/** The downloaded file: the portable spelling in the body so any Markdown tool shows prose; a body that does not parse is left as typed. */
+const portable = (text: string): string => { try { return mapBody(text, toPortable); } catch { return text; } };
 
 /** "1" → 1, "true" → true, anything else stays text (an expression, a word). */
 const parseScalar = (s: string): unknown => (/^-?\d+$/.test(s) ? Number(s) : s === "true" ? true : s === "false" ? false : s);
@@ -107,7 +111,7 @@ function Editor({ loaded, path }: { loaded: Loaded; path?: string }) {
       <div class="row" style="justify-content:space-between">
         <div><h1 class="steel-h1">Write</h1><div class="muted small">{path ? <span class="steel-mono">{path}</span> : "A new document. It becomes a file in your homebrew folder; the sheet reads it everywhere."}</div></div>
         <div class="row">
-          <a class="steel-btn" style="display:inline-flex;align-items:center;text-decoration:none" href={`data:text/markdown;charset=utf-8,${encodeURIComponent(text.value)}`} download={savePath.split("/").pop()}>Download .md</a>
+          <a class="steel-btn" style="display:inline-flex;align-items:center;text-decoration:none" href={`data:text/markdown;charset=utf-8,${encodeURIComponent(portable(text.value))}`} download={savePath.split("/").pop()}>Download .md</a>
           <button type="button" class="steel-btn steel-btn--primary" disabled={!canSave || saving.value} onClick={() => void save()}>Save</button>
         </div>
       </div>
@@ -155,7 +159,7 @@ function Editor({ loaded, path }: { loaded: Loaded; path?: string }) {
               ))}
             </Panel>
             <Panel title="Text">
-              <textarea class="steel-input" aria-label="text" rows={6} style="width:100%;box-sizing:border-box;padding:.5rem" placeholder="Rules text. Markdown. {{ wounds.max | your Wounds }} shows a live value." value={body.value} onInput={(e) => commit(fm.value, (e.target as HTMLTextAreaElement).value)} />
+              <textarea class="steel-input" aria-label="text" rows={6} style="width:100%;box-sizing:border-box;padding:.5rem" placeholder="Rules text. Markdown. {{ wounds.max | your Wounds }} shows a live value." value={toShort(body.value)} onInput={(e) => commit(fm.value, (e.target as HTMLTextAreaElement).value)} />
             </Panel>
           </fieldset>
         )}

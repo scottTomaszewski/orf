@@ -78,3 +78,9 @@ test("a when reading an absent resource's current is a diagnostic and false", ()
   expect(n(s, "speed")).toBe(5);
   expect(s.diagnostics.map((d) => d.message).join()).toMatch(/mage\.surge\.current/);
 });
+
+test("render resolves the portable span spelling exactly like the short one", () => {
+  const s = evaluateCharacter(pip, registry, byId);
+  expect(s.render('Deals <span data-orf="1d6 + str">1d6 plus Strength</span>.')).toBe("Deals 1d6 - 1.");
+  expect(s.render("{{ wounds.max }} and <span data-orf=\"wounds.max\">w</span>")).toBe(`${n(s, "wounds.max")} and ${n(s, "wounds.max")}`);
+});

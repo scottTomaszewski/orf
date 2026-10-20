@@ -153,7 +153,7 @@ export function lintDocument(doc: Document, registry: Registry): Diagnostic[] {
   for (const [k, v] of Object.entries(fm)) {
     if (RESERVED.includes(k)) continue;
     if (isObj(v) && Object.keys(v).some((kk) => kk.startsWith("{"))) { err(`property "${k}": looks like an unquoted {{ }} that YAML parsed as a mapping; quote the value`); continue; }
-    if (typeof v !== "string" || !v.includes("{{")) continue;
+    if (typeof v !== "string" || !(v.includes("{{") || v.includes("data-orf="))) continue;
     try {
       for (const x of extractInlineExpressions(v, 1)) checkExpression(x.expr, `${k}: {{ ${x.expr} }}`);
     } catch (e) {

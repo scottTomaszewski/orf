@@ -1,9 +1,10 @@
 /** Render a document body: paragraphs, **bold**, *italic*, ## headings; `{{ expr | display }}` resolved by `resolve` or shown symbolically. */
 import type { ComponentChildren } from "preact";
 
-export function renderSymbolic(text: string): string {
-  return text.replace(/\{\{([^{}]*)\}\}/g, (_, inner: string) => { const [expr, display] = inner.split("|").map((s) => s.trim()); return display || expr; });
-}
+import { renderDisplay } from "../../src/inline.js";
+
+/** What a plain Markdown renderer shows: display text for both spellings ({{ }} and <span data-orf>). */
+export const renderSymbolic = (text: string): string => renderDisplay(text);
 function inline(s: string): ComponentChildren {
   const parts = s.split(/(\*\*[^*]+\*\*|\*[^*]+\*|`[^`]+`)/g);
   return parts.map((p, i) => p.startsWith("**") ? <b key={i}>{p.slice(2, -2)}</b> : p.startsWith("*") ? <i key={i}>{p.slice(1, -1)}</i> : p.startsWith("`") ? <code key={i}>{p.slice(1, -1)}</code> : p);

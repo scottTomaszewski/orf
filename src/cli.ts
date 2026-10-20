@@ -1,4 +1,6 @@
-import { loadDocumentsLenient } from "./document-fs.js";
+import { readFileSync, statSync, writeFileSync } from "node:fs";
+import { listDocumentFiles, loadDocumentsLenient } from "./document-fs.js";
+import { mapBody, toPortable, toShort } from "./inline.js";
 import { evaluateCharacter } from "./engine.js";
 import { formatValue } from "./expr/value.js";
 import { lintAll } from "./lint.js";
@@ -30,8 +32,27 @@ function sheet(characterId: string, dirs: string[]): number {
   return all.some((d) => d.severity !== "warning") ? 1 : 0;
 }
 
+/** `fmt --portable|--short <files or dirs...>`: rewrite every inline expression in each document's body in one spelling; the header is untouched. */
+function fmt(args: string[]): number {
+  const form = args.find((a) => a === "--portable" || a === "--short");
+  if (!form) { console.log("usage: fmt --portable|--short <files or dirs...>   (portable: <span data-orf> for plain Markdown renderers; short: {{ }})"); return 1; }
+  const paths = args.filter((a) => a !== form);
+  const files = paths.flatMap((p) => (statSync(p).isDirectory() ? listDocumentFiles([p]) : [p]));
+  const convert = form === "--portable" ? toPortable : toShort;
+  let changed = 0;
+  for (const f of files) {
+    const before = readFileSync(f, "utf8");
+    let after: string;
+    try { after = mapBody(before, convert); } catch (e) { console.log(`${f}: ${e instanceof Error ? e.message : String(e)}`); return 1; }
+    if (after !== before) { writeFileSync(f, after); changed++; console.log(`fmt: ${f}`); }
+  }
+  console.log(`OK: ${changed} of ${files.length} files rewritten (${form.slice(2)})`);
+  return 0;
+}
+
 export function main(argv: string[]): number {
   if (argv[0] === "sheet") return sheet(argv[1] ?? "", argv.slice(2));
+  if (argv[0] === "fmt") return fmt(argv.slice(1));
   const dirs = argv.length ? argv : ["systems", "examples"];
   const diagnostics: Diagnostic[] = [];
   const { docs, errors } = loadDocumentsLenient(dirs);

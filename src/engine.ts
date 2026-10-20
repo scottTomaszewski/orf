@@ -1,6 +1,6 @@
 import { assembleCharacter, type Attachment } from "./character.js";
 import type { Document } from "./document.js";
-import { extractInlineExpressions } from "./expr-refs.js";
+import { replaceInline } from "./inline.js";
 import { evaluate, EvalError, type Env } from "./expr/evaluate.js";
 import { parse, ParseError } from "./expr/parser.js";
 import { bool, formatValue, int, text, ValueError, type Value } from "./expr/value.js";
@@ -322,27 +322,10 @@ export function evaluateCharacter(character: Document, registry: Registry, docs:
       if (!c) throw new Error(`unknown variable "${id}"`);
       return resolve(c).value;
     },
-    render: (src) => {
-      let out = src;
-      const parts = extractInlineExpressions(src, 1);
-      for (const p of parts) {
-        let rendered: string;
-        try { rendered = formatValue(evaluate(parse(p.expr), makeEnv({}))); } catch { rendered = `⚠ ${p.expr}`; }
-        out = replaceInline(out, p.expr, rendered);
-      }
-      return out;
-    },
+    render: (src) => replaceInline(src, (m) => {
+      try { return formatValue(evaluate(parse(m.expr), makeEnv({}))); } catch { return `⚠ ${m.expr}`; }
+    }),
   };
   return sheet;
 }
 
-/** Replace the first {{ expr ... }} whose expression text matches. */
-function replaceInline(src: string, expr: string, rendered: string): string {
-  const re = /\{\{([^{}]*)\}\}/g;
-  let m: RegExpExecArray | null;
-  while ((m = re.exec(src))) {
-    const inner = m[1].split("|")[0].trim();
-    if (inner === expr.trim()) return src.slice(0, m.index) + rendered + src.slice(m.index + m[0].length);
-  }
-  return src;
-}

@@ -284,3 +284,8 @@ test("refresh to: max on a resource with no max is an error", () => {
   const d = content({ resources: [{ id: "x", refresh: [{ on: "safe-rest", to: "max" }] }] });
   expect(lintDocument(d, buildRegistry([...base, d]).registry).map((x) => x.message).join("\n")).toMatch(/refresh\[0\].*to: max.*no max/);
 });
+
+test("a portable span with an unknown identifier is reported like the short form", () => {
+  const d = lintDocument(content({}, 'You have <span data-orf="wound.max">wounds</span>.'), reg);
+  expect(d.map((x) => x.message).join("\n")).toMatch(/wound\.max/);
+});
