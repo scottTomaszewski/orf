@@ -132,6 +132,29 @@ While worn, +1 Speed. Once per Safe Rest, you may move your full Speed as a free
   problem in every loaded file with its line. A broken file never takes the rest down.
 - From a terminal, in this repository: `npx tsx src/cli.ts systems/nimble <your folder>`.
 
+## Publishing: the portable spelling
+
+`{{ wounds.max | one more Wound than most }}` is not Markdown, so a plain renderer shows the
+braces. When a file leaves the sheet (a download, a sale, a page on your site), write the same
+thing as HTML and every Markdown tool shows the prose:
+
+```markdown
+---
+id: nimble.ancestries.ratfolk-portable
+type: ancestry
+system: nimble
+name: Ratfolk
+effects:
+  - {target: wounds.max, add: 1}
+---
+You can suffer <span data-orf="wounds.max">one more Wound than most</span> before you die.
+```
+
+The sheet reads both spellings as the same thing. **Write → Download** emits the portable one
+for you; `npx tsx src/cli.ts fmt --portable <folder>` converts files in place, and
+`fmt --short` converts them back for editing. Obsidian's reading view shows the text; Live
+Preview shows the tag only while your cursor is inside it.
+
 Common messages: `unknown target` (a typo, or a number the system does not declare),
 `duplicate document id` (your `id` is already taken; pick another), `invalid YAML` (usually a
 colon or quote inside a value: wrap the value in quotes).

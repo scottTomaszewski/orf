@@ -35,6 +35,7 @@ npm install
 npm test          # parser, evaluator, corpus, fold, assembly, engine, moments, Nimble module, linter
 npm run lint-docs # lint the Nimble tree and the 5e insurance tree
 npx tsx src/cli.ts sheet scott.characters.pip systems/nimble examples/nimble   # Pip, with provenance
+npx tsx src/cli.ts fmt --portable <folder>   # {{ }} → <span data-orf>, so plain Markdown tools show prose; --short reverses
 ```
 
 ## The sheet

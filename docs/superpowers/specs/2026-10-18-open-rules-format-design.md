@@ -276,6 +276,14 @@ spans show their display text (or the expression when there is none). Nothing in
 require a non-Markdown construct. Content should use the display form wherever the raw expression
 would read badly in a plain renderer.
 
+**Portable spelling (decision, Scott, 2026-10-19).** `{{ }}` is not Markdown, so a plain renderer
+shows the braces. The same construct may be spelled `<span data-orf="expr">display</span>`, which
+every CommonMark renderer shows as the display text (raw inline HTML is the only construct that
+can hide data and show text). The short form is what people type; the portable form is what the
+Write view's Download, the CLI's `fmt --portable`, and any export emit; the engine and linter
+accept both (`docs/spec/expressions.md` §6, `src/inline.ts`). Verified in Obsidian: reading view
+shows the text, Live Preview shows the tag only while the cursor is inside it.
+
 ## 6. The effects model
 
 ### 6.1 Declarative contributions (decision, Scott, on my proposal)
