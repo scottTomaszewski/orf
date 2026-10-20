@@ -614,5 +614,10 @@ Settled 2026-10-18 by Scott's gate review: handlers out (engine module), `transf
 Settled 2026-10-19 by Scott: the name (ORF, Open Rules Format); the Markdown-superset guarantee
 (§5.4); the interest test is creator adoption (§1).
 
+Open after the 2026-10-19 community conversations (notes and ideas in
+`docs/ideas/2026-10-19-marketplace-and-portable-prose.md`): a creator marketplace as the likely
+condition for success; what, if anything, the format offers against AI piracy; and the portable
+form of `{{ expr | display }}` so plain Markdown editors show prose (leaning `<span data-orf>`).
+
 Builder's calls, flagged: exact PEG for `when`; `wil d8` sugar; the hosted character store;
 framework and hosting; how the sheet renders provenance on a phone.
